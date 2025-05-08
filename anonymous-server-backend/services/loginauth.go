@@ -13,17 +13,18 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+var SecretKey = []byte("1234567890MYKEYHERE98765321")
+
 // generateJWTToken generates a JWT token for the given user
 func generateJWTToken(user User) (string, error) {
 	// Define the JWT secret key (replace with your own secret)
-	secretKey := []byte("1234567890MYKEYHERE98765321")
 	// Create a new JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": user.Username,
 		"exp":      jwt.TimeFunc().Add(24 * time.Hour).Unix(), // Token expiration time
 	})
 	// Sign the token with the secret key
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString(SecretKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %v", err)
 	}
@@ -32,7 +33,7 @@ func generateJWTToken(user User) (string, error) {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
+	Token string `json:"access_token"`
 }
 
 type User struct {
@@ -54,6 +55,7 @@ func (lr *LoginRequest) Validate() error {
 // ProcessLogin processes the login request and generates a JWT token
 func ProcessLogin(loginRequest LoginRequest) (LoginResponse, error) {
 	// Validate the login request
+
 	if err := loginRequest.Validate(); err != nil {
 		return LoginResponse{}, err
 	}
@@ -65,7 +67,7 @@ func ProcessLogin(loginRequest LoginRequest) (LoginResponse, error) {
 	}
 
 	if user.Username != "testuser1" || user.Password != "testpassword1" {
-		if user.Username == "testuser2" || user.Password == "testpassword2" {
+		if user.Username != "testuser2" || user.Password != "testpassword2" {
 			return LoginResponse{}, fmt.Errorf("user is not active")
 		}
 	}
