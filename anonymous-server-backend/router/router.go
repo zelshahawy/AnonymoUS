@@ -21,6 +21,8 @@ func StartServer() {
 
 	// Define the heartbeat route
 	router.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET")
+	// Define the login route
+	router.HandleFunc("/login", cmd.LoginHandler).Methods("POST")
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
