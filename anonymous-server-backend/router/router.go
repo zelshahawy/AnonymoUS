@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/zelshahawy/Anonymous_backend/cmd"
 )
 
 func StartServer() {
@@ -17,6 +18,10 @@ func StartServer() {
 		port = "8081" // Default port if not specified
 	}
 	fmt.Printf("Starting server on port %s...\n", port)
+
+	// Define the heartbeat route
+	router.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET")
+
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 	}
