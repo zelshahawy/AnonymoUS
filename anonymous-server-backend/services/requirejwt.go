@@ -2,40 +2,38 @@ package services
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
-func RequireJWT(next http.Handler) http.Handler {
+// AuthMiddleware checks for a valid auth_token cookie, verifies the JWT,
+// and injects the user ID (sub) into the request context.
+func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		auth := r.Header.Get("Authorization") // e.g. "Bearer <token>"
-		parts := strings.SplitN(auth, " ", 2)
-		if len(parts) != 2 {
-			http.Error(w, "missing auth", http.StatusUnauthorized)
+		c, err := r.Cookie("auth_token")
+		if err != nil {
+			http.Error(w, "unauthorized - missing cookie", http.StatusUnauthorized)
 			return
 		}
-		tokenStr := parts[1]
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
-			if t.Method != jwt.SigningMethodHS256 {
-				return nil, errors.New("bad signing method")
+
+		// parse & validate JWT
+		claims := &jwt.StandardClaims{}
+		token, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (interface{}, error) {
+			// ensure token is signed with HMAC
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
 			return SecretKey, nil
 		})
 		if err != nil || !token.Valid {
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			http.Error(w, "unauthorized - invalid token", http.StatusUnauthorized)
 			return
 		}
-		claims := token.Claims.(jwt.MapClaims)
-		userID, ok := claims["username"].(string)
-		if !ok {
-			http.Error(w, "invalid claims", http.StatusUnauthorized)
-			return
-		}
-		// store userID in context so handlers can read it
-		ctx := context.WithValue(r.Context(), "userID", userID)
+
+		// inject user ID into context and call next
+		ctx := context.WithValue(r.Context(), "userID", claims.Subject)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

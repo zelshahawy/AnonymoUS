@@ -27,7 +27,7 @@ func StartServer() {
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	protected := router.NewRoute().Subrouter()
-	protected.Use(services.RequireJWT)
+	protected.Use(services.AuthMiddleware)
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET")
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/zelshahawy/Anonymous_backend/services"
 )
@@ -48,8 +49,23 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// set the JSON content-type
+	w.Header().Set("Content-Type", "application/json")
+
+	// set the cookie before sending headers
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    response.Token,
+		Path:     "/",
+		Expires:  time.Now().Add(1 * time.Minute),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	// now send status code and JSON body
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, fmt.Sprintf("Error encoding response: %v", err), http.StatusInternalServerError)
-	}
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "logged in",
+	})
 }

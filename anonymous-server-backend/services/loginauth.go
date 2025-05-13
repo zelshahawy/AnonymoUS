@@ -13,7 +13,7 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-var SecretKey = []byte("1234567890MYKEYHERE98765321")
+var SecretKey = []byte("KDSJBASJKBA")
 
 // generateJWTToken generates a JWT token for the given user
 func generateJWTToken(user User) (string, error) {
@@ -21,7 +21,7 @@ func generateJWTToken(user User) (string, error) {
 	// Create a new JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": user.Username,
-		"exp":      jwt.TimeFunc().Add(24 * time.Hour).Unix(), // Token expiration time
+		"exp":      jwt.TimeFunc().Add(1 * time.Minute).Unix(), // Token expiration time
 	})
 	// Sign the token with the secret key
 	tokenString, err := token.SignedString(SecretKey)
