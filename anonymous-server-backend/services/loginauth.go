@@ -78,7 +78,7 @@ func ProcessLogin(loginRequest LoginRequest) (LoginResponse, error) {
 		return LoginResponse{}, err
 	}
 
-	fmt.Println("Generated JWT Token:", token)
+	// fmt.Println("Generated JWT Token:", token)
 	return LoginResponse{Token: token}, nil
 
 }
