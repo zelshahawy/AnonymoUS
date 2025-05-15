@@ -23,7 +23,8 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if userID == "" {
-		fmt.Println("userID is empty")
+		http.Error(w, "unauthorized - empty userID", http.StatusUnauthorized)
+		return
 	} else {
 		fmt.Println("userID", userID)
 	}
@@ -46,6 +47,9 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	// 4) start pumps
 	go writePump(client)
 	readPump(client)
+
+	// 5) close connection
+	defer close(client)
 }
 
 func readPump(c *hub.Client) {
@@ -60,6 +64,7 @@ func readPump(c *hub.Client) {
 		}
 		// tag the sender
 		msg.From = c.UserID
+		msg.Messageid = hub.GenerateMessageID()
 		// route it
 		hub.GlobalHub.Send(msg.To, &msg)
 	}
@@ -69,4 +74,9 @@ func writePump(c *hub.Client) {
 	for msg := range c.Send {
 		c.Conn.WriteJSON(msg)
 	}
+}
+
+func close(c *hub.Client) {
+	c.Conn.Close()
+	hub.GlobalHub.Unregister(c)
 }

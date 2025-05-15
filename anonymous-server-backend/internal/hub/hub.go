@@ -7,9 +7,10 @@ import (
 )
 
 type Message struct {
-	From string `json:"from"`
-	To   string `json:"to"`
-	Body string `json:"body"`
+	Messageid string `json:"messageid"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+	Body      string `json:"body"`
 }
 
 type Client struct {
