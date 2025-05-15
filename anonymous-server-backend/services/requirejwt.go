@@ -8,6 +8,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
+type contextKey string
+
+const userIDKey contextKey = "userID"
+
 // AuthMiddleware checks for a valid auth_token cookie, verifies the JWT,
 // and injects the user ID (sub) into the request context.
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -33,7 +37,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// inject user ID into context and call next
-		ctx := context.WithValue(r.Context(), "userID", claims.Subject)
+		ctx := context.WithValue(r.Context(), userIDKey, claims.Subject)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// UserIDFromContext retrieves the user ID from the request context.
+// Returns the ID and a boolean indicating whether it was present.
+func UserIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(userIDKey).(string)
+	return userID, ok
 }

@@ -22,13 +22,13 @@ func StartServer() {
 
 	// Define the login route
 	router.HandleFunc("/login", cmd.LoginHandler).Methods("POST")
-
 	// Define the static file route
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	protected := router.NewRoute().Subrouter()
 	protected.Use(services.AuthMiddleware)
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET")
+	protected.HandleFunc("/ws", cmd.WsHandler).Methods("GET")
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)

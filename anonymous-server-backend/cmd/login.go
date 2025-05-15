@@ -57,8 +57,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    response.Token,
 		Path:     "/",
-		Expires:  time.Now().Add(1 * time.Minute),
-		Secure:   true,
+		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})

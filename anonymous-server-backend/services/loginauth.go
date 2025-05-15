@@ -17,19 +17,17 @@ var SecretKey = []byte("KDSJBASJKBA")
 
 // generateJWTToken generates a JWT token for the given user
 func generateJWTToken(user User) (string, error) {
-	// Define the JWT secret key (replace with your own secret)
-	// Create a new JWT token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": user.Username,
-		"exp":      jwt.TimeFunc().Add(1 * time.Minute).Unix(), // Token expiration time
-	})
-	// Sign the token with the secret key
+	claims := jwt.StandardClaims{
+		Subject:   user.Username,
+		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		IssuedAt:  time.Now().Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(SecretKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %v", err)
 	}
 	return tokenString, nil
-
 }
 
 type LoginResponse struct {
