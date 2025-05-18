@@ -28,7 +28,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized - empty userID", http.StatusUnauthorized)
 		return
 	} else {
-		fmt.Println("userID", userID)
+		fmt.Println("userID", userID, "Has connected.")
 	}
 
 	// 2) upgrade to WebSocket
@@ -50,8 +50,6 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 
 	go writePump(client)
 	readPump(ctx, client)
-
-	defer close(client)
 }
 
 // change readPump to accept a context
