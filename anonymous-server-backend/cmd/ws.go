@@ -2,43 +2,44 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/zelshahawy/Anonymous_backend/services"
-
-	"github.com/zelshahawy/Anonymous_backend/internal/hub"
+	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/zelshahawy/Anonymous_backend/internal/hub"
+	"github.com/zelshahawy/Anonymous_backend/services"
+)
+
+const (
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = 30 * time.Second
 )
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true }, // tighten in prod!
+	CheckOrigin: func(r *http.Request) bool { return true }, // tighten in prod
 }
 
+// WsHandler handles WebSocket requests from clients.
 func WsHandler(w http.ResponseWriter, r *http.Request) {
-	// 1) get userID from context (set by your AuthMiddleware)
 	userID, ok := services.UserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthorized - missing userID", http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	if userID == "" {
-		http.Error(w, "unauthorized - empty userID", http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
-	} else {
-		fmt.Println("userID", userID, "Has connected.")
 	}
 
-	// 2) upgrade to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		http.Error(w, "could not upgrade", http.StatusInternalServerError)
+		http.Error(w, "could not upgrade to websocket", http.StatusInternalServerError)
 		return
 	}
 
-	// 3) wrap in a client and register
 	client := &hub.Client{
 		Conn:   conn,
 		UserID: userID,
@@ -47,17 +48,23 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	hub.GlobalHub.Register(client)
 
 	ctx := r.Context()
-
 	go writePump(client)
 	readPump(ctx, client)
 }
 
-// change readPump to accept a context
+// readPump pumps messages from the WebSocket to the hub.
+// It also handles history requests and chat messages.
 func readPump(ctx context.Context, c *hub.Client) {
 	defer func() {
 		hub.GlobalHub.Unregister(c)
 		c.Conn.Close()
 	}()
+
+	// Configure read deadline and pong handler
+	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.Conn.SetPongHandler(func(string) error {
+		return c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	})
 
 	for {
 		var msg hub.Message
@@ -67,15 +74,13 @@ func readPump(ctx context.Context, c *hub.Client) {
 
 		switch msg.Type {
 		case "history":
-			// client is asking for history with msg.To
 			history, err := services.LoadRecentMessages(ctx, c.UserID, msg.To, 50)
 			if err != nil {
 				log.Printf("error loading history: %v", err)
 				continue
 			}
-			// send each historical message back over the socket
 			for _, m := range history {
-				c.Conn.WriteJSON(hub.Message{
+				_ = c.Conn.WriteJSON(hub.Message{
 					Type:      "history",
 					Messageid: m.MsgID,
 					From:      m.From,
@@ -85,11 +90,9 @@ func readPump(ctx context.Context, c *hub.Client) {
 			}
 
 		case "chat":
-			// a real-time chat message
 			msg.From = c.UserID
 			msg.Messageid = hub.GenerateMessageID()
 
-			// persist it
 			if err := services.SaveMessage(ctx, &services.MessageDoc{
 				MsgID: msg.Messageid,
 				From:  msg.From,
@@ -99,7 +102,6 @@ func readPump(ctx context.Context, c *hub.Client) {
 				log.Printf("failed to save message %s: %v", msg.Messageid, err)
 			}
 
-			// route to the recipient
 			hub.GlobalHub.Send(msg.To, &msg)
 
 		default:
@@ -108,13 +110,29 @@ func readPump(ctx context.Context, c *hub.Client) {
 	}
 }
 
+// writePump pumps messages from the hub to the WebSocket.
 func writePump(c *hub.Client) {
-	for msg := range c.Send {
-		c.Conn.WriteJSON(msg)
-	}
-}
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		c.Conn.Close()
+	}()
 
-func close(c *hub.Client) {
-	c.Conn.Close()
-	hub.GlobalHub.Unregister(c)
+	for {
+		select {
+		case msg, ok := <-c.Send:
+			if !ok {
+				// Hub closed the channel.
+				return
+			}
+			if err := c.Conn.WriteJSON(msg); err != nil {
+				return
+			}
+
+		case <-ticker.C:
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
+	}
 }
