@@ -34,7 +34,6 @@ func StartServer() {
 	protected.Use(services.AuthMiddleware)
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET")
 	protected.HandleFunc("/ws", cmd.WsHandler).Methods("GET")
-	protected.HandleFunc("/history", cmd.HistoryHandler).Methods("GET")
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
