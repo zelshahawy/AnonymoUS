@@ -7,10 +7,15 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zelshahawy/Anonymous_backend/cmd"
+	"github.com/zelshahawy/Anonymous_backend/config"
 	"github.com/zelshahawy/Anonymous_backend/services"
 )
 
 func StartServer() {
+	config.LoadConfig()
+	config.InitDBClients()
+	defer config.DisconnectDB()
+
 	router := mux.NewRouter()
 
 	// Start the server
@@ -29,6 +34,7 @@ func StartServer() {
 	protected.Use(services.AuthMiddleware)
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET")
 	protected.HandleFunc("/ws", cmd.WsHandler).Methods("GET")
+	protected.HandleFunc("/history", cmd.HistoryHandler).Methods("GET")
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)

@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/zelshahawy/Anonymous_backend/services"
@@ -44,29 +46,67 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	hub.GlobalHub.Register(client)
 
-	// 4) start pumps
-	go writePump(client)
-	readPump(client)
+	ctx := r.Context()
 
-	// 5) close connection
+	go writePump(client)
+	readPump(ctx, client)
+
 	defer close(client)
 }
 
-func readPump(c *hub.Client) {
+// change readPump to accept a context
+func readPump(ctx context.Context, c *hub.Client) {
 	defer func() {
 		hub.GlobalHub.Unregister(c)
 		c.Conn.Close()
 	}()
+
 	for {
 		var msg hub.Message
 		if err := c.Conn.ReadJSON(&msg); err != nil {
 			break
 		}
-		// tag the sender
-		msg.From = c.UserID
-		msg.Messageid = hub.GenerateMessageID()
-		// route it
-		hub.GlobalHub.Send(msg.To, &msg)
+
+		switch msg.Type {
+		case "history":
+			// client is asking for history with msg.To
+			history, err := services.LoadRecentMessages(ctx, c.UserID, msg.To, 50)
+			if err != nil {
+				log.Printf("error loading history: %v", err)
+				continue
+			}
+			// send each historical message back over the socket
+			for _, m := range history {
+				c.Conn.WriteJSON(hub.Message{
+					Type:      "history",
+					Messageid: m.MsgID,
+					From:      m.From,
+					To:        m.To,
+					Body:      m.Body,
+				})
+			}
+
+		case "chat":
+			// a real-time chat message
+			msg.From = c.UserID
+			msg.Messageid = hub.GenerateMessageID()
+
+			// persist it
+			if err := services.SaveMessage(ctx, &services.MessageDoc{
+				MsgID: msg.Messageid,
+				From:  msg.From,
+				To:    msg.To,
+				Body:  msg.Body,
+			}); err != nil {
+				log.Printf("failed to save message %s: %v", msg.Messageid, err)
+			}
+
+			// route to the recipient
+			hub.GlobalHub.Send(msg.To, &msg)
+
+		default:
+			log.Printf("unknown message type: %q", msg.Type)
+		}
 	}
 }
 

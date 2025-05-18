@@ -24,7 +24,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		// parse & validate JWT
 		claims := &jwt.StandardClaims{}
-		token, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (any, error) {
 			// ensure token is signed with HMAC
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
