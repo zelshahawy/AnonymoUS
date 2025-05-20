@@ -13,6 +13,23 @@ export default async function ChatLayout({ children }: Props) {
 	if (!token) {
 		redirect(LOGINURL);
 	}
-	// otherwise render the chat UI
+	let res;
+	try {
+		res = await fetch('http://localhost:8081/heartbeat', {
+			method: 'GET',
+			cache: 'no-store',
+			headers: {
+				'Cookie': `auth_token=${token}`
+			},
+		});
+	} catch (error) {
+		console.error('Error fetching heartbeat:', error);
+		redirect(LOGINURL);
+	}
+
+	if (!res || !res.ok) {
+		return redirect(LOGINURL);
+	}
+
 	return <>{children}</>;
 }
