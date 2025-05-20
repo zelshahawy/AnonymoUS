@@ -8,13 +8,16 @@ export default function LoginPage() {
 	const [error, setError] = useState('');
 	const router = useRouter();
 
+	const LOGINURL = process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8081/login';
+	if (!LOGINURL) throw new Error('LOGINURL is not defined');
+
 	const handleLogin = async (e: FormEvent) => {
 		e.preventDefault();
 		setError('');
 		try {
-			const res = await fetch('/login', {
+			const res = await fetch(LOGINURL, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 'Content-Type': 'application/json', },
 				credentials: 'include',
 				body: JSON.stringify({ username, password }),
 			});

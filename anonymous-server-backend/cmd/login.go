@@ -13,6 +13,7 @@ import (
 // LoginHandler handles the login request, parses either JSON or form data,
 // validates it, and returns a JWT token.
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("LoginHandler called")
 	w.Header().Set("Content-Type", "application/json")
 	ct := r.Header.Get("Content-Type")
 
@@ -67,4 +68,5 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "logged in",
 	})
+	fmt.Println("Login successful, token set in cookie")
 }

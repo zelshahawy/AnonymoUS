@@ -20,6 +20,9 @@ export default function ChatPage() {
 	const [input, setInput] = useState('');
 	const endRef = useRef<HTMLDivElement>(null);
 
+	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8081/ws';
+	const HEARTBEAT = process.env.NEXT_PUBLIC_HEARTBEAT_URL || 'http://localhost:8081/heartbeat';
+
 	// Redirect if not authenticated
 	useEffect(() => {
 		fetch('/heartbeat', { credentials: 'include' })
@@ -30,7 +33,7 @@ export default function ChatPage() {
 	// Open WS when peer set
 	useEffect(() => {
 		if (!peer) return;
-		const ws = new WebSocket(`ws://${window.location.host}/ws`);
+		const ws = new WebSocket(WEBSOCKETURL);
 		ws.onopen = () => ws.send(JSON.stringify({ type: 'history', to: peer }));
 		ws.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
