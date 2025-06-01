@@ -11,7 +11,7 @@ export default async function ChatPage() {
 		headers: { 'Cookie': `auth_token=${cookieStore.get('auth_token')?.value}` }
 	})
 	if (!res.ok) return redirect('/login')
-
-	// all good -> render the client UI
-	return <ChatClient />
+	const payload = await res.json();
+	const user = payload.sub as string;
+	return <ChatClient user={user} />;
 }
