@@ -113,7 +113,7 @@ export default function ChatClient({ user }: { user: string }) {
 			{/* Sidebar: Contacts */}
 			<div className="w-60 bg-white border-r flex flex-col">
 				<div className="flex items-center justify-between px-4 py-3 border-b">
-					<span className="font-semibold text-lg">Contacts</span>
+					<span className="font-semibold text-lg text-black">Contacts</span>
 					<button
 						onClick={addContact}
 						className="text-white bg-blue-600 hover:bg-blue-700 rounded-full w-6 h-6 flex items-center justify-center"
@@ -130,7 +130,7 @@ export default function ChatClient({ user }: { user: string }) {
 						<div
 							key={idx}
 							onClick={() => setPeer(c)}
-							className={`px-4 py-3 cursor-pointer hover:bg-gray-100 ${peer === c ? 'bg-gray-200 font-semibold' : ''
+							className={`px-4 py-3 cursor-pointer hover:bg-gray-100 text-gray-600 ${peer === c ? 'bg-gray-200 font-semibold' : ''
 								}`}
 						>
 							{c}
@@ -159,7 +159,7 @@ export default function ChatClient({ user }: { user: string }) {
 					) : (
 						messages.map((m, i) => (
 							<div
-								key={m.messageid + '_' + i}
+								key={m.messageid}
 								className={`mb-2 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'
 									}`}
 							>
@@ -186,12 +186,12 @@ export default function ChatClient({ user }: { user: string }) {
 						onChange={e => setInput(e.target.value)}
 						onKeyDown={handleKeyDown}
 						disabled={!peer}
-						className="flex-1 border border-gray-300 rounded px-3 py-2 mr-2 focus:outline-none focus:ring"
+						className="flex-1 border border-black rounded px-3 py-2 mr-2 focus:outline-none focus:ring text-black"
 					/>
 					<button
 						onClick={sendMessage}
 						disabled={!peer}
-						className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+						className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
 					>
 						Send
 					</button>
