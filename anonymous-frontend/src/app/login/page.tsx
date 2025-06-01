@@ -22,7 +22,7 @@ export default function LoginPage() {
 				body: JSON.stringify({ username, password }),
 			});
 			if (!res.ok) throw new Error('Invalid credentials');
-			router.push('/chat?user=' + encodeURIComponent(username));
+			router.push('/chat');
 		} catch (err: unknown) {
 			setError((err as Error).message || 'Login failed');
 		}
@@ -38,7 +38,7 @@ export default function LoginPage() {
 					<input
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
-						className="w-full px-3 py-2 border rounded"
+						className="w-full px-3 py-2 border rounded text-gray-500"
 						placeholder="testuser1"
 					/>
 				</div>
@@ -48,7 +48,7 @@ export default function LoginPage() {
 						type="password"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
-						className="w-full px-3 py-2 border rounded"
+						className="w-full px-3 py-2 border rounded text-gray-500"
 						placeholder="testpassword1"
 					/>
 				</div>
