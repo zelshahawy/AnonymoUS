@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/zelshahawy/Anonymous_backend/services"
 )
+
+var RecaptchaSecret = "6LcF4FErAAAAAKKLzXxhX5_oE5EEuooLBxJqS0Q5"
 
 // LoginHandler handles the login request, parses either JSON or form data,
 // validates it, and returns a JWT token.
@@ -33,14 +36,38 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		loginRequest.Username = r.PostFormValue("username")
 		loginRequest.Password = r.PostFormValue("password")
+		loginRequest.RecaptchaToken = r.PostFormValue("recaptcha_token")
 
 	default:
 		http.Error(w, "Unsupported Content-Type", http.StatusUnsupportedMediaType)
 		return
 	}
 
+	// fmt.Printf("recaptchaToken=%q\n", loginRequest.RecaptchaToken)
+
 	if err := loginRequest.Validate(); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid request: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	resp, err := http.PostForm(
+		"https://www.google.com/recaptcha/api/siteverify",
+		url.Values{
+			"secret":   {RecaptchaSecret},
+			"response": {loginRequest.RecaptchaToken},
+		},
+	)
+	if err != nil {
+		http.Error(w, "recaptcha verification failed", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	var rc struct {
+		Success bool `json:"success"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&rc); err != nil || !rc.Success {
+		http.Error(w, "recaptcha validation failed", http.StatusBadRequest)
 		return
 	}
 

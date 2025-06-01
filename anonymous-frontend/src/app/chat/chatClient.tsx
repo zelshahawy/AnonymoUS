@@ -53,16 +53,14 @@ export default function ChatClient({ user }: { user: string }) {
 
 	// 3) Whenever peer changes, open a new WebSocket and request history.
 	useEffect(() => {
-		// Close previous socket if any
 		if (socket) {
 			socket.close();
 			setSocket(null);
 		}
-
-		setMessages([]); // clear the message list whenever we pick a new peer
+		setMessages([]);
 
 		if (!peer) {
-			return; // no chat selected
+			return;
 		}
 
 		const ws = new WebSocket(WEBSOCKETURL);
@@ -109,94 +107,103 @@ export default function ChatClient({ user }: { user: string }) {
 	};
 
 	return (
-		<div className="flex h-screen">
-			{/* Sidebar: Contacts */}
-			<div className="w-60 bg-white border-r flex flex-col">
-				<div className="flex items-center justify-between px-4 py-3 border-b">
-					<span className="font-semibold text-lg text-black">Contacts</span>
-					<button
-						onClick={addContact}
-						className="text-white bg-blue-600 hover:bg-blue-700 rounded-full w-6 h-6 flex items-center justify-center"
-						title="Add contact"
-					>
-						+
-					</button>
-				</div>
-				<div className="flex-1 overflow-y-auto">
-					{contacts.length === 0 && (
-						<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
-					)}
-					{contacts.map((c, idx) => (
-						<div
-							key={idx}
-							onClick={() => setPeer(c)}
-							className={`px-4 py-3 cursor-pointer hover:bg-gray-100 text-gray-600 ${peer === c ? 'bg-gray-200 font-semibold' : ''
-								}`}
+		<>
+			<style jsx global>{`
+        .grecaptcha-badge {
+          position: fixed !important;
+          bottom: auto !important;
+					top: 0 !important;
+        }
+      `}</style>
+			<div className="flex h-screen">
+				{/* Sidebar: Contacts */}
+				<div className="w-60 bg-white border-r flex flex-col">
+					<div className="flex items-center justify-between px-4 py-3 border-b">
+						<span className="font-semibold text-lg text-black">Contacts</span>
+						<button
+							onClick={addContact}
+							className="text-white bg-blue-600 hover:bg-blue-700 rounded-full w-6 h-6 flex items-center justify-center"
+							title="Add contact"
 						>
-							{c}
-						</div>
-					))}
-				</div>
-			</div>
-
-			{/* Main Chat Pane */}
-			<div className="flex-1 flex flex-col">
-				{/* Header */}
-				<div className="px-4 py-3 bg-blue-600 text-white">
-					{peer ? (
-						<span>
-							Chatting with <strong>{peer}</strong>
-						</span>
-					) : (
-						<span className="text-gray-200">Select a contact to start chatting</span>
-					)}
-				</div>
-
-				{/* Messages area */}
-				<div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-					{!peer ? (
-						<p className="text-gray-500">No chat selected.</p>
-					) : (
-						messages.map((m, i) => (
+							+
+						</button>
+					</div>
+					<div className="flex-1 overflow-y-auto">
+						{contacts.length === 0 && (
+							<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
+						)}
+						{contacts.map((c, idx) => (
 							<div
-								key={m.messageid}
-								className={`mb-2 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'
+								key={idx}
+								onClick={() => setPeer(c)}
+								className={`px-4 py-3 cursor-pointer hover:bg-gray-100 text-gray-600 ${peer === c ? 'bg-gray-200 font-semibold' : ''
 									}`}
 							>
-								<div
-									className={`px-4 py-2 rounded-lg max-w-xs break-words ${m.from === currentUser
-										? 'bg-blue-500 text-white rounded-br-none'
-										: 'bg-gray-200 text-gray-800 rounded-bl-none'
-										}`}
-								>
-									{m.body}
-								</div>
+								{c}
 							</div>
-						))
-					)}
-					<div ref={endRef} />
+						))}
+					</div>
 				</div>
 
-				{/* Input area */}
-				<div className="p-4 bg-white border-t flex items-center">
-					<input
-						type="text"
-						placeholder="Type a message..."
-						value={input}
-						onChange={e => setInput(e.target.value)}
-						onKeyDown={handleKeyDown}
-						disabled={!peer}
-						className="flex-1 border border-black rounded px-3 py-2 mr-2 focus:outline-none focus:ring text-black"
-					/>
-					<button
-						onClick={sendMessage}
-						disabled={!peer}
-						className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-					>
-						Send
-					</button>
+				{/* Main Chat Pane */}
+				<div className="flex-1 flex flex-col">
+					{/* Header */}
+					<div className="px-4 py-3 bg-blue-600 text-white">
+						{peer ? (
+							<span>
+								Chatting with <strong>{peer}</strong>
+							</span>
+						) : (
+							<span className="text-gray-200">Select a contact to start chatting</span>
+						)}
+					</div>
+
+					{/* Messages area */}
+					<div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+						{!peer ? (
+							<p className="text-gray-500">No chat selected.</p>
+						) : (
+							messages.map((m, i) => (
+								<div
+									key={m.messageid}
+									className={`mb-2 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'
+										}`}
+								>
+									<div
+										className={`px-4 py-2 rounded-lg max-w-xs break-words ${m.from === currentUser
+											? 'bg-blue-500 text-white rounded-br-none'
+											: 'bg-gray-200 text-gray-800 rounded-bl-none'
+											}`}
+									>
+										{m.body}
+									</div>
+								</div>
+							))
+						)}
+						<div ref={endRef} />
+					</div>
+
+					{/* Input area */}
+					<div className="p-4 bg-white border-t flex items-center">
+						<input
+							type="text"
+							placeholder="Type a message..."
+							value={input}
+							onChange={e => setInput(e.target.value)}
+							onKeyDown={handleKeyDown}
+							disabled={!peer}
+							className="flex-1 border border-black rounded px-3 py-2 mr-2 focus:outline-none focus:ring text-black"
+						/>
+						<button
+							onClick={sendMessage}
+							disabled={!peer}
+							className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+						>
+							Send
+						</button>
+					</div>
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }

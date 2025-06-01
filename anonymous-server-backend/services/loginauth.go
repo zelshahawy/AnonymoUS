@@ -9,8 +9,9 @@ import (
 
 // LoginRequest represents the login request payload
 type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username       string `json:"username"`
+	Password       string `json:"password"`
+	RecaptchaToken string `json:"recaptchaToken"`
 }
 
 var SecretKey = []byte("KDSJBASJKBA")
