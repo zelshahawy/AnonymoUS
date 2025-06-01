@@ -1,4 +1,5 @@
 'use client';
+import Herobg from '@/components/herobg';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { FormEvent, useState } from 'react';
@@ -48,6 +49,7 @@ export default function LoginPage() {
 
 	return (
 		<>
+			<Herobg />
 			{/* load reCAPTCHA v3 */}
 			<Script
 				src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`}
@@ -61,7 +63,7 @@ export default function LoginPage() {
         }
       `}</style>
 
-			<div className="min-h-screen flex flex-col items-center justify-center bg-gray-500">
+			<div className="min-h-screen flex flex-col items-center justify-center">
 				<h1 className="text-4xl font-bold mb-6">Log In</h1>
 				<form
 					onSubmit={handleLogin}

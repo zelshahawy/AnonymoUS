@@ -1,0 +1,220 @@
+nav {
+	color: white;
+	--csil-beige: white;
+	--csil-border: #ECEBE4;
+	display: flex;
+	justify-content: stretch;
+	gap: 30px;
+	position: fixed;
+	margin-left: 3rem;
+	margin-right: 3rem;
+	margin-top: 1rem;
+	width: calc(100% - 6rem);
+	height: 2.2rem;
+	-webkit-font-smoothing: antialiased;
+	z-index: 5;
+}
+
+.navOption {
+	display: flex;
+	gap: 7.5px;
+}
+
+@keyframes disappearUp {
+	0% {
+		opacity: 1;
+		/* Fully visible */
+		transform: translateY(0);
+		/* Start at original position */
+	}
+
+	100% {
+		opacity: 0;
+		/* Fully transparent */
+		transform: translateY(-100px);
+		/* Move up 100px */
+	}
+}
+
+@keyframes dropDown {
+	0% {
+		opacity: 0;
+		/* Fully visible */
+		transform: translateY(-100px);
+		/* Start at original position */
+	}
+
+	100% {
+		opacity: 1;
+		/* Fully transparent */
+		transform: translateY(0);
+		/* Move up 100px */
+	}
+}
+
+.hidden {
+	animation: disappearUp 0.2s forwards
+}
+
+.active {
+	animation: dropDown 0.2s forwards
+}
+
+nav>ul {
+	display: flex;
+	list-style: none;
+	padding: 0;
+	gap: 3rem;
+	flex-grow: 1;
+	margin: 0;
+	padding: 10px 20px;
+	position: relative;
+	border-radius: 0 5px 5px 0;
+	border-left: none;
+	border-width: 1px;
+
+}
+
+nav>ul:before {
+	content: "";
+	position: absolute;
+	top: -1px;
+	/* Offset to align with the main border */
+	bottom: -1px;
+	/* Offset to align with the main border */
+	left: -13px;
+	/* Offset to align with the main border */
+	width: 20%;
+	/* Adjust to control the skewed portion */
+	background-color: inherit;
+	transform: skewX(-20deg);
+	/* Skew only the right side */
+	transform-origin: left;
+	border: 1px solid var(--csil-border);
+	/* Create the illusion of the border */
+	border-right: none;
+	z-index: -1;
+	border-radius: 5px 0 0 10px;
+
+}
+
+.circle {
+	width: 8.5px;
+	height: 8.5px;
+	border-radius: 50%;
+	background-color: transparent;
+	border-color: black;
+	border-width: .5px;
+	border-style: groove;
+}
+
+.on {
+	background-color: rgb(255, 151, 241);
+}
+
+nav>ul>* {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	transition: opacity .1s ease-in-out;
+}
+
+.dropDown:before {
+	content: "";
+	position: absolute;
+	top: -50px;
+	/* Adjust this value to cover the gap */
+	left: 0;
+	height: 50px;
+	/* Adjust this value to cover the gap */
+	width: 100%;
+}
+
+.dropDown {
+	position: absolute;
+	background-color: var(--csil-beige);
+	border-radius: 5px;
+	border-width: 2px;
+	border-color: var(--csil-border);
+	border-style: solid;
+	top: 40px;
+	padding: 20px;
+	padding-top: 5px;
+	min-height: 100px;
+	animation: pop-out .25s ease-in-out;
+	transition: opacity .25s ease-in-out;
+	transform-origin: top;
+}
+
+.disappear {
+	animation: pop-away .25s ease-in-out;
+}
+
+@keyframes pop-out {
+	from {
+		transform: translateY(-25px);
+		opacity: 0;
+	}
+
+	to {
+		transform: translateY(0px);
+		opacity: 1;
+	}
+}
+
+@keyframes pop-away {
+	from {
+		transform: translateY(0px);
+		opacity: 1;
+	}
+
+	to {
+		transform: translateY(-25px);
+		opacity: 0;
+	}
+}
+
+nav>* {
+	border-color: var(--csil-border);
+	border-style: solid;
+	background-color: var(--csil-beige);
+	color: black;
+}
+
+.fullLogo {
+	display: inline-flex;
+	flex-direction: row;
+	justify-content: space-between;
+	font-family: var(--font-monoRoman);
+	font-weight: 600;
+	border-right-style: none;
+	gap: .5rem;
+	width: min-content;
+	align-items: center;
+	position: relative;
+	padding: .25rem 1rem;
+	border-radius: 5px 0 0 5px;
+	border-width: 1px;
+}
+
+.fullLogo:before {
+	content: "";
+	position: absolute;
+	border-radius: 0 10px 5px 0;
+	top: -1px;
+	/* Offset to align with the main border */
+	bottom: -1px;
+	/* Offset to align with the main border */
+	right: -13px;
+	/* Offset to align with the main border */
+	width: 70%;
+	/* Adjust to control the skewed portion */
+	background-color: inherit;
+	transform: skewX(-20deg);
+	/* Skew only the right side */
+	transform-origin: left;
+	border: 1px solid var(--csil-border);
+	/* Create the illusion of the border */
+	border-left: none;
+	z-index: -1;
+}

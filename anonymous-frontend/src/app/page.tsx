@@ -1,20 +1,36 @@
 'use client';
+import Image from 'next/image';
 import Link from 'next/link';
+import Navbar from '../components/Navbar';
+import Herobg from '../components/herobg';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-500">
-      <h1 className="text-4xl font-bold mb-6">Secure Chat App</h1>
-      <p className="mb-8 text-center max-w-lg">
-        This is a simple real-time chat application built with Go, WebSockets, and MongoDB.
-        Features secure, peer-to-peer messaging with history persistence.
-      </p>
-      <Link
-        href="/login"
-        className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Log In to Chat
-      </Link>
-    </div>
+    <>
+      <Herobg />
+      <Navbar />
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <Image
+          src="/chat-logo.png"
+          alt="AnonymousME Logo"
+          width={200}
+          height={200}
+          className="mb-10 rounded-full shadow-lg border-amber-500"
+        />
+        <h1 className="text-5xl font-extrabold text-white mb-4">
+          Welcome to AnonymousME
+        </h1>
+        <p className="mb-8 text-center max-w-xl text-gray-200">
+          AnonymousME is a privacy-focused, real-time peer-to-peer chat app. No central
+          storage of your messages, full end-to-end encryption, and seamless user experience.
+        </p>
+        <Link
+          href="/login"
+          className="px-8 py-3 bg-blue-600 text-white text-lg font-medium rounded hover:bg-blue-700 transition"
+        >
+          Log In to Chat
+        </Link>
+      </div>
+    </>
   );
 }
