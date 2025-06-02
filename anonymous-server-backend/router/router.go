@@ -30,6 +30,7 @@ func StartServer() {
 
 	// Define public routes
 	router.HandleFunc("/login", cmd.LoginHandler).Methods("POST", "OPTIONS")
+	router.HandleFunc("/logout", cmd.LogoutHandler).Methods("GET", "OPTIONS")
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	// Protected routes
@@ -37,7 +38,6 @@ func StartServer() {
 	protected.Use(services.AuthMiddleware)
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/ws", cmd.WsHandler).Methods("GET")
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8081"

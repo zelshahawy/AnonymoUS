@@ -42,15 +42,17 @@ const NavItem: FC<{
 
 export default function Navbar() {
 	const navigation: { [key: string]: [string, string][] } = {
-		"About Ziad": [
+		"About Me": [
 			["Github", "/About"],
 			["Linkedin", "/History"],
 		],
-		Login: [
+		"Login/Logout": [
 			["login", "/login"],
 			["logout", "/logout"]
 		],
-		Inquiries: [["Inquiries", "/Contact"]],
+		"Chat": [["Chat", "/chat"]],
+
+		"Inquiries": [["Email", "/Contact"]],
 	};
 	const [show, setShow] = useState(true);
 	const [pulledOut, setPulledOut] = useState(
@@ -106,7 +108,7 @@ export default function Navbar() {
 					height={17}
 					priority
 				/>{" "}
-				Chat
+				Home
 			</Link>
 
 			<ul>

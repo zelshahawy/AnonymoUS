@@ -18,11 +18,11 @@ export default function LandingPage() {
           className="mb-10 rounded-full shadow-lg border-amber-500"
         />
         <h1 className="text-5xl font-extrabold text-white mb-4">
-          Welcome to AnonymousME
+          AnonymoUS
         </h1>
         <p className="mb-8 text-center max-w-xl text-gray-200">
-          AnonymousME is a privacy-focused, real-time peer-to-peer chat app. No central
-          storage of your messages, full end-to-end encryption, and seamless user experience.
+          AnonymoUS is a privacy-focused, real-time peer-to-peer chat app that aims for collaborative trading and stock market monitoring.
+          No central storage of your messages, full end-to-end encryption, and seamless user experience.
         </p>
         <Link
           href="/login"

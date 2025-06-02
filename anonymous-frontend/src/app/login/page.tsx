@@ -1,5 +1,6 @@
 'use client';
 import Herobg from '@/components/herobg';
+import NavBar from '@/components/Navbar';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { FormEvent, useState } from 'react';
@@ -50,6 +51,7 @@ export default function LoginPage() {
 	return (
 		<>
 			<Herobg />
+			<NavBar />
 			{/* load reCAPTCHA v3 */}
 			<Script
 				src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`}
