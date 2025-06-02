@@ -1,6 +1,7 @@
 // src/app/chat/chatClient.tsx
 'use client';
 
+import Link from 'next/link';
 import { KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 interface Message {
@@ -148,14 +149,29 @@ export default function ChatClient({ user }: { user: string }) {
 				{/* Main Chat Pane */}
 				<div className="flex-1 flex flex-col">
 					{/* Header */}
-					<div className="px-4 py-3 bg-blue-600 text-white">
-						{peer ? (
-							<span>
-								Chatting with <strong>{peer}</strong>
-							</span>
-						) : (
-							<span className="text-gray-200">Select a contact to start chatting</span>
-						)}
+					{/* Header with Home & Logout */}
+					<div className="px-4 py-3 bg-blue-600 text-white flex justify-between items-center">
+						<div>
+							{peer ? (
+								<span>
+									Chatting with <strong>{peer}</strong>
+								</span>
+							) : (
+								<span className="text-gray-200">Select a contact to start chatting</span>
+							)}
+						</div>
+						<div className="flex space-x-2">
+							<Link href="/">
+								<button className="px-3 py-1 bg-white text-blue-600 rounded hover:bg-gray-100">
+									Home
+								</button>
+							</Link>
+							<Link href="/logout">
+								<button className="px-3 py-1 bg-white text-blue-600 rounded hover:bg-gray-100">
+									Logout
+								</button>
+							</Link>
+						</div>
 					</div>
 
 					{/* Messages area */}

@@ -97,32 +97,34 @@ export default function Navbar() {
 	}, [lastScrollY]);
 
 	return (
-		<nav className={firstDrop ? "" : show == false ? "hidden" : "active"}>
-			<Link href="/" className={"fullLogo"}>
-				{" "}
-				<Image
-					src="/chat-logo.png"
-					alt="Next.js Logo"
-					className={"logoImage"}
-					width={17}
-					height={17}
-					priority
-				/>{" "}
+		<nav className={firstDrop ? "" : show ? "active" : "hidden"}>
+			<Link href="/" className="fullLogo">
+				<Image src="/chat-logo.png" alt="Home" width={17} height={17} />
 				Home
 			</Link>
 
 			<ul>
-				{Object.entries(navigation).map(([key, value], i) => (
-					<NavItem
-						name={key}
-						key={i}
-						pulledOut={pulledOut[i]}
-						options={value}
-						handler={handlePullout}
-						closer={handleCloser}
-						pos={i}
-					/>
-				))}
+				{Object.entries(navigation).map(([key, options], i) =>
+					options.length === 1 ? (
+						// single-item menus become a simple link
+						<li key={key}>
+							<Link href={options[0][1]} className="navOption">
+								{options[0][0]}
+							</Link>
+						</li>
+					) : (
+						// multi-item menus keep the dropdown behavior
+						<NavItem
+							name={key}
+							key={key}
+							pulledOut={pulledOut[i]}
+							options={options}
+							handler={handlePullout}
+							closer={handleCloser}
+							pos={i}
+						/>
+					)
+				)}
 			</ul>
 		</nav>
 	);
