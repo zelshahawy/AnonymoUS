@@ -112,7 +112,7 @@ func readPump(ctx context.Context, c *hub.Client) {
 				log.Printf("failed to save message %s: %v", msg.Messageid, err)
 			}
 
-			c.Send <- &msg // Send to the client. Might opt to have this in frontend instead.
+			hub.GlobalHub.Send(msg.From, &msg)
 			hub.GlobalHub.Send(msg.To, &msg)
 
 		default:
