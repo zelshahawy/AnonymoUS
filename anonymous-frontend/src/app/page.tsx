@@ -11,11 +11,11 @@ export default function LandingPage() {
       <Navbar />
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
         <Image
-          src="/chat-logo.png"
+          src="/chat-logo-1.png"
           alt="AnonymousME Logo"
-          width={200}
-          height={200}
-          className="mb-10 rounded-full shadow-lg border-amber-500"
+          width={300}
+          height={300}
+          className="mb-10 rounded-full shadow-lg border-amber-500 bg-blue-100 hover:bg-blue-200 transition duration-300 transform hover:scale-105"
         />
         <h1 className="text-5xl font-extrabold text-white mb-4">
           AnonymoUS

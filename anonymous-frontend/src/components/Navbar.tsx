@@ -46,9 +46,9 @@ export default function Navbar() {
 			["Github", "/About"],
 			["Linkedin", "/History"],
 		],
-		"Login/Logout": [
-			["login", "/login"],
-			["logout", "/logout"]
+		"Login / Logout": [
+			["Login", "/login"],
+			["Logout", "/logout"]
 		],
 		"Chat": [["Chat", "/chat"]],
 
