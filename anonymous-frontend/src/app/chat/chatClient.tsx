@@ -54,10 +54,6 @@ export default function ChatClient({ user }: { user: string }) {
 
 	// 3) Whenever peer changes, open a new WebSocket and request history.
 	useEffect(() => {
-		if (socket) {
-			socket.close();
-			setSocket(null);
-		}
 		setMessages([]);
 
 		if (!peer) {
@@ -70,8 +66,18 @@ export default function ChatClient({ user }: { user: string }) {
 			ws.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
 		};
 		ws.onmessage = (e: MessageEvent) => {
+
 			const msg: Message = JSON.parse(e.data);
-			setMessages(prev => [...prev, msg]);
+			const isChatBetweenThem =
+				(msg.from === currentUser && msg.to === peer)
+				|| (msg.from === peer && msg.to === currentUser);
+
+
+			if (msg.type === 'history') {
+				setMessages(prev => [...prev, msg]);
+			} else if (msg.type === 'chat' && isChatBetweenThem) {
+				setMessages(prev => [...prev, msg]);
+			}
 		};
 		ws.onclose = () => {
 			console.log('WebSocket closed');
