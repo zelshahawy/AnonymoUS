@@ -8,6 +8,17 @@ import { FormEvent, useState } from 'react';
 const SITE_KEY =
 	process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
 	'6LcF4FErAAAAAIcuSOwJ8Bh605MYV2rE7Nij1tzK';
+declare global {
+	interface Window {
+		grecaptcha: {
+			ready: (cb: () => void) => void;
+			execute: (
+				siteKey: string,
+				options: { action: string }
+			) => Promise<string>;
+		};
+	}
+}
 
 export default function LoginPage() {
 	const [username, setUsername] = useState('');
@@ -23,10 +34,10 @@ export default function LoginPage() {
 		setError('');
 
 		// wait until the grecaptcha library is loaded & ready
-		await new Promise((res) => (window as any).grecaptcha.ready(res));
+		await new Promise<void>((resolve) => window.grecaptcha.ready(resolve));
 
 		try {
-			const token = await (window as any).grecaptcha.execute(SITE_KEY, {
+			const token = await window.grecaptcha.execute(SITE_KEY, {
 				action: 'login',
 			});
 
@@ -43,8 +54,12 @@ export default function LoginPage() {
 			}
 
 			router.push('/chat');
-		} catch (err: any) {
-			setError(err.message);
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				setError(err.message);
+			} else {
+				setError(String(err));
+			}
 		}
 	}
 
@@ -58,12 +73,12 @@ export default function LoginPage() {
 				strategy="afterInteractive"
 			/>
 			<style jsx global>{`
-        .grecaptcha-badge {
-          position: fixed !important;
-          bottom: auto !important;
-          top: 0px !important;
-        }
-      `}</style>
+			.grecaptcha-badge {
+			  position: fixed !important;
+			  bottom: auto !important;
+			  top: 0px !important;
+			}
+		  `}</style>
 
 			<div className="min-h-screen flex flex-col items-center justify-center">
 				<h1 className="text-4xl font-bold mb-6">Log In</h1>

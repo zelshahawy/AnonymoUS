@@ -1,7 +1,11 @@
-import { jwtVerify } from 'jose';
+import { jwtVerify, type JWTPayload } from 'jose';
 import { cookies } from 'next/headers';
 import ChatClient from './chatClient';
 import RedirectLogin from './RedirectLogin';
+
+interface TokenPayload extends JWTPayload {
+	sub: string
+}
 
 export default async function ChatPage() {
 	// grab token from cookie
@@ -11,7 +15,7 @@ export default async function ChatPage() {
 	if (!token) return <RedirectLogin />
 
 	// verify & decode JWT
-	let payload: any
+	let payload: TokenPayload
 	try {
 		; ({ payload } = await jwtVerify(
 			token,

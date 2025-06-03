@@ -6,7 +6,7 @@ import "./Navbar.css";
 
 const NavItem: FC<{
 	name: string;
-	pulledOut: Boolean;
+	pulledOut: boolean;
 	options: [string, string][];
 	handler: (i: number) => void;
 	closer: () => void;
