@@ -49,8 +49,14 @@ export default function LoginPage() {
 			});
 
 			if (!res.ok) {
-				const err = await res.json();
-				throw new Error(err.message || 'Invalid credentials');
+				let message = 'Invalid credentials'
+				try {
+					const errBody = await res.json()
+					if (errBody && typeof errBody.message === 'string') {
+						message = errBody.message
+					}
+				} catch {/* ignore malformed JSON */ }
+				throw new Error(message)
 			}
 
 			router.push('/chat');
