@@ -90,6 +90,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    response.Token,
+		Path:     "/",                                        // or whatever path your app uses
+		Domain:   "anonymous-production-5c21.up.railway.app", // e.g. "api.yoursite.com" or omit to default to the server’s host
+		Expires:  time.Now().Add(24 * time.Hour),             // time.Time
+		HttpOnly: true,
+		Secure:   true, // requires HTTPS
+		SameSite: http.SameSiteNoneMode,
+	})
 
 	// now send status code and JSON body
 	w.WriteHeader(http.StatusNoContent)
