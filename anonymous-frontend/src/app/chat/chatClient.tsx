@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
 interface Message {
 	type: 'chat' | 'history';
@@ -12,12 +12,34 @@ interface Message {
 	messageid: string;
 }
 
+type Action =
+	| { type: 'history'; payload: Message }
+	| { type: 'chat'; payload: Message };
+
+function messagesReducer(state: Message[], action: Action): Message[] {
+	switch (action.type) {
+		case 'history':
+			// just append—history comes in chronological order
+			return [...state, action.payload]
+
+		case 'chat':
+			// guard against duplicates if server might echo twice
+			if (state.some(m => m.messageid === action.payload.messageid)) {
+				return state
+			}
+			return [...state, action.payload]
+
+		default:
+			return state
+	}
+}
+
 export default function ChatClient({ user, token }: { user: string, token: string }) {
 	const currentUser = user
 	const [contacts, setContacts] = useState<string[]>([]);
 	const [peer, setPeer] = useState<string>('');
 	const [socket, setSocket] = useState<WebSocket | null>(null);
-	const [messages, setMessages] = useState<Message[]>([]);
+	const [messages, dispatch] = useReducer(messagesReducer, [] as Message[]);
 	const [input, setInput] = useState<string>('');
 	const endRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +76,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 	// 3) Whenever peer changes, open a new WebSocket and request history.
 	useEffect(() => {
-		setMessages([]);
 		console.log("ChatClient useEffect—peer =", peer, "token =", token);
 		console.log("WS URL base:", WEBSOCKETURL);
 
@@ -70,16 +91,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		ws.onmessage = (e: MessageEvent) => {
 
 			const msg: Message = JSON.parse(e.data);
-			const isChatBetweenThem =
-				(msg.from === currentUser && msg.to === peer)
-				|| (msg.from === peer && msg.to === currentUser);
-
-
-			if (msg.type === 'history') {
-				setMessages(prev => [...prev, msg]);
-			} else if (msg.type === 'chat' && isChatBetweenThem) {
-				setMessages(prev => [...prev, msg]);
-			}
+			dispatch({ type: msg.type, payload: msg } as Action);
 		};
 		ws.onclose = () => {
 			console.log('WebSocket closed');

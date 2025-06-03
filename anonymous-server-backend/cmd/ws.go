@@ -21,7 +21,9 @@ const (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return strings.HasPrefix(r.Header.Get("Origin"), "https://anonymous-sigma-three.vercel.app")
+		origin := r.Header.Get("Origin")
+		return strings.HasPrefix(origin, "http://localhost:3000") ||
+			strings.HasPrefix(origin, "https://anonymous-sigma-three.vercel.app")
 	},
 }
 
@@ -112,7 +114,7 @@ func readPump(ctx context.Context, c *hub.Client) {
 				log.Printf("failed to save message %s: %v", msg.Messageid, err)
 			}
 
-			c.Send <- &msg // Send to the client. Might opt to have this in frontend instead.
+			hub.GlobalHub.Send(msg.From, &msg)
 			hub.GlobalHub.Send(msg.To, &msg)
 
 		default:
