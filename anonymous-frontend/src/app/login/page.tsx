@@ -50,8 +50,8 @@ export default function LoginPage() {
 
 	return (
 		<>
-			<Herobg />
 			<NavBar />
+			<Herobg />
 			{/* load reCAPTCHA v3 */}
 			<Script
 				src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`}
@@ -67,6 +67,9 @@ export default function LoginPage() {
 
 			<div className="min-h-screen flex flex-col items-center justify-center">
 				<h1 className="text-4xl font-bold mb-6">Log In</h1>
+				<p className="mb-4 text-white text-sm text-center max-w-md">
+					You can use <strong>testuser1 / testpassword1</strong> or <strong>testuser2 / testpassword2</strong> to try out the app. All chat data is lost when you log out and these accounts are shared—do not enter any sensitive information. Please remember to log out responsibly.
+				</p>
 				<form
 					onSubmit={handleLogin}
 					className="w-full max-w-sm bg-white p-6 rounded-lg shadow"

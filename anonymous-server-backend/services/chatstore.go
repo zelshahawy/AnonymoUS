@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/zelshahawy/Anonymous_backend/config"
@@ -23,6 +24,22 @@ func SaveMessage(ctx context.Context, doc *MessageDoc) error {
 	doc.Timestamp = time.Now()
 	_, err := config.DBClients.MessagesCollection.InsertOne(ctx, doc)
 	return err
+}
+
+func DeleteUserData(username string) error {
+	// remove all messages sent or received by this user
+	filter := bson.M{"$or": []bson.M{
+		{"from": username},
+		{"to": username},
+	}}
+
+	res, err := config.DBClients.MessagesCollection.DeleteMany(context.Background(), filter)
+	if err != nil {
+		log.Printf("failed to delete messages for user %s: %v", username, err)
+		return err
+	}
+	log.Printf("deleted %d messages for user %s", res.DeletedCount, username)
+	return nil
 }
 
 // LoadRecentMessages fetches the last 'limit' messages exchanged between userA and userB.
