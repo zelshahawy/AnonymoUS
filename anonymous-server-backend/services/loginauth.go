@@ -51,6 +51,27 @@ func (lr *LoginRequest) Validate() error {
 	return nil
 }
 
+func ValidateToken(tokenString string) (*jwt.StandardClaims, error) {
+	// Parse the token
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
+		// Ensure the token is signed with HMAC
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return SecretKey, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %v", err)
+	}
+
+	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid token")
+}
+
 // ProcessLogin processes the login request and generates a JWT token
 func ProcessLogin(loginRequest LoginRequest) (LoginResponse, error) {
 	// Validate the login request

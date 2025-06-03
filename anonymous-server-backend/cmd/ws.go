@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -19,18 +20,27 @@ const (
 )
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true }, // tighten in prod
+	CheckOrigin: func(r *http.Request) bool {
+		return strings.HasPrefix(r.Header.Get("Origin"), "https://anonymous-sigma-three.vercel.app")
+	},
 }
 
 // WsHandler handles WebSocket requests from clients.
 func WsHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := services.UserIDFromContext(r.Context())
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "Unauthorized: missing token", http.StatusUnauthorized)
 		return
 	}
+	claim, err := services.ValidateToken(token)
+	if err != nil {
+		log.Printf("invalid token: %v", err)
+		http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)
+		return
+	}
+	userID := claim.Subject
 	if userID == "" {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		http.Error(w, "Unauthorized: empty user ID", http.StatusUnauthorized)
 		return
 	}
 

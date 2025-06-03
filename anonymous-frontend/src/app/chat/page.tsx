@@ -28,5 +28,5 @@ export default async function ChatPage() {
 
 	const user = payload.sub as string
 	console.log('ChatPage user:', user)
-	return <ChatClient user={user} />
+	return <ChatClient user={user} token={token} />
 }
