@@ -92,9 +92,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// now send status code and JSON body
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "logged in",
-	})
-	fmt.Println("Login successful, token set in cookie")
+	w.WriteHeader(http.StatusNoContent)
+
 }
