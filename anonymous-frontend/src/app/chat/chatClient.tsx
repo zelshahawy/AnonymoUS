@@ -55,6 +55,8 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	// 3) Whenever peer changes, open a new WebSocket and request history.
 	useEffect(() => {
 		setMessages([]);
+		console.log("ChatClient useEffect—peer =", peer, "token =", token);
+		console.log("WS URL base:", WEBSOCKETURL);
 
 		if (!peer) {
 			return;
