@@ -85,14 +85,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    response.Token,
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
-	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_token",
-		Value:    response.Token,
 		Path:     "/",                                        // or whatever path your app uses
 		Domain:   "anonymous-production-5c21.up.railway.app", // e.g. "api.yoursite.com" or omit to default to the server’s host
 		Expires:  time.Now().Add(24 * time.Hour),             // time.Time
