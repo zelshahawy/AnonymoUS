@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/zelshahawy/Anonymous_backend/services"
 )
 
-var RecaptchaSecret = "6LcF4FErAAAAAKKLzXxhX5_oE5EEuooLBxJqS0Q5"
+var RecaptchaSecret = os.Getenv("RECAPTCHA_SECRET")
 
 // LoginHandler handles the login request, parses either JSON or form data,
 // validates it, and returns a JWT token.

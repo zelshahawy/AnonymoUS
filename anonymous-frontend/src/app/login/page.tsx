@@ -37,35 +37,42 @@ export default function LoginPage() {
 		await new Promise<void>((resolve) => window.grecaptcha.ready(resolve));
 
 		try {
-			const token = await window.grecaptcha.execute(SITE_KEY, {
-				action: 'login',
-			});
+			// 1) wait until grecaptcha is actually loaded (or fail)
+			await new Promise<void>((resolve, reject) => {
+				if (window.grecaptcha && typeof window.grecaptcha.ready === 'function') {
+					window.grecaptcha.ready(resolve)
+				} else {
+					reject(new Error('reCAPTCHA failed to load'))
+				}
+			})
 
+			// 2) execute reCAPTCHA
+			const token = await window.grecaptcha.execute(SITE_KEY, { action: 'login' })
+
+			// 3) hit the backend
 			const res = await fetch(LOGINURL, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',
 				body: JSON.stringify({ username, password, recaptchaToken: token }),
-			});
+			})
 
+			// 4) if bad status, try to parse JSON error, else fallback
 			if (!res.ok) {
-				let message = 'Invalid credentials'
-				try {
-					const errBody = await res.json()
-					if (errBody && typeof errBody.message === 'string') {
-						message = errBody.message
-					}
-				} catch {/* ignore malformed JSON */ }
-				throw new Error(message)
+				let msg = 'Invalid credentials'
+				const errBody = await res.json().catch(() => null)
+				if (errBody && typeof errBody.message === 'string') {
+					msg = errBody.message
+				}
+				throw new Error(msg)
 			}
 
-			router.push('/chat');
+			// 5) success → navigate
+			router.push('/chat')
 		} catch (err: unknown) {
-			if (err instanceof Error) {
-				setError(err.message);
-			} else {
-				setError(String(err));
-			}
+			console.error('login failed:', err)
+			const msg = err instanceof Error ? err.message : String(err)
+			setError(msg || 'Login failed')
 		}
 	}
 
