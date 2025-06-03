@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -14,7 +15,8 @@ type LoginRequest struct {
 	RecaptchaToken string `json:"recaptchaToken"`
 }
 
-var SecretKey = []byte("KDSJBASJKBA")
+var secretInput = os.Getenv("SECRET_KEY")
+var SecretKey = []byte(secretInput)
 
 // generateJWTToken generates a JWT token for the given user
 func generateJWTToken(user User) (string, error) {
