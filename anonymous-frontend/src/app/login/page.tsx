@@ -29,6 +29,9 @@ export default function LoginPage() {
 	const LOGINURL =
 		process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8081/login';
 
+	const CHATURL =
+		process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:8081/chat';
+
 	async function handleLogin(e: FormEvent) {
 		e.preventDefault();
 		setError('');

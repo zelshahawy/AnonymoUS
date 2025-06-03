@@ -172,7 +172,7 @@ export default function ChatClient({ user }: { user: string }) {
 						{!peer ? (
 							<p className="text-gray-500">No chat selected.</p>
 						) : (
-							messages.map((m, _) => (
+							messages.map((m) => (
 								<div
 									key={m.messageid}
 									className={`mb-2 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'
