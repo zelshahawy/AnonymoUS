@@ -1,14 +1,14 @@
 import { jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import ChatClient from './chatClient';
+import RedirectLogin from './RedirectLogin';
 
 export default async function ChatPage() {
 	// grab token from cookie
 	const cookieStore = await cookies();
 	const token = cookieStore.get('auth_token')?.value
 	const JWT_SECRET = process.env.JWT_SECRET || "KDSJBASJKBA"
-	if (!token) return redirect('/login')
+	if (!token) return <RedirectLogin />
 
 	// verify & decode JWT
 	let payload: any
@@ -19,7 +19,7 @@ export default async function ChatPage() {
 			{ algorithms: ['HS256'] }
 		))
 	} catch {
-		return redirect('/login')
+		return <RedirectLogin />
 	}
 
 	const user = payload.sub as string
