@@ -19,7 +19,7 @@ func StartServer() {
 
 	// Set up CORS middleware
 	corsMiddleware := handlers.CORS(
-		handlers.AllowedOrigins([]string{"https://anonymous-sigma-three.vercel.app"}),
+		handlers.AllowedOrigins([]string{"http://localhost:3000", "https://anonymous-sigma-three.vercel.app"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
 		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 		handlers.AllowCredentials(),

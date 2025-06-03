@@ -7,7 +7,7 @@ import { FormEvent, useState } from 'react';
 
 const SITE_KEY =
 	process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
-	'6Ld39FMrAAAAALKNDA3zB70pCoVC8rjqWs3iN8VF';
+	'6LehuFQrAAAAAEQGx8PoQtlHtzZe1Gp66B1djg5y';
 declare global {
 	interface Window {
 		grecaptcha: {
