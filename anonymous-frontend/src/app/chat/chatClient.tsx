@@ -129,6 +129,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 	return (
 		<>
+			<style jsx global>{`
+			.grecaptcha-badge {
+				display: none !important;
+			}
+		  `}</style>
 			<div className="flex h-screen">
 				{/* Sidebar: Contacts */}
 				<div className="w-60 bg-white border-r flex flex-col">
