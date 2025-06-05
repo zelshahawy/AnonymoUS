@@ -218,3 +218,31 @@ nav>* {
 	border-left: none;
 	z-index: -1;
 }
+
+@media (max-width: 768px) {
+	.menu-toggle {
+		display: block;
+	}
+
+	/* hide desktop menu */
+	nav>ul {
+		display: none;
+		flex-direction: column;
+		width: 100%;
+	}
+
+	/* show when open */
+	nav.mobile-open>ul.open {
+		display: flex;
+	}
+
+	nav>ul.open li {
+		padding: 0.75rem 1rem;
+		border-top: 1px solid #eee;
+	}
+
+	/* submenus can stay hidden or expand on click */
+	.dropDown {
+		display: none;
+	}
+}
