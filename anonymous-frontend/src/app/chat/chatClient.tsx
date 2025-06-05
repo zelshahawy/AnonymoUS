@@ -152,7 +152,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 							<div>
 								<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
 								<p className="p-4 text-gray-500 text-sm">
-									Don't have anyone to message? Add <strong>testuser1</strong> or <strong>testuser2</strong> as a contact, then log in there to see and send messages.
+									Don&apos;t have anyone to message? Add <strong>testuser1</strong> or <strong>testuser2</strong> as a contact, then log in there to see and send messages.
 									Be careful though because all data for the testusers are deleted when you log out. You should use incognito mode for testing.
 								</p>
 							</div>
