@@ -14,7 +14,8 @@ interface Message {
 
 type Action =
 	| { type: 'history'; payload: Message }
-	| { type: 'chat'; payload: Message };
+	| { type: 'chat'; payload: Message }
+	| { type: 'clear' };
 
 function messagesReducer(state: Message[], action: Action): Message[] {
 	switch (action.type) {
@@ -28,6 +29,9 @@ function messagesReducer(state: Message[], action: Action): Message[] {
 				return state
 			}
 			return [...state, action.payload]
+
+		case 'clear':
+			return [];
 
 		default:
 			return state
@@ -82,14 +86,13 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		if (!peer) {
 			return;
 		}
-
+		dispatch({ type: 'clear' });
 		const ws = new WebSocket(`${WEBSOCKETURL}?token=${encodeURIComponent(token)}`);
 		ws.onopen = () => {
-			// Ask server for history between currentUser and peer
+			console.log('WebSocket connected');
 			ws.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
 		};
 		ws.onmessage = (e: MessageEvent) => {
-
 			const msg: Message = JSON.parse(e.data);
 			dispatch({ type: msg.type, payload: msg } as Action);
 		};
