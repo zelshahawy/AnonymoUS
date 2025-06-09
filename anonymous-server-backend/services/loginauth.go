@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/oklog/ulid/v2"
 )
 
 // LoginRequest represents the login request payload
+
 type LoginRequest struct {
 	Username       string `json:"username"`
 	Password       string `json:"password"`
@@ -20,11 +22,14 @@ var SecretKey = []byte(secretInput)
 
 // generateJWTToken generates a JWT token for the given user
 func generateJWTToken(user User) (string, error) {
+	jti := ulid.Make().String()
 	claims := jwt.StandardClaims{
+		Id:        jti,
 		Subject:   user.Username,
 		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 		IssuedAt:  time.Now().Unix(),
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(SecretKey)
 	if err != nil {
@@ -68,6 +73,9 @@ func ValidateToken(tokenString string) (*jwt.StandardClaims, error) {
 	}
 
 	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
+		if IsJTIRevoked(claims.Id) {
+			return nil, fmt.Errorf("token revoked")
+		}
 		return claims, nil
 	}
 
