@@ -19,7 +19,7 @@ var secretInput = os.Getenv("SECRET_KEY")
 var SecretKey = []byte(secretInput)
 
 // generateJWTToken generates a JWT token for the given user
-func generateJWTToken(user User) (string, error) {
+func GenerateJWTToken(user User) (string, error) {
 	claims := jwt.StandardClaims{
 		Subject:   user.Username,
 		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
@@ -38,8 +38,12 @@ type LoginResponse struct {
 }
 
 type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	PasswordHash string `bson:"passwordHash,omitempty"` // only for local users
+	GoogleID     string `bson:"googleID,omitempty"`     // only for Google users
+	Email        string `bson:"email,omitempty"`
+	Active       bool   `bson:"active"`
 }
 
 // Validate validates the login request
@@ -95,7 +99,7 @@ func ProcessLogin(loginRequest LoginRequest) (LoginResponse, error) {
 	}
 
 	// Generate JWT token
-	token, err := generateJWTToken(user)
+	token, err := GenerateJWTToken(user)
 	if err != nil {
 		return LoginResponse{}, err
 	}
