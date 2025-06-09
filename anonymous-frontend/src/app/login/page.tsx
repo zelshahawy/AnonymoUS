@@ -129,7 +129,7 @@ export default function LoginPage() {
 						Log In
 					</button>
 					<div className="mt-4">
-						<button
+						<button type='button'
 							onClick={() => window.location.href = 'http://localhost:8081/auth/google/login'}
 							className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
 						>
