@@ -60,7 +60,7 @@ func (lr *LoginRequest) Validate() error {
 
 func ValidateToken(tokenString string) (*jwt.StandardClaims, error) {
 	// Parse the token
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(t *jwt.Token) (any, error) {
 		// Ensure the token is signed with HMAC
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
