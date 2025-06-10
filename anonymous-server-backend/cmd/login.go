@@ -18,7 +18,6 @@ var RecaptchaSecret = os.Getenv("RECAPTCHA_SECRET")
 // validates it, and returns a JWT token.
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("LoginHandler called")
-	w.Header().Set("Content-Type", "application/json")
 	ct := r.Header.Get("Content-Type")
 
 	var loginRequest services.LoginRequest
@@ -59,8 +58,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		http.Error(w, "recaptcha verification failed", http.StatusInternalServerError)
-		return
+		// http.Error(w, "recaptcha verification failed", http.StatusInternalServerError)
+		fmt.Printf("Error verifying recaptcha: %v\n", err)
 	}
 	defer resp.Body.Close()
 
@@ -68,18 +67,17 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Success bool `json:"success"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&rc); err != nil || !rc.Success {
-		http.Error(w, "recaptcha validation failed", http.StatusBadRequest)
-		return
+		//http.Error(w, "recaptcha validation failed", http.StatusBadRequest)
+		//return
+		fmt.Printf("Recaptcha validation failed: %v\n", err)
 	}
 
 	response, err := services.ProcessLogin(loginRequest)
 	if err != nil {
+		fmt.Printf("Error processing login: %v\n", err)
 		http.Error(w, fmt.Sprintf("Error processing login: %v", err), http.StatusInternalServerError)
 		return
 	}
-
-	// set the JSON content-type
-	w.Header().Set("Content-Type", "application/json")
 
 	// set the cookie before sending headers
 	http.SetCookie(w, &http.Cookie{
@@ -88,11 +86,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",                            // or whatever path your app uses
 		Expires:  time.Now().Add(24 * time.Hour), // time.Time
 		HttpOnly: true,
-		Secure:   true, // requires HTTPS
-		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	})
-
-	// now send status code and JSON body
-	w.WriteHeader(http.StatusNoContent)
-
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		fmt.Printf("Error encoding login response: %v\n", err)
+	}
+	fmt.Println("LoginHandler completed successfully")
 }
