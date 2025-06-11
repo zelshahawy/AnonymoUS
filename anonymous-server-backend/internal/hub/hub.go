@@ -22,32 +22,46 @@ type Client struct {
 
 type Hub struct {
 	// map of userID → client
-	clients map[string]*Client
+	clients map[string][]*Client
 	mu      sync.RWMutex
 }
 
 var GlobalHub = &Hub{
-	clients: make(map[string]*Client),
+	clients: make(map[string][]*Client),
 }
 
 func (h *Hub) Register(c *Client) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.clients[c.UserID] = c
+	h.clients[c.UserID] = append(h.clients[c.UserID], c)
 }
 
 func (h *Hub) Unregister(c *Client) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	delete(h.clients, c.UserID)
+	conns := h.clients[c.UserID]
+	// filter out this client
+	for i, cli := range conns {
+		if cli == c {
+			conns = append(conns[:i], conns[i+1:]...)
+			break
+		}
+	}
+	if len(conns) == 0 {
+		delete(h.clients, c.UserID)
+	} else {
+		h.clients[c.UserID] = conns
+	}
 	close(c.Send)
 }
 
 func (h *Hub) Send(to string, msg *Message) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-	if c, ok := h.clients[to]; ok {
-		c.Send <- msg
+	for _, c := range h.clients[to] {
+		// avoid blocking the loop if one channel is full
+		select {
+		case c.Send <- msg:
+		default:
+		}
 	}
 }
 

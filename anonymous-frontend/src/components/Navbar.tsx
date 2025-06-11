@@ -43,17 +43,17 @@ const NavItem: FC<{
 export default function Navbar() {
 	const navigation: { [key: string]: [string, string][] } = {
 		"About Me": [
-			["Github", "/About"],
-			["Linkedin", "/History"],
+			["Github", "https://github.com/zelshahawy"],
+			["LinkedIn", "https://www.linkedin.com/in/ziad-elshahawy"],
 		],
 		"Login / Logout": [
 			["Login", "/login"],
-			["Logout", "/logout"]
+			["Logout", "/logout"],
 		],
 		"Chat": [["Chat", "/chat"]],
-
-		"Inquiries": [["Email", "/Contact"]],
-	};
+		"Inquiries": [["Email", "mailto:ziad.a.elshahawy@gmail.com"]],
+	}
+	const [mobileOpen, setMobileOpen] = useState(false)
 	const [show, setShow] = useState(true);
 	const [pulledOut, setPulledOut] = useState(
 		new Array(Object.entries(navigation).length).fill(false)
@@ -96,36 +96,46 @@ export default function Navbar() {
 		};
 	}, [lastScrollY]);
 
+	useEffect(() => {
+		const onResize = () => {
+			if (window.innerWidth > 768) setMobileOpen(false)
+		}
+		window.addEventListener("resize", onResize)
+		return () => window.removeEventListener("resize", onResize)
+	}, [])
+
 	return (
-		<nav className={firstDrop ? "" : show ? "active" : "hidden"}>
+		<nav className={`${firstDrop ? "" : show ? "active" : "hidden"}${mobileOpen ? " mobile-open" : ""}`}>
 			<Link href="/" className="fullLogo">
 				<Image src="/chat-logo.png" alt="Home" width={17} height={17} />
 				Home
 			</Link>
 
-			<ul>
-				{Object.entries(navigation).map(([key, options], i) =>
-					options.length === 1 ? (
-						// single-item menus become a simple link
-						<li key={key}>
-							<Link href={options[0][1]} className="navOption">
-								{options[0][0]}
-							</Link>
-						</li>
-					) : (
-						// multi-item menus keep the dropdown behavior
-						<NavItem
-							name={key}
-							key={key}
-							pulledOut={pulledOut[i]}
-							options={options}
-							handler={handlePullout}
-							closer={handleCloser}
-							pos={i}
-						/>
+			<ul className={mobileOpen ? "open" : ""}>
+				{
+					Object.entries(navigation).map(([key, options], i) =>
+						options.length === 1 ? (
+							// single-item menus become a simple link
+							<li key={key}>
+								<Link href={options[0][1]} className="navOption">
+									{options[0][0]}
+								</Link>
+							</li>
+						) : (
+							// multi-item menus keep the dropdown behavior
+							<NavItem
+								name={key}
+								key={key}
+								pulledOut={pulledOut[i]}
+								options={options}
+								handler={handlePullout}
+								closer={handleCloser}
+								pos={i}
+							/>
+						)
 					)
-				)}
+				}
 			</ul>
-		</nav>
+		</nav >
 	);
 }
