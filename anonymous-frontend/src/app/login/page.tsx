@@ -1,9 +1,12 @@
 'use client';
 import Herobg from '@/components/herobg';
 import NavBar from '@/components/Navbar';
+import { faGoogle } from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { FormEvent, useState } from 'react';
+
 
 const SITE_KEY =
 	process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
@@ -133,7 +136,8 @@ export default function LoginPage() {
 							onClick={() => window.location.href = 'http://localhost:8081/auth/google/login'}
 							className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
 						>
-							Sign in with Google
+							<FontAwesomeIcon icon={faGoogle} className="mr-2" />
+							Regsiter and sign in with Google
 						</button>
 					</div>
 				</form>
