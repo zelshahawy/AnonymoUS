@@ -11,9 +11,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
+	"github.com/oklog/ulid/v2"
 )
 
 // LoginRequest represents the login request payload
+
 type LoginRequest struct {
 	Username       string `json:"username"`
 	Password       string `json:"password"`
@@ -24,12 +26,15 @@ var secretInput = os.Getenv("SECRET_KEY")
 var SecretKey = []byte(secretInput)
 
 // generateJWTToken generates a JWT token for the given user
-func GenerateJWTToken(user User) (string, error) {
+func generateJWTToken(user User) (string, error) {
+	jti := ulid.Make().String()
 	claims := jwt.StandardClaims{
+		Id:        jti,
 		Subject:   user.Username,
 		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 		IssuedAt:  time.Now().Unix(),
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(SecretKey)
 	if err != nil {
@@ -64,7 +69,7 @@ func (lr *LoginRequest) Validate() error {
 
 func ValidateToken(tokenString string) (*jwt.StandardClaims, error) {
 	// Parse the token
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(t *jwt.Token) (any, error) {
 		// Ensure the token is signed with HMAC
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
@@ -77,6 +82,9 @@ func ValidateToken(tokenString string) (*jwt.StandardClaims, error) {
 	}
 
 	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
+		if IsJTIRevoked(claims.Id) {
+			return nil, fmt.Errorf("token revoked")
+		}
 		return claims, nil
 	}
 

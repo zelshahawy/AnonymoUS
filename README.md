@@ -1,4 +1,4 @@
-# AnonymousME
+# AnonymoUS
 # Secure Chat & Trading Platform
 
 A real‐time chat application built with Go and Next.js, featuring:
