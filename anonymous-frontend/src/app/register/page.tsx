@@ -55,7 +55,7 @@ export default function RegisterPage() {
 			if (ct.includes('application/json')) {
 				const payload = await res.json().catch(() => null);
 				if (payload && typeof payload === 'object') {
-					errMsg = (payload as any).error || (payload as any).message || JSON.stringify(payload);
+					errMsg = (payload).error || (payload).message || JSON.stringify(payload);
 				}
 			} else {
 				errMsg = await res.text().catch(() => errMsg);
