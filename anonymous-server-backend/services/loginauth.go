@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/oklog/ulid/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/oklog/ulid/v2"
 )
 
 // LoginRequest represents the login request payload
@@ -26,7 +26,7 @@ var secretInput = os.Getenv("SECRET_KEY")
 var SecretKey = []byte(secretInput)
 
 // generateJWTToken generates a JWT token for the given user
-func generateJWTToken(user User) (string, error) {
+func GenerateJWTToken(user User) (string, error) {
 	jti := ulid.Make().String()
 	claims := jwt.StandardClaims{
 		Id:        jti,

@@ -55,7 +55,7 @@ export default function RegisterPage() {
 			if (ct.includes('application/json')) {
 				const payload = await res.json().catch(() => null);
 				if (payload && typeof payload === 'object') {
-					errMsg = (payload as any).error || (payload as any).message || JSON.stringify(payload);
+					errMsg = (payload).error || (payload).message || JSON.stringify(payload);
 				}
 			} else {
 				errMsg = await res.text().catch(() => errMsg);
@@ -84,7 +84,7 @@ export default function RegisterPage() {
 			<div className="min-h-screen flex flex-col items-center justify-center px-4">
 				<h1 className="text-4xl font-bold mb-6 text-white">Complete Registration</h1>
 				<p className="mb-4 text-white text-center max-w-md text-sm">
-					You're signing up with <strong>{email}</strong>. Choose a username and password
+					You are signing up with <strong>{email}</strong>. Choose a username and password
 					to finish creating your account.
 				</p>
 
