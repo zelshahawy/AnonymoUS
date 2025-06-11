@@ -98,6 +98,9 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		};
 		ws.onclose = () => {
 			console.log('WebSocket closed');
+			if (!peer) {
+				window.location.href = '/home';
+			}
 		};
 		setSocket(ws);
 
