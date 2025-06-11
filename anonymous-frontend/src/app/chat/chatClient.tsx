@@ -46,7 +46,12 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [messages, dispatch] = useReducer(messagesReducer, [] as Message[]);
 	const [input, setInput] = useState<string>('');
 	const endRef = useRef<HTMLDivElement>(null);
+	const [showContacts, setShowContacts] = useState<boolean>(true);
 
+	const handleSelect = (c: string) => {
+		setPeer(c);
+		setShowContacts(false);
+	};
 	// Always open "/ws" so Next.js proxies it on the same origin:
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8081/ws';
 
@@ -98,9 +103,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		};
 		ws.onclose = () => {
 			console.log('WebSocket closed');
-			if (!peer) {
-				window.location.href = '/home';
-			}
 		};
 		setSocket(ws);
 
@@ -136,13 +138,20 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	return (
 		<>
 			<style jsx global>{`
-			.grecaptcha-badge {
-				display: none !important;
-			}
-		  `}</style>
+				.grecaptcha-badge {
+					display: none !important;
+				}
+			`}</style>
+
 			<div className="flex h-screen">
 				{/* Sidebar: Contacts */}
-				<div className="w-60 bg-white border-r flex flex-col">
+				<div
+					className={`
+						${showContacts ? 'block' : 'hidden'}  /* mobile: show when flag is true */
+						sm:block                            /* sm+ always show */
+						w-60 bg-white border-r flex flex-col
+					`}
+				>
 					<div className="flex items-center justify-between px-4 py-3 border-b">
 						<span className="font-semibold text-lg text-black">Contacts</span>
 						<button
@@ -158,15 +167,15 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 							<div>
 								<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
 								<p className="p-4 text-gray-500 text-sm">
-									Don&apos;t have anyone to message? Add <strong>testuser1</strong> or <strong>testuser2</strong> as a contact, then log in there to see and send messages.
-									Be careful though because all data for the testusers are deleted when you log out. You should use incognito mode for testing.
+									Don&apos;t have anyone to message? Add <strong>testuser1</strong> or{' '}
+									<strong>testuser2</strong> as a contact...
 								</p>
 							</div>
 						)}
 						{contacts.map((c, idx) => (
 							<div
 								key={idx}
-								onClick={() => setPeer(c)}
+								onClick={() => handleSelect(c)}
 								className={`px-4 py-3 cursor-pointer hover:bg-gray-100 text-gray-600 ${peer === c ? 'bg-gray-200 font-semibold' : ''
 									}`}
 							>
@@ -177,19 +186,31 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				</div>
 
 				{/* Main Chat Pane */}
-				<div className="flex-1 flex flex-col">
+				<div
+					className={`
+						${showContacts ? 'hidden' : 'flex'}  /* mobile: hide when contacts are shown */
+						sm:flex                             /* sm+ always show */
+						flex-1 flex flex-col
+					`}
+				>
 					{/* Header */}
-					{/* Header with Home & Logout */}
-					<div className="px-4 py-3 bg-blue-600 text-white flex justify-between items-center">
-						<div>
+					<div className="px-4 py-3 bg-blue-600 text-white flex items-center">
+						{/* back‐to‐contacts on mobile */}
+						<button
+							onClick={() => setShowContacts(true)}
+							className="sm:hidden mr-4 text-white"
+						>
+							<strong>←</strong> Contacts
+						</button>
+
+						<div className="flex-1">
 							{peer ? (
-								<span>
-									Chatting with <strong>{peer}</strong>
-								</span>
+								<span>Chatting with <strong>{peer}</strong></span>
 							) : (
 								<span className="text-gray-200">Select a contact to start chatting</span>
 							)}
 						</div>
+
 						<div className="flex space-x-2">
 							<Link href="/">
 								<button className="px-3 py-1 bg-white text-blue-600 rounded hover:bg-gray-100">
@@ -204,7 +225,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						</div>
 					</div>
 
-					{/* Messages area */}
+					{/* Messages */}
 					<div className="flex-1 overflow-y-auto p-4 bg-gray-50">
 						{!peer ? (
 							<p className="text-gray-500">No chat selected.</p>
@@ -229,13 +250,13 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						<div ref={endRef} />
 					</div>
 
-					{/* Input area */}
+					{/* Input */}
 					<div className="p-4 bg-white border-t flex items-center">
 						<input
 							type="text"
 							placeholder="Type a message..."
 							value={input}
-							onChange={e => setInput(e.target.value)}
+							onChange={(e) => setInput(e.target.value)}
 							onKeyDown={handleKeyDown}
 							disabled={!peer}
 							className="flex-1 border border-black rounded px-3 py-2 mr-2 focus:outline-none focus:ring text-black"
