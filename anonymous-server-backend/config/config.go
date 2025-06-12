@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 	"log"
-	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -23,6 +23,7 @@ type Provider interface {
 	GetInt64(key string) int64
 	GetSizeInBytes(key string) uint
 	GetString(key string) string
+	SetDefault(key string, value interface{})
 	GetStringMap(key string) map[string]interface{}
 	GetStringMapString(key string) map[string]string
 	GetStringMapStringSlice(key string) map[string][]string
@@ -48,6 +49,18 @@ func init() {
 	defaultConfig = readViperConfig("ANONYMOUS_BACKEND")
 }
 
+func ValidateRequired(keys ...string) {
+	missing := []string{}
+	for _, key := range keys {
+		if !Config().IsSet(key) || strings.TrimSpace(Config().GetString(key)) == "" {
+			missing = append(missing, key)
+		}
+	}
+	if len(missing) > 0 {
+		log.Fatalf("Missing required config keys: %s", strings.Join(missing, ", "))
+	}
+}
+
 func readViperConfig(appName string) *viper.Viper {
 	v := viper.New()
 	v.SetEnvPrefix(appName)
@@ -57,6 +70,9 @@ func readViperConfig(appName string) *viper.Viper {
 
 	v.SetDefault("json_logs", false)
 	v.SetDefault("loglevel", "debug")
+	v.SetDefault("mongo_uri", "mongodb://localhost:27017")
+	v.SetDefault("mongo_database", "chatapp")
+	v.SetDefault("frontend_url", "http://localhost:3000")
 
 	return v
 }
@@ -81,15 +97,8 @@ var (
 
 // LoadConfig reads required configuration from environment variables.
 func LoadConfig() {
-	Configuration.MongoURI = os.Getenv("MONGO_URI")
-	if Configuration.MongoURI == "" {
-		log.Fatal("MONGO_URI environment variable is required")
-	}
-	// Optionally allow overriding the database name; default to "chatapp".
-	Configuration.Database = os.Getenv("MONGO_DATABASE")
-	if Configuration.Database == "" {
-		Configuration.Database = "chatapp"
-	}
+	Configuration.MongoURI = Config().GetString("mongo_uri")
+	Configuration.Database = Config().GetString("mongo_database")
 }
 
 // InitDBClients establishes the MongoDB connection and initializes collections.

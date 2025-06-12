@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -12,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/zelshahawy/Anonymous_backend/config"
 )
 
 // LoginRequest represents the login request payload
@@ -22,7 +23,7 @@ type LoginRequest struct {
 	RecaptchaToken string `json:"recaptchaToken"`
 }
 
-var secretInput = os.Getenv("SECRET_KEY")
+var secretInput = config.Config().GetString("secret_key")
 var SecretKey = []byte(secretInput)
 
 // generateJWTToken generates a JWT token for the given user

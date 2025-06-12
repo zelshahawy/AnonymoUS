@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 
+	"github.com/zelshahawy/Anonymous_backend/config"
 	"github.com/zelshahawy/Anonymous_backend/services"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -15,8 +15,8 @@ import (
 
 var (
 	googleCfg = &oauth2.Config{
-		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		ClientID:     config.Config().GetString("google_client_id"),
+		ClientSecret: config.Config().GetString("google_client_secret"),
 		RedirectURL:  "http://localhost:8081/auth/google/callback",
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
