@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"log"
-	"os"
 	"time"
 
 	"github.com/spf13/viper"
@@ -23,6 +22,7 @@ type Provider interface {
 	GetInt64(key string) int64
 	GetSizeInBytes(key string) uint
 	GetString(key string) string
+	SetDefault(key string, value interface{})
 	GetStringMap(key string) map[string]interface{}
 	GetStringMapString(key string) map[string]string
 	GetStringMapStringSlice(key string) map[string][]string
@@ -57,6 +57,13 @@ func readViperConfig(appName string) *viper.Viper {
 
 	v.SetDefault("json_logs", false)
 	v.SetDefault("loglevel", "debug")
+	v.SetDefault("mongo_uri", "mongodb://localhost:27017")
+	v.SetDefault("mongo_database", "chatapp")
+	v.SetDefault("frontend_url", "http://localhost:3000")
+	v.SetDefault("recaptcha_secret", "")
+	v.SetDefault("secret_key", "")
+	v.SetDefault("google_client_id", "")
+	v.SetDefault("google_client_secret", "")
 
 	return v
 }
@@ -81,12 +88,12 @@ var (
 
 // LoadConfig reads required configuration from environment variables.
 func LoadConfig() {
-	Configuration.MongoURI = os.Getenv("MONGO_URI")
+	Configuration.MongoURI = Config().GetString("mongo_uri")
 	if Configuration.MongoURI == "" {
 		log.Fatal("MONGO_URI environment variable is required")
 	}
 	// Optionally allow overriding the database name; default to "chatapp".
-	Configuration.Database = os.Getenv("MONGO_DATABASE")
+	Configuration.Database = Config().GetString("mongo_database")
 	if Configuration.Database == "" {
 		Configuration.Database = "chatapp"
 	}

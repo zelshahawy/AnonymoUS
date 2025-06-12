@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/zelshahawy/Anonymous_backend/config"
 	"github.com/zelshahawy/Anonymous_backend/router"
 	"github.com/zelshahawy/Anonymous_backend/version"
 )
@@ -12,6 +13,8 @@ func main() {
 
 	versionFlag := flag.Bool("version", false, "Version")
 	flag.Parse()
+
+	config.LoadConfig()
 
 	if *versionFlag {
 		fmt.Println("Build Date:", version.BuildDate)

@@ -3,7 +3,6 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -45,10 +44,7 @@ func StartServer() {
 	protected := router.NewRoute().Subrouter()
 	protected.Use(services.AuthMiddleware)
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET", "OPTIONS")
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8081"
-	}
+	port := "8081"
 	fmt.Printf("Starting server on port %s...\n", port)
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
