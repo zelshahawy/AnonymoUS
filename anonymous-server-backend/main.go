@@ -14,11 +14,6 @@ func main() {
 	versionFlag := flag.Bool("version", false, "Version")
 	flag.Parse()
 	config.LoadConfig()
-	config.ValidateRequired("mongo_uri",
-		"secret_key",
-		"google_client_id",
-		"google_client_secret",
-		"recaptcha_secret")
 
 	if *versionFlag {
 		fmt.Println("Build Date:", version.BuildDate)
