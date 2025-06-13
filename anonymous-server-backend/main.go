@@ -13,14 +13,6 @@ func main() {
 
 	versionFlag := flag.Bool("version", false, "Version")
 	flag.Parse()
-
-	config.ValidateRequired(
-		"mongo_uri",
-		"secret_key",
-		"google_client_id",
-		"google_client_secret",
-		"recaptcha_secret",
-	)
 	config.LoadConfig()
 
 	if *versionFlag {
