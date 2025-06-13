@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -105,7 +104,6 @@ func LoadConfig() {
 
 // InitDBClients establishes the MongoDB connection and initializes collections.
 func InitDBClients() {
-	fmt.Printf("Viper AllSettings: %+v\n", Config().AllSettings())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
