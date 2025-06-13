@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"honnef.co/go/tools/config"
 )
 
 // Provider defines a set of read-only methods for accessing the application
@@ -103,6 +105,7 @@ func LoadConfig() {
 
 // InitDBClients establishes the MongoDB connection and initializes collections.
 func InitDBClients() {
+	fmt.Printf("Viper AllSettings: %+v\n", config.Config().AllSettings())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -110,12 +113,12 @@ func InitDBClients() {
 	clientOpts := options.Client().ApplyURI(Configuration.MongoURI)
 	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		log.Fatalf("Failed to connect to MongoDB: %v Here is the link %s", err, Configuration.MongoURI)
 	}
 
 	// Ping to verify connection
 	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatalf("Failed to ping MongoDB: %v", err)
+		log.Fatalf("Failed to ping MongoDB: %v Here is the link %s", err, Configuration.MongoURI)
 	}
 
 	// Assign the client and messages collection for use in other services.
