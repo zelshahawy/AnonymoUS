@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -47,18 +46,6 @@ func LoadConfigProvider(appName string) Provider {
 
 func init() {
 	defaultConfig = readViperConfig("ANONYMOUS_BACKEND")
-}
-
-func ValidateRequired(keys ...string) {
-	missing := []string{}
-	for _, key := range keys {
-		if !Config().IsSet(key) || strings.TrimSpace(Config().GetString(key)) == "" {
-			missing = append(missing, key)
-		}
-	}
-	if len(missing) > 0 {
-		log.Fatalf("Missing required config keys: %s", strings.Join(missing, ", "))
-	}
 }
 
 func readViperConfig(appName string) *viper.Viper {
