@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"honnef.co/go/tools/config"
 )
 
 // Provider defines a set of read-only methods for accessing the application
@@ -33,6 +32,7 @@ type Provider interface {
 	GetTime(key string) time.Time
 	InConfig(key string) bool
 	IsSet(key string) bool
+	AllSettings() map[string]interface{}
 }
 
 var defaultConfig *viper.Viper
@@ -105,7 +105,7 @@ func LoadConfig() {
 
 // InitDBClients establishes the MongoDB connection and initializes collections.
 func InitDBClients() {
-	fmt.Printf("Viper AllSettings: %+v\n", config.Config().AllSettings())
+	fmt.Printf("Viper AllSettings: %+v\n", Config().AllSettings())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
