@@ -78,6 +78,15 @@ func ValidateRequired(keys ...string) {
 	}
 }
 
+func PrintEnvironment() {
+	log.Println("Environment Variables:")
+	for _, key := range Config().AllSettings() {
+		if value, ok := key.(string); ok && strings.TrimSpace(value) != "" {
+			log.Printf("%s: %s", key, value)
+		}
+	}
+}
+
 type Clients struct {
 	// MongoClient is the primary MongoDB client used for database operations.
 	MongoClient *mongo.Client

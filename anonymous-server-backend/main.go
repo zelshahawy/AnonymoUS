@@ -21,6 +21,7 @@ func main() {
 		"google_client_secret",
 		"recaptcha_secret",
 	)
+	config.PrintEnvironment()
 
 	if *versionFlag {
 		fmt.Println("Build Date:", version.BuildDate)

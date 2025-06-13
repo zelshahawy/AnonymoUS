@@ -44,7 +44,7 @@ func StartServer() {
 	protected := router.NewRoute().Subrouter()
 	protected.Use(services.AuthMiddleware)
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET", "OPTIONS")
-	port := "8081"
+	port := "8080"
 	fmt.Printf("Starting server on port %s...\n", port)
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
