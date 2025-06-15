@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
 interface Message {
-	type: 'chat' | 'history';
+	type: 'chat' | 'history' | 'bot';
 	from: string;
 	to: string;
 	body: string;
@@ -15,7 +15,9 @@ interface Message {
 type Action =
 	| { type: 'history'; payload: Message }
 	| { type: 'chat'; payload: Message }
-	| { type: 'clear' };
+	| { type: 'clear' }
+	| { type: 'bot'; payload: Message };
+
 
 function messagesReducer(state: Message[], action: Action): Message[] {
 	switch (action.type) {

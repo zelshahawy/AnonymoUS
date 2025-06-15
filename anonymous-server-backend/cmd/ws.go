@@ -115,6 +115,18 @@ func readPump(ctx context.Context, c *hub.Client) {
 			hub.GlobalHub.Send(msg.From, &msg)
 			hub.GlobalHub.Send(msg.To, &msg)
 
+			for _, bot := range services.HandleStockCommand(&msg) {
+				botMsg := hub.Message{
+					Type:      "chat", // or "bot" if you handle that specially
+					Messageid: hub.GenerateMessageID(),
+					From:      bot.From,
+					To:        msg.To,
+					Body:      bot.Body,
+				}
+				hub.GlobalHub.Send(botMsg.From, &botMsg)
+				hub.GlobalHub.Send(botMsg.To, &botMsg)
+			}
+
 		default:
 			log.Printf("unknown message type: %q", msg.Type)
 		}
