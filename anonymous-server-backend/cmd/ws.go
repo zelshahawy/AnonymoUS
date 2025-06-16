@@ -21,7 +21,7 @@ const (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return strings.HasPrefix(r.Header.Get("Origin"), "https://anonymous-sigma-three.vercel.app")
+		return strings.HasPrefix(r.Header.Get("Origin"), "http://localhost:3000")
 	},
 }
 
@@ -46,7 +46,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		http.Error(w, "could not upgrade to websocket", http.StatusInternalServerError)
+		log.Printf("websocket upgrade failed: %v", err)
 		return
 	}
 
@@ -122,6 +122,14 @@ func readPump(ctx context.Context, c *hub.Client) {
 					From:      bot.From,
 					To:        msg.To,
 					Body:      bot.Body,
+				}
+				if err := services.SaveMessage(ctx, &services.MessageDoc{
+					MsgID: botMsg.Messageid,
+					From:  botMsg.From,
+					To:    botMsg.To,
+					Body:  botMsg.Body,
+				}); err != nil {
+					log.Printf("failed to save bot message %s: %v", botMsg.Messageid, err)
 				}
 				hub.GlobalHub.Send(botMsg.From, &botMsg)
 				hub.GlobalHub.Send(botMsg.To, &botMsg)

@@ -11,7 +11,7 @@ export default async function ChatPage() {
 	// grab token from cookie
 	const cookieStore = await cookies();
 	const token = cookieStore.get('auth_token')?.value
-	const JWT_SECRET = process.env.JWT_SECRET || "KDSJBASJKBA"
+	const JWT_SECRET = "KDSJBASJKBA"
 	if (!token) return <RedirectLogin />
 
 	// verify & decode JWT

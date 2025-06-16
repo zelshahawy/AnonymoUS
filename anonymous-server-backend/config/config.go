@@ -62,7 +62,7 @@ func readViperConfig(appName string) *viper.Viper {
 	v.SetDefault("mongo_uri", "mongodb://localhost:27017")
 	v.SetDefault("mongo_database", "chatapp")
 	v.SetDefault("frontend_url", "http://localhost:3000")
-	v.SetDefault("sotck_api", "http://localhost:8000/stocks/")
+	v.SetDefault("stock_api", "http://localhost:5550/api/stocks/")
 
 	return v
 }

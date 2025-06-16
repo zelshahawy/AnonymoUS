@@ -8,9 +8,7 @@ import Script from 'next/script';
 import { FormEvent, useState } from 'react';
 
 
-const SITE_KEY =
-	process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
-	'6Ld39FMrAAAAALKNDA3zB70pCoVC8rjqWs3iN8VF';
+const SITE_KEY = '6Ld39FMrAAAAALKNDA3zB70pCoVC8rjqWs3iN8VF';
 declare global {
 	interface Window {
 		grecaptcha: {
@@ -29,8 +27,7 @@ export default function LoginPage() {
 	const [error, setError] = useState('');
 	const router = useRouter();
 
-	const LOGINURL =
-		process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8081/login';
+	const LOGINURL = 'http://localhost:8080/login';
 
 	async function handleLogin(e: FormEvent) {
 		e.preventDefault();
@@ -133,7 +130,7 @@ export default function LoginPage() {
 					</button>
 					<div className="mt-4">
 						<button type='button'
-							onClick={() => window.location.href = 'http://localhost:8081/auth/google/login'}
+							onClick={() => window.location.href = 'http://localhost:8080/auth/google/login'}
 							className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
 						>
 							<FontAwesomeIcon icon={faGoogle} className="mr-2" />

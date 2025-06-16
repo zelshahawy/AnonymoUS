@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -50,7 +49,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := http.PostForm(
+	/* resp, err := http.PostForm(
 		"https://www.google.com/recaptcha/api/siteverify",
 		url.Values{
 			"secret":   {RecaptchaSecret},
@@ -66,11 +65,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var rc struct {
 		Success bool `json:"success"`
 	}
+
 	if err := json.NewDecoder(resp.Body).Decode(&rc); err != nil || !rc.Success {
 		//http.Error(w, "recaptcha validation failed", http.StatusBadRequest)
 		//return
 		fmt.Printf("Recaptcha validation failed: %v\n", err)
 	}
+	*/
 
 	response, err := services.ProcessLogin(loginRequest)
 	if err != nil {
