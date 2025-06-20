@@ -62,7 +62,8 @@ func readViperConfig(appName string) *viper.Viper {
 	v.SetDefault("mongo_uri", "mongodb://localhost:27017")
 	v.SetDefault("mongo_database", "chatapp")
 	v.SetDefault("frontend_url", "http://localhost:3000")
-
+	v.SetDefault("oauth_state_string", "random_state_string")
+	v.SetDefault("backend_url", "https://localhost:8081")
 	return v
 }
 

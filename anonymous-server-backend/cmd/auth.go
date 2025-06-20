@@ -17,11 +17,11 @@ var (
 	googleCfg = &oauth2.Config{
 		ClientID:     config.Config().GetString("google_client_id"),
 		ClientSecret: config.Config().GetString("google_client_secret"),
-		RedirectURL:  "http://localhost:8081/auth/google/callback",
+		RedirectURL:  config.Config().GetString("backend_url") + "/auth/google/callback",
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
-	oauthStateString = "random" // TODO: generate securely in production
+	oauthStateString = config.Config().GetString("oauth_state_string")
 )
 
 // HandleGoogleLogin redirects the user to Google's OAuth consent page.
