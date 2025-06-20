@@ -29,8 +29,8 @@ export default function LoginPage() {
 	const [error, setError] = useState('');
 	const router = useRouter();
 
-	const LOGINURL =
-		process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8081/login';
+	const LOGINURL = process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8081/login';
+	const REGISTERURL = process.env.NEXT_PUBLIC_REGISTER_URL || 'http://localhost:8081/auth/google/login';
 
 	async function handleLogin(e: FormEvent) {
 		e.preventDefault();
@@ -133,7 +133,7 @@ export default function LoginPage() {
 					</button>
 					<div className="mt-4">
 						<button type='button'
-							onClick={() => router.push('/auth/google/login')}
+							onClick={() => window.location.href = REGISTERURL}
 							className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
 						>
 							<FontAwesomeIcon icon={faGoogle} className="mr-2" />

@@ -11,7 +11,7 @@ module.exports = {
 				source: '/heartbeat',
 				destination: 'http://localhost:8081/heartbeat',
 			},
-			// and if you need it for WS:
+
 			{
 				source: '/ws',
 				destination: 'ws://localhost:8081/ws',
