@@ -127,7 +127,6 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		Name:     "auth_token",
 		Value:    token,
 		Path:     "/",
-		Domain:   ".railway.app", // allow any subdomain to share it
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,                  // required for SameSite=None
