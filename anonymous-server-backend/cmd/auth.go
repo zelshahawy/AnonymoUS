@@ -91,14 +91,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Set HttpOnly session cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_token",
-		Value:    tokenStr,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   false, // set true if using HTTPS
-		SameSite: http.SameSiteLaxMode,
-	})
+	setSessionCookie(w, tokenStr)
 
 	// Redirect to chat UI
 	http.Redirect(w, r, config.Config().GetString("frontend_url")+"/chat", http.StatusTemporaryRedirect)
