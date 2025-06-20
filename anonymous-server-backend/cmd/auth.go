@@ -70,7 +70,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	if err == services.ErrUserNotFound {
 		// New user: redirect to registration page
 		redirectURL := fmt.Sprintf(
-			"http://localhost:3000/register?googleID=%s&email=%s",
+			config.Config().GetString("frontend_url")+"/register?googleID=%s&email=%s",
 			url.QueryEscape(info.ID),
 			url.QueryEscape(info.Email),
 		)
@@ -101,7 +101,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// Redirect to chat UI
-	http.Redirect(w, r, "http://localhost:3000/chat", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, config.Config().GetString("frontend_url")+"/chat", http.StatusTemporaryRedirect)
 }
 
 func HandleExternalRegister(w http.ResponseWriter, r *http.Request) {
