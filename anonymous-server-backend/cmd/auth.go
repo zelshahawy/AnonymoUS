@@ -126,10 +126,11 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    token,
-		Path:     "/",                            // or whatever path your app uses
-		Expires:  time.Now().Add(24 * time.Hour), // time.Time
+		Path:     "/",
+		Domain:   ".railway.app", // allow any subdomain to share it
+		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		Secure:   true,                  // required for SameSite=None
+		SameSite: http.SameSiteNoneMode, // allow cross-site set & send
 	})
 }
