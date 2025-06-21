@@ -94,8 +94,13 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Set HttpOnly session cookie
 	setSessionCookie(w, tokenStr)
 
-	// Redirect to chat UI
-	http.Redirect(w, r, config.Config().GetString("frontend_url")+"/chat", http.StatusTemporaryRedirect)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(struct {
+		Token string `json:"token"`
+	}{
+		Token: tokenStr,
+	})
 }
 
 func HandleExternalRegister(w http.ResponseWriter, r *http.Request) {
@@ -131,5 +136,13 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(struct {
+		Token string `json:"token"`
+	}{
+		Token: token,
 	})
 }
