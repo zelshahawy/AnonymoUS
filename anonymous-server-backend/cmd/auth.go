@@ -94,8 +94,6 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Set HttpOnly session cookie
 	setSessionCookie(w, tokenStr)
 
-	time.Sleep(1 * time.Second) // Optional: delay for UX
-
 	http.Redirect(w, r, config.Config().GetString("frontend_url")+"/chat", http.StatusSeeOther)
 }
 
@@ -131,6 +129,6 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 }
