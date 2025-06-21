@@ -145,6 +145,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				<div className="w-60 bg-white border-r flex flex-col">
 					<div className="flex items-center justify-between px-4 py-3 border-b">
 						<span className="font-semibold text-lg text-black">Contacts</span>
+						<span className="font-semibold text-lg text-black">Your current username is {currentUser} </span>
 						<button
 							onClick={addContact}
 							className="text-white bg-blue-600 hover:bg-blue-700 rounded-full w-6 h-6 flex items-center justify-center"
