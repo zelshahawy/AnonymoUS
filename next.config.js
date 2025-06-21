@@ -16,6 +16,10 @@ module.exports = {
 				source: '/ws',
 				destination: 'ws://localhost:8081/ws',
 			},
+			{
+				source: '/auth/google/callback',
+				destination: 'https://anonymous-production-5c21.up.railway.app/auth/google/callback'
+			}
 		]
 	},
 }
