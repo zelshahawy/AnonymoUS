@@ -18,7 +18,7 @@ var (
 	googleCfg = &oauth2.Config{
 		ClientID:     config.Config().GetString("google_client_id"),
 		ClientSecret: config.Config().GetString("google_client_secret"),
-		RedirectURL:  config.Config().GetString("front") + "/auth/google/callback",
+		RedirectURL:  config.Config().GetString("frontend_url") + "/auth/google/callback",
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
