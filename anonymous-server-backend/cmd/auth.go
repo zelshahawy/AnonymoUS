@@ -18,7 +18,7 @@ var (
 	googleCfg = &oauth2.Config{
 		ClientID:     config.Config().GetString("google_client_id"),
 		ClientSecret: config.Config().GetString("google_client_secret"),
-		RedirectURL:  config.Config().GetString("backend_url") + "/auth/google/callback",
+		RedirectURL:  config.Config().GetString("front") + "/auth/google/callback",
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
@@ -71,7 +71,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	if err == services.ErrUserNotFound {
 		// New user: redirect to registration page
 		redirectURL := fmt.Sprintf(
-			config.Config().GetString("frontend_url")+"/register?googleID=%s&email=%s",
+			config.Config().GetString("frontend_url")+"/auth/google/callback",
 			url.QueryEscape(info.ID),
 			url.QueryEscape(info.Email),
 		)
@@ -93,14 +93,6 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	// Set HttpOnly session cookie
 	setSessionCookie(w, tokenStr)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(struct {
-		Token string `json:"token"`
-	}{
-		Token: tokenStr,
-	})
 
 	http.Redirect(w, r, config.Config().GetString("frontend_url")+"/chat", http.StatusSeeOther)
 }
