@@ -37,6 +37,8 @@ export default function RegisterClient() {
 			}
 		);
 
+
+
 		if (!res.ok) {
 			let errMsg = 'Registration failed';
 			const ct = res.headers.get('content-type') || '';

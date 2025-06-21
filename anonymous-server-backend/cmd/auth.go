@@ -137,12 +137,4 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 	})
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(struct {
-		Token string `json:"token"`
-	}{
-		Token: token,
-	})
 }
