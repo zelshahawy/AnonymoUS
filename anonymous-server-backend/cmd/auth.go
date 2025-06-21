@@ -101,6 +101,8 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}{
 		Token: tokenStr,
 	})
+
+	http.Redirect(w, r, config.Config().GetString("frontend_url")+"/chat", http.StatusSeeOther)
 }
 
 func HandleExternalRegister(w http.ResponseWriter, r *http.Request) {
