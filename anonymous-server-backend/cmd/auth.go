@@ -129,7 +129,7 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		Path:     "/",
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
-		Secure:   true,                  // required for SameSite=None
-		SameSite: http.SameSiteNoneMode, // allow cross-site set & send
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	})
 }
