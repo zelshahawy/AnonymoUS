@@ -144,7 +144,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				{/* Sidebar: Contacts */}
 				<div className="w-60 bg-white border-r flex flex-col">
 					<div className="flex items-center justify-between px-4 py-3 border-b">
-						<span className="font-semibold text-sm text-black">Your username is {currentUser} </span> <br />
 						<span className="font-semibold text-lg text-black">Contacts</span>
 						<button
 							onClick={addContact}
@@ -155,6 +154,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						</button>
 					</div>
 					<div className="flex-1 overflow-y-auto">
+						<p className=" text-sm text-black">Your username is {currentUser} </p>
 						{contacts.length === 0 && (
 							<div>
 								<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
