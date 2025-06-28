@@ -4,8 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
+)
+
+var (
+	mu          sync.RWMutex
+	revokedJTIs = make(map[string]time.Time)
 )
 
 type contextKey string
@@ -47,4 +54,29 @@ func AuthMiddleware(next http.Handler) http.Handler {
 func UserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value(userIDKey).(string)
 	return userID, ok
+}
+
+// RevokeJTI marks a JWT ID as revoked until its expiration time.
+func RevokeJTI(jti string, exp time.Time) {
+	mu.Lock()
+	revokedJTIs[jti] = exp
+	mu.Unlock()
+}
+
+// IsJTIRevoked reports true if the JTI has been revoked.
+// It also auto-cleans any entries that have expired.
+func IsJTIRevoked(jti string) bool {
+	mu.RLock()
+	exp, ok := revokedJTIs[jti]
+	mu.RUnlock()
+	if !ok {
+		return false
+	}
+	if time.Now().After(exp) {
+		mu.Lock()
+		delete(revokedJTIs, jti)
+		mu.Unlock()
+		return false
+	}
+	return true
 }

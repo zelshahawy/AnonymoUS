@@ -11,8 +11,7 @@ export default function LogoutPage() {
 
 		// 2) navigate the browser to your Go logout endpoint
 		//    this will clear the HttpOnly cookie and issue its own redirect
-		const logoutURL =
-			process.env.NEXT_PUBLIC_LOGOUT_URL || 'http://localhost:8081/logout';
+		const logoutURL = 'http://localhost:8080/logout';
 		window.location.href = logoutURL;
 	}, []);
 

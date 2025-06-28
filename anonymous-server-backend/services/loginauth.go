@@ -1,30 +1,41 @@
 package services
 
 import (
+	"context"
 	"fmt"
-	"os"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/oklog/ulid/v2"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/zelshahawy/Anonymous_backend/config"
 )
 
 // LoginRequest represents the login request payload
+
 type LoginRequest struct {
 	Username       string `json:"username"`
 	Password       string `json:"password"`
 	RecaptchaToken string `json:"recaptchaToken"`
 }
 
-var secretInput = os.Getenv("SECRET_KEY")
+var secretInput = config.Config().GetString("secret_key")
 var SecretKey = []byte(secretInput)
 
 // generateJWTToken generates a JWT token for the given user
-func generateJWTToken(user User) (string, error) {
+func GenerateJWTToken(user User) (string, error) {
+	jti := ulid.Make().String()
 	claims := jwt.StandardClaims{
+		Id:        jti,
 		Subject:   user.Username,
 		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 		IssuedAt:  time.Now().Unix(),
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(SecretKey)
 	if err != nil {
@@ -38,8 +49,12 @@ type LoginResponse struct {
 }
 
 type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	PasswordHash string `bson:"passwordHash,omitempty"` // only for local users
+	GoogleID     string `bson:"googleID,omitempty"`     // only for Google users
+	Email        string `bson:"email,omitempty"`
+	Active       bool   `bson:"active"`
 }
 
 // Validate validates the login request
@@ -55,7 +70,7 @@ func (lr *LoginRequest) Validate() error {
 
 func ValidateToken(tokenString string) (*jwt.StandardClaims, error) {
 	// Parse the token
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(t *jwt.Token) (any, error) {
 		// Ensure the token is signed with HMAC
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
@@ -68,39 +83,64 @@ func ValidateToken(tokenString string) (*jwt.StandardClaims, error) {
 	}
 
 	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
+		if IsJTIRevoked(claims.Id) {
+			return nil, fmt.Errorf("token revoked")
+		}
 		return claims, nil
 	}
 
 	return nil, fmt.Errorf("invalid token")
 }
 
-// ProcessLogin processes the login request and generates a JWT token
-func ProcessLogin(loginRequest LoginRequest) (LoginResponse, error) {
-	// Validate the login request
-
-	if err := loginRequest.Validate(); err != nil {
+// ProcessLogin looks up the user, checks bcrypt, and returns a JWT.
+func ProcessLogin(req LoginRequest) (LoginResponse, error) {
+	// 1) Basic validation
+	if err := req.Validate(); err != nil {
+		fmt.Println("Invalid login request:", err)
 		return LoginResponse{}, err
 	}
+	req.Username = strings.TrimSpace(req.Username)
+	req.Password = strings.TrimSpace(req.Password)
+	fmt.Printf("ProcessLogin → incoming username=%q password=%q\n", req.Username, req.Password)
 
-	// Simulate user authentication (replace with actual authentication logic)
-	user := User{
-		Username: loginRequest.Username,
-		Password: loginRequest.Password,
+	ctx := context.Background()
+	// 2) Fetch user record from Mongo
+	userDoc, err := FindUserByUsername(ctx, req.Username)
+	if err == ErrUserNotFound {
+		fmt.Println("User not found:", req.Username)
+		return LoginResponse{}, fmt.Errorf("invalid credentials")
+	} else if err != nil {
+		fmt.Println("Error finding user:", err)
+		return LoginResponse{}, err
+	}
+	fmt.Println("Found user:", userDoc.Username)
+	fmt.Println("passwordHash:", userDoc.PasswordHash)
+	// 3) Compare password hash
+	if bcrypt.CompareHashAndPassword(
+		[]byte(userDoc.PasswordHash),
+		[]byte(req.Password),
+	) != nil {
+		return LoginResponse{}, fmt.Errorf("invalid credentials")
 	}
 
-	if user.Username != "testuser1" || user.Password != "testpassword1" {
-		if user.Username != "testuser2" || user.Password != "testpassword2" {
-			return LoginResponse{}, fmt.Errorf("user is not active")
-		}
-	}
-
-	// Generate JWT token
-	token, err := generateJWTToken(user)
+	// 4) Generate JWT
+	svcUser := User{Username: userDoc.Username}
+	token, err := GenerateJWTToken(svcUser)
 	if err != nil {
 		return LoginResponse{}, err
 	}
 
-	// fmt.Println("Generated JWT Token:", token)
 	return LoginResponse{Token: token}, nil
+}
 
+// services/user.go
+
+func FindUserByUsername(ctx context.Context, username string) (*UserDoc, error) {
+	col := usersCollection()
+	var user UserDoc
+	err := col.FindOne(ctx, bson.M{"username": username}).Decode(&user)
+	if err == mongo.ErrNoDocuments {
+		return nil, ErrUserNotFound
+	}
+	return &user, err
 }

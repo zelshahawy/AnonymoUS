@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 	"log"
-	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -23,6 +23,7 @@ type Provider interface {
 	GetInt64(key string) int64
 	GetSizeInBytes(key string) uint
 	GetString(key string) string
+	SetDefault(key string, value interface{})
 	GetStringMap(key string) map[string]interface{}
 	GetStringMapString(key string) map[string]string
 	GetStringMapStringSlice(key string) map[string][]string
@@ -30,6 +31,7 @@ type Provider interface {
 	GetTime(key string) time.Time
 	InConfig(key string) bool
 	IsSet(key string) bool
+	AllSettings() map[string]interface{}
 }
 
 var defaultConfig *viper.Viper
@@ -57,8 +59,33 @@ func readViperConfig(appName string) *viper.Viper {
 
 	v.SetDefault("json_logs", false)
 	v.SetDefault("loglevel", "debug")
+	v.SetDefault("mongo_uri", "mongodb://localhost:27017")
+	v.SetDefault("mongo_database", "chatapp")
+	v.SetDefault("frontend_url", "http://localhost:3000")
+	v.SetDefault("stock_api", "http://localhost:5550/api/stocks/")
 
 	return v
+}
+
+func ValidateRequired(keys ...string) {
+	missing := []string{}
+	for _, key := range keys {
+		if !Config().IsSet(key) || strings.TrimSpace(Config().GetString(key)) == "" {
+			missing = append(missing, key)
+		}
+	}
+	if len(missing) > 0 {
+		log.Fatalf("Missing required config keys: %s", strings.Join(missing, ", "))
+	}
+}
+
+func PrintEnvironment() {
+	log.Println("Environment Variables:")
+	for _, key := range Config().AllSettings() {
+		if value, ok := key.(string); ok && strings.TrimSpace(value) != "" {
+			log.Printf("%s: %s", key, value)
+		}
+	}
 }
 
 type Clients struct {
@@ -81,15 +108,8 @@ var (
 
 // LoadConfig reads required configuration from environment variables.
 func LoadConfig() {
-	Configuration.MongoURI = os.Getenv("MONGO_URI")
-	if Configuration.MongoURI == "" {
-		log.Fatal("MONGO_URI environment variable is required")
-	}
-	// Optionally allow overriding the database name; default to "chatapp".
-	Configuration.Database = os.Getenv("MONGO_DATABASE")
-	if Configuration.Database == "" {
-		Configuration.Database = "chatapp"
-	}
+	Configuration.MongoURI = Config().GetString("mongo_uri")
+	Configuration.Database = Config().GetString("mongo_database")
 }
 
 // InitDBClients establishes the MongoDB connection and initializes collections.
@@ -101,12 +121,12 @@ func InitDBClients() {
 	clientOpts := options.Client().ApplyURI(Configuration.MongoURI)
 	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		log.Fatalf("Failed to connect to MongoDB: %v Here is the link %s", err, Configuration.MongoURI)
 	}
 
 	// Ping to verify connection
 	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatalf("Failed to ping MongoDB: %v", err)
+		log.Fatalf("Failed to ping MongoDB: %v Here is the link %s", err, Configuration.MongoURI)
 	}
 
 	// Assign the client and messages collection for use in other services.

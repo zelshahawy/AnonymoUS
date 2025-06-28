@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
 interface Message {
-	type: 'chat' | 'history';
+	type: 'chat' | 'history' | 'bot';
 	from: string;
 	to: string;
 	body: string;
@@ -14,7 +14,10 @@ interface Message {
 
 type Action =
 	| { type: 'history'; payload: Message }
-	| { type: 'chat'; payload: Message };
+	| { type: 'chat'; payload: Message }
+	| { type: 'clear' }
+	| { type: 'bot'; payload: Message };
+
 
 function messagesReducer(state: Message[], action: Action): Message[] {
 	switch (action.type) {
@@ -28,6 +31,9 @@ function messagesReducer(state: Message[], action: Action): Message[] {
 				return state
 			}
 			return [...state, action.payload]
+
+		case 'clear':
+			return [];
 
 		default:
 			return state
@@ -44,7 +50,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const endRef = useRef<HTMLDivElement>(null);
 
 	// Always open "/ws" so Next.js proxies it on the same origin:
-	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8081/ws';
+	const WEBSOCKETURL = 'ws://localhost:8080/ws';
 
 	// 1) Load contacts from localStorage (per currentUser)
 	useEffect(() => {
@@ -82,19 +88,21 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		if (!peer) {
 			return;
 		}
-
+		dispatch({ type: 'clear' });
 		const ws = new WebSocket(`${WEBSOCKETURL}?token=${encodeURIComponent(token)}`);
 		ws.onopen = () => {
-			// Ask server for history between currentUser and peer
+			console.log('WebSocket connected');
 			ws.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
 		};
 		ws.onmessage = (e: MessageEvent) => {
-
 			const msg: Message = JSON.parse(e.data);
 			dispatch({ type: msg.type, payload: msg } as Action);
 		};
 		ws.onclose = () => {
 			console.log('WebSocket closed');
+			if (!peer) {
+				window.location.href = '/home';
+			}
 		};
 		setSocket(ws);
 
@@ -129,6 +137,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 	return (
 		<>
+			<style jsx global>{`
+			.grecaptcha-badge {
+				display: none !important;
+			}
+		  `}</style>
 			<div className="flex h-screen">
 				{/* Sidebar: Contacts */}
 				<div className="w-60 bg-white border-r flex flex-col">
@@ -144,7 +157,13 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 					<div className="flex-1 overflow-y-auto">
 						{contacts.length === 0 && (
-							<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
+							<div>
+								<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
+								<p className="p-4 text-gray-500 text-sm">
+									Don&apos;t have anyone to message? Add <strong>testuser1</strong> or <strong>testuser2</strong> as a contact, then log in there to see and send messages.
+									Be careful though because all data for the testusers are deleted when you log out. You should use incognito mode for testing.
+								</p>
+							</div>
 						)}
 						{contacts.map((c, idx) => (
 							<div

@@ -1,13 +1,14 @@
 'use client';
 import Herobg from '@/components/herobg';
 import NavBar from '@/components/Navbar';
+import { faGoogle } from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { FormEvent, useState } from 'react';
 
-const SITE_KEY =
-	process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
-	'6LehuFQrAAAAAEQGx8PoQtlHtzZe1Gp66B1djg5y';
+
+const SITE_KEY = '6LehuFQrAAAAAEQGx8PoQtlHtzZe1Gp66B1djg5y';
 declare global {
 	interface Window {
 		grecaptcha: {
@@ -26,8 +27,7 @@ export default function LoginPage() {
 	const [error, setError] = useState('');
 	const router = useRouter();
 
-	const LOGINURL =
-		process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8081/login';
+	const LOGINURL = 'http://localhost:8080/login';
 
 	async function handleLogin(e: FormEvent) {
 		e.preventDefault();
@@ -128,6 +128,15 @@ export default function LoginPage() {
 					>
 						Log In
 					</button>
+					<div className="mt-4">
+						<button type='button'
+							onClick={() => window.location.href = 'http://localhost:8080/auth/google/login'}
+							className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
+						>
+							<FontAwesomeIcon icon={faGoogle} className="mr-2" />
+							Regsiter and sign in with Google
+						</button>
+					</div>
 				</form>
 			</div>
 		</>
