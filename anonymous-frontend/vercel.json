@@ -2,7 +2,7 @@
 	"rewrites": [
 		{
 			"source": "/api/:path*",
-			"destination": "https://anonymous-production-5c21.up.railway.app/:path*"
+			"destination": "http://localhost:8081/:path*"
 		}
 	]
 }

@@ -21,7 +21,9 @@ const (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return strings.HasPrefix(r.Header.Get("Origin"), "http://localhost:3000")
+		origin := r.Header.Get("Origin")
+		return strings.HasPrefix(origin, "http://localhost:3000") ||
+			strings.HasPrefix(origin, "https://anonymous-sigma-three.vercel.app")
 	},
 }
 
