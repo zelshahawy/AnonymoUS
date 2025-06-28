@@ -1,0 +1,12 @@
+[project]
+name = "finance-microservice"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+	"fastapi>=0.115.12",
+	"pydantic>=2.11.7",
+	"uvicorn>=0.34.3",
+	"yfinance>=0.2.63",
+]

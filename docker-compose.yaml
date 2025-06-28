@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:6
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    build:
+      context: ./anonymous-server-backend
+    env_file:
+      - ./anonymous-server-backend/.env
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./anonymous-frontend
+    environment:
+      NEXT_PUBLIC_LOGIN_URL: http://backend:8081/login
+      NEXT_PUBLIC_WEBSOCKET_URL: ws://backend:8081
+      NEXT_PUBLIC_LOGOUT_URL: http://backend:8081/logout
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  python-service:
+    build:
+      context: ./python-service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+
+volumes:
+  mongo-data:
