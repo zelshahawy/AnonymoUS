@@ -34,6 +34,7 @@ export default function RegisterClient() {
 			}
 		);
 
+
 		if (!res.ok) {
 			let errMsg = 'Registration failed';
 			const ct = res.headers.get('content-type') || '';
@@ -49,6 +50,13 @@ export default function RegisterClient() {
 			setError(errMsg);
 			return;
 		}
+
+		const { token: authToken } = (await res.json()) as { token: string };
+		if (!authToken) {
+			setError('No authentication token received');
+			return;
+		}
+		document.cookie = `auth_token=${authToken}; path=/; max-age=31536000; secure; samesite=strict`;
 
 		router.push('/chat');
 	}

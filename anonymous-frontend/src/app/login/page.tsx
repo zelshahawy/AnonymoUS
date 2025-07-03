@@ -29,6 +29,7 @@ export default function LoginPage() {
 
 	const LOGINURL = 'http://localhost:8080/login';
 
+
 	async function handleLogin(e: FormEvent) {
 		e.preventDefault();
 		setError('');
@@ -131,6 +132,7 @@ export default function LoginPage() {
 					<div className="mt-4">
 						<button type='button'
 							onClick={() => window.location.href = 'http://localhost:8080/auth/google/login'}
+
 							className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
 						>
 							<FontAwesomeIcon icon={faGoogle} className="mr-2" />

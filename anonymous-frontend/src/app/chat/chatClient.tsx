@@ -156,6 +156,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						</button>
 					</div>
 					<div className="flex-1 overflow-y-auto">
+						<p className="p-4 text-gray-500">Your username is {currentUser} </p>
 						{contacts.length === 0 && (
 							<div>
 								<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
@@ -251,7 +252,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						</button>
 					</div>
 				</div>
-			</div>
+			</div >
 		</>
 	);
 }

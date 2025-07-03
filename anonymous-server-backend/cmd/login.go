@@ -48,31 +48,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Invalid request: %v", err), http.StatusBadRequest)
 		return
 	}
-
-	/* resp, err := http.PostForm(
-		"https://www.google.com/recaptcha/api/siteverify",
-		url.Values{
-			"secret":   {RecaptchaSecret},
-			"response": {loginRequest.RecaptchaToken},
-		},
-	)
-	if err != nil {
-		// http.Error(w, "recaptcha verification failed", http.StatusInternalServerError)
-		fmt.Printf("Error verifying recaptcha: %v\n", err)
-	}
-	defer resp.Body.Close()
-
-	var rc struct {
-		Success bool `json:"success"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&rc); err != nil || !rc.Success {
-		//http.Error(w, "recaptcha validation failed", http.StatusBadRequest)
-		//return
-		fmt.Printf("Recaptcha validation failed: %v\n", err)
-	}
-	*/
-
 	response, err := services.ProcessLogin(loginRequest)
 	if err != nil {
 		fmt.Printf("Error processing login: %v\n", err)

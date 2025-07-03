@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/zelshahawy/Anonymous_backend/config"
 	"github.com/zelshahawy/Anonymous_backend/services"
@@ -17,11 +18,11 @@ var (
 	googleCfg = &oauth2.Config{
 		ClientID:     config.Config().GetString("google_client_id"),
 		ClientSecret: config.Config().GetString("google_client_secret"),
-		RedirectURL:  "http://localhost:8081/auth/google/callback",
+		RedirectURL:  config.Config().GetString("frontend_url") + "/auth/google/callback",
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
-	oauthStateString = "random" // TODO: generate securely in production
+	oauthStateString = config.Config().GetString("oauth_state_string")
 )
 
 // HandleGoogleLogin redirects the user to Google's OAuth consent page.
@@ -70,7 +71,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	if err == services.ErrUserNotFound {
 		// New user: redirect to registration page
 		redirectURL := fmt.Sprintf(
-			"http://localhost:3000/register?googleID=%s&email=%s",
+			config.Config().GetString("frontend_url")+"/auth/google/callback",
 			url.QueryEscape(info.ID),
 			url.QueryEscape(info.Email),
 		)
@@ -91,17 +92,9 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Set HttpOnly session cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_token",
-		Value:    tokenStr,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   false, // set true if using HTTPS
-		SameSite: http.SameSiteLaxMode,
-	})
+	setSessionCookie(w, tokenStr)
 
-	// Redirect to chat UI
-	http.Redirect(w, r, "http://localhost:3000/chat", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, config.Config().GetString("frontend_url")+"/chat", http.StatusSeeOther)
 }
 
 func HandleExternalRegister(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +126,9 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		Name:     "auth_token",
 		Value:    token,
 		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
