@@ -1,11 +1,15 @@
 FROM node:18-alpine
 
+# install pnpm globally so the pnpm CLI is available
+RUN npm install -g pnpm@latest
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+
+COPY package*.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["pnpm", "run", "start"]

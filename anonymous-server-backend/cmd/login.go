@@ -7,11 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zelshahawy/Anonymous_backend/config"
 	"github.com/zelshahawy/Anonymous_backend/services"
 )
-
-var RecaptchaSecret = config.Config().GetString("recaptcha_secret")
 
 // LoginHandler handles the login request, parses either JSON or form data,
 // validates it, and returns a JWT token.
@@ -35,7 +32,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		loginRequest.Username = r.PostFormValue("username")
 		loginRequest.Password = r.PostFormValue("password")
-		loginRequest.RecaptchaToken = r.PostFormValue("recaptcha_token")
 
 	default:
 		http.Error(w, "Unsupported Content-Type", http.StatusUnsupportedMediaType)
