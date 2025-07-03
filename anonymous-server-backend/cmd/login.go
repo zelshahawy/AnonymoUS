@@ -48,7 +48,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Invalid request: %v", err), http.StatusBadRequest)
 		return
 	}
-
 	response, err := services.ProcessLogin(loginRequest)
 	if err != nil {
 		fmt.Printf("Error processing login: %v\n", err)
