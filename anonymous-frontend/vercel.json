@@ -2,11 +2,11 @@
 	"rewrites": [
 		{
 			"source": "/api/:path*",
-			"destination": "https://anonymous-production-5c21.up.railway.app/:path*"
+			"destination": "https://ziad-unit-64e.com/:path*"
 		},
 		{
 			"source": "/auth/google/callback",
-			"destination": "https://anonymous-production-5c21.up.railway.app/auth/google/callback"
+			"destination": "https://https://ziad-unit-64e.com/auth/google/callback"
 		}
 	]
 }
