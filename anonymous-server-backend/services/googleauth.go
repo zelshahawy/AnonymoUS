@@ -83,3 +83,38 @@ func CreateExternalUser(ctx context.Context, googleID, email, username, password
 	user.ID = res.InsertedID.(primitive.ObjectID)
 	return &user, nil
 }
+
+func CreateUser(ctx context.Context, username, email, password string) (*UserDoc, error) {
+	col := usersCollection()
+
+	// Ensure username is unique
+	count, err := col.CountDocuments(ctx, bson.M{"username": username})
+	if err != nil {
+		return nil, err
+	}
+	if count > 0 {
+		return nil, errors.New("username already in use")
+	}
+
+	// Hash the password
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	user := UserDoc{
+		Username:     username,
+		PasswordHash: string(hashed),
+		Email:        email,
+		Active:       true,
+		CreatedAt:    now,
+	}
+
+	res, err := col.InsertOne(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	user.ID = res.InsertedID.(primitive.ObjectID)
+	return &user, nil
+}

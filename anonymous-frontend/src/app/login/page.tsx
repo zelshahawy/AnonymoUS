@@ -1,12 +1,9 @@
 'use client';
 import Herobg from '@/components/herobg';
 import NavBar from '@/components/Navbar';
-import { faGoogle } from '@fortawesome/free-brands-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { FormEvent, useState } from 'react';
-
 
 const SITE_KEY = '6LehuFQrAAAAAEQGx8PoQtlHtzZe1Gp66B1djg5y';
 declare global {
@@ -28,7 +25,6 @@ export default function LoginPage() {
 	const router = useRouter();
 
 	const LOGINURL = 'http://localhost:8080/login';
-
 
 	async function handleLogin(e: FormEvent) {
 		e.preventDefault();
@@ -86,13 +82,6 @@ export default function LoginPage() {
 				src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`}
 				strategy="afterInteractive"
 			/>
-			<style jsx global>{`
-			.grecaptcha-badge {
-			  position: fixed !important;
-			  bottom: auto !important;
-			  top: 0px !important;
-			}
-		  `}</style>
 
 			<div className="min-h-screen flex flex-col items-center justify-center">
 				<h1 className="text-4xl font-bold mb-6">Log In</h1>
@@ -129,17 +118,20 @@ export default function LoginPage() {
 					>
 						Log In
 					</button>
-					<div className="mt-4">
-						<button type='button'
-							onClick={() => window.location.href = 'http://localhost:8080/auth/google/login'}
-
-							className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
-						>
-							<FontAwesomeIcon icon={faGoogle} className="mr-2" />
-							Regsiter and sign in with Google
-						</button>
-					</div>
 				</form>
+
+				<div className="mt-4 w-full max-w-sm">
+					<button
+						type='button'
+						onClick={(e) => {
+							e.preventDefault();
+							router.push('/register');
+						}}
+						className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+					>
+						Create Account
+					</button>
+				</div>
 			</div>
 		</>
 	);
