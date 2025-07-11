@@ -13,7 +13,7 @@ services:
     env_file:
       - ./anonymous-server-backend/.env
     ports:
-      - "8081:8081"
+      - "8080:8080"
     depends_on:
       - mongo
 
@@ -21,9 +21,9 @@ services:
     build:
       context: ./anonymous-frontend
     environment:
-      NEXT_PUBLIC_LOGIN_URL: http://backend:8081/login
-      NEXT_PUBLIC_WEBSOCKET_URL: ws://backend:8081
-      NEXT_PUBLIC_LOGOUT_URL: http://backend:8081/logout
+      NEXT_PUBLIC_LOGIN_URL: http://backend:8080/login
+      NEXT_PUBLIC_WEBSOCKET_URL: ws://backend:8080
+      NEXT_PUBLIC_LOGOUT_URL: http://backend:8080/logout
     ports:
       - "3000:3000"
     depends_on:

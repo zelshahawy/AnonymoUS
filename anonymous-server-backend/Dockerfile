@@ -10,5 +10,5 @@ RUN go build -o server .
 FROM alpine:3.18
 WORKDIR /app
 COPY --from=builder /app/server .
-EXPOSE 8081
+EXPOSE 8080
 ENTRYPOINT ["./server"]
