@@ -13,7 +13,7 @@ module.exports = {
 			},
 			{
 				source: '/auth/google/callback',
-				destination: 'https://anonymous-production-5c21.up.railway.app/auth/google/callback'
+				destination: 'http://localhost:8081/auth/google/callback',
 			}
 		]
 	},
