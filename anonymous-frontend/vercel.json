@@ -6,7 +6,7 @@
 		},
 		{
 			"source": "/auth/google/callback",
-			"destination": "https://https://ziad-unit-64e.com/auth/google/callback"
+			"destination": "https://ziad-unit-64e.com/auth/google/callback"
 		}
 	]
 }

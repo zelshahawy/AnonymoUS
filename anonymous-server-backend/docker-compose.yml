@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   traefik:
     image: traefik:v2.10
@@ -9,7 +7,7 @@ services:
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
-      - --certificatesresolvers.myresolver.acme.email=you@your-email.com
+      - --certificatesresolvers.myresolver.acme.email=ziad.a.elshahawy@gmail.com
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
       - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
     ports:
@@ -23,16 +21,16 @@ services:
 
   backend:
     build:
-      context: ./anonymous-server-backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile-local
     env_file:
-      - ./anonymous-server-backend/.env
+      - .env
     expose:
-      - "8081"
+      - "8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`ziad-unit-64E.com`)"
+      - "traefik.http.routers.backend.rule=Host(`anon-backend.ziad-unit-64E.com`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
-      - "traefik.http.services.backend.loadbalancer.server.port=8081"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
 
