@@ -1,6 +1,5 @@
 'use client';
 
-import { redirect, useSearchParams } from 'next/navigation';
 import { ReactNode, Suspense } from 'react';
 
 export default function RegisterLayout({ children }: { children: ReactNode }) {
@@ -18,10 +17,5 @@ export default function RegisterLayout({ children }: { children: ReactNode }) {
 }
 
 function Guard({ children }: { children: ReactNode }) {
-	const params = useSearchParams();
-	const googleID = params.get('googleID');
-	if (!googleID) {
-		redirect('/login');
-	}
 	return <>{children}</>;
 }
