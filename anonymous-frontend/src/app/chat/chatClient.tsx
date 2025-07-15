@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
 interface Message {
-	type: 'chat' | 'history';
+	type: 'chat' | 'history' | 'bot';
 	from: string;
 	to: string;
 	body: string;
@@ -15,7 +15,9 @@ interface Message {
 type Action =
 	| { type: 'history'; payload: Message }
 	| { type: 'chat'; payload: Message }
-	| { type: 'clear' };
+	| { type: 'clear' }
+	| { type: 'bot'; payload: Message };
+
 
 function messagesReducer(state: Message[], action: Action): Message[] {
 	switch (action.type) {
@@ -48,7 +50,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const endRef = useRef<HTMLDivElement>(null);
 
 	// Always open "/ws" so Next.js proxies it on the same origin:
-	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8081/ws';
+	const WEBSOCKETURL = 'ws://localhost:8080/ws';
 
 	// 1) Load contacts from localStorage (per currentUser)
 	useEffect(() => {
