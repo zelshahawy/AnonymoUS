@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   mongo:
     image: mongo:6
@@ -8,6 +7,7 @@ services:
       - "27017:27017"
 
   backend:
+    image: zelshahawy/anonymous:backend-latest
     build:
       context: ./anonymous-server-backend
     env_file:
@@ -18,18 +18,20 @@ services:
       - mongo
 
   frontend:
+    image: zelshahawy/anonymous:frontend-latest
     build:
       context: ./anonymous-frontend
     environment:
-      NEXT_PUBLIC_LOGIN_URL: http://backend:8080/login
+      NEXT_PUBLIC_LOGIN_URL:  http://backend:8080/login
       NEXT_PUBLIC_WEBSOCKET_URL: ws://backend:8080
-      NEXT_PUBLIC_LOGOUT_URL: http://backend:8080/logout
+      NEXT_PUBLIC_LOGOUT_URL:  http://backend:8080/logout
     ports:
       - "3000:3000"
     depends_on:
       - backend
 
   python-service:
+    image: zelshahawy/anonymous:python-latest
     build:
       context: ./finance-microservice
     ports:
@@ -39,3 +41,4 @@ services:
 
 volumes:
   mongo-data:
+
