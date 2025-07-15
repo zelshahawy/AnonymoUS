@@ -2,7 +2,11 @@
 	"rewrites": [
 		{
 			"source": "/api/:path*",
-			"destination": "http://localhost:8081/:path*"
+			"destination": "https://anon-backend.ziad-unit-64e.com/:path*"
+		},
+		{
+			"source": "/auth/google/callback",
+			"destination": "https://anon-backend.ziad-unit-64e.com/auth/google/callback"
 		}
 	]
 }

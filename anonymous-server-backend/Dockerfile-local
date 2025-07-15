@@ -1,40 +1,37 @@
-# Build Stage
-FROM zelshahawy/alpine-golang-buildimage:1.13 AS build-stage
+# ─── Stage 1: Build a static Go binary ───────────────────────────────
+FROM golang:1.24-alpine AS builder
 
-LABEL app="build-Anonymous_backend"
-LABEL REPO="https://github.com/zelshahawy/Anonymous_backend"
+# install git (for go modules) and C toolchain in case any deps need cgo
+RUN apk add --no-cache git build-base
 
-ENV PROJPATH=/go/src/github.com/zelshahawy/Anonymous_backend
+WORKDIR /app
 
-# Because of https://github.com/docker/docker/issues/14914
-ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+# cache deps
+COPY go.mod go.sum ./
+RUN go mod download
 
-ADD . /go/src/github.com/zelshahawy/Anonymous_backend
-WORKDIR /go/src/github.com/zelshahawy/Anonymous_backend
+# copy the rest of your code
+COPY . .
 
-RUN make build-alpine
+# produce a fully static, stripped binary
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix nocgo \
+    -ldflags="-w -s" \
+    -o bin/Anonymous_backend .
 
-# Final Stage
-FROM zelshahawy/alpine-base-image:latest
+# ─── Stage 2: Minimal runtime image ─────────────────────────────────
+FROM alpine:latest
 
-ARG GIT_COMMIT
-ARG VERSION
-LABEL REPO="https://github.com/zelshahawy/Anonymous_backend"
-LABEL GIT_COMMIT=$GIT_COMMIT
-LABEL VERSION=$VERSION
+# only for TLS, logging, etc.
+RUN apk add --no-cache ca-certificates
 
-# Because of https://github.com/docker/docker/issues/14914
-ENV PATH=$PATH:/opt/Anonymous_backend/bin
+# copy in your built binary
+COPY --from=builder /app/bin/Anonymous_backend /usr/local/bin/Anonymous_backend
 
-WORKDIR /opt/Anonymous_backend/bin
+# drop privileges if you like
+USER nobody:nobody
 
-COPY --from=build-stage /go/src/github.com/zelshahawy/Anonymous_backend/bin/Anonymous_backend /opt/Anonymous_backend/bin/
-RUN chmod +x /opt/Anonymous_backend/bin/Anonymous_backend
+EXPOSE 8080
 
-# Create appuser
-RUN adduser -D -g '' Anonymous_backend
-USER Anonymous_backend
+# default entrypoint
+ENTRYPOINT ["Anonymous_backend"]
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-
-CMD ["/opt/Anonymous_backend/bin/Anonymous_backend"]
