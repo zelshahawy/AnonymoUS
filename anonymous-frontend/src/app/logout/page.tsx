@@ -10,7 +10,7 @@ export default function LogoutPage() {
 		window.sessionStorage.clear();
 
 		const logoutURL =
-			process.env.NEXT_PUBLIC_LOGOUT_URL || 'http://localhost:8081/logout';
+			process.env.NEXT_PUBLIC_LOGOUT_URL || 'http://localhost:8080/logout';
 		window.location.href = logoutURL;
 	}, []);
 

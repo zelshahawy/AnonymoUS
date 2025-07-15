@@ -28,7 +28,7 @@ export default function RegisterClient() {
 
 		const res = await fetch(
 			process.env.NEXT_PUBLIC_REGISTER_URL ||
-			'http://localhost:8081/auth/register-external',
+			'http://localhost:8080/auth/register-external',
 			{
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },

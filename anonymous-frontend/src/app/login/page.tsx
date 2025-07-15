@@ -29,8 +29,8 @@ export default function LoginPage() {
 	const [error, setError] = useState('');
 	const router = useRouter();
 
-	const LOGINURL = process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8081/login';
-	const REGISTERURL = process.env.NEXT_PUBLIC_REGISTER_URL || 'http://localhost:8081/auth/google/login';
+	const LOGINURL = process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8080/login';
+	const REGISTERURL = process.env.NEXT_PUBLIC_REGISTER_URL || 'http://localhost:8080/auth/google/login';
 
 	async function handleLogin(e: FormEvent) {
 		e.preventDefault();
