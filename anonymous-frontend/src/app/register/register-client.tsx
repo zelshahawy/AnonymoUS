@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { FormEvent, useState } from 'react';
 
-const SITE_KEY = '6Ld39FMrAAAAALKNDA3zB70pCoVC8rjqWs3iN8VF';
+const SITE_KEY =
+	process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
+	'6Ld39FMrAAAAALKNDA3zB70pCoVC8rjqWs3iN8VF';
 
 export default function RegisterClient() {
 	const params = useSearchParams();
@@ -25,7 +27,8 @@ export default function RegisterClient() {
 		const token = await window.grecaptcha.execute(SITE_KEY, { action: 'register' });
 
 		const res = await fetch(
-			'http://localhost:8080/auth/register-external',
+			process.env.NEXT_PUBLIC_REGISTER_URL ||
+			'http://localhost:8081/auth/register-external',
 			{
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },

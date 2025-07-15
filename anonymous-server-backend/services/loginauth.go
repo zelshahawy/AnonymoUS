@@ -133,8 +133,6 @@ func ProcessLogin(req LoginRequest) (LoginResponse, error) {
 	return LoginResponse{Token: token}, nil
 }
 
-// services/user.go
-
 func FindUserByUsername(ctx context.Context, username string) (*UserDoc, error) {
 	col := usersCollection()
 	var user UserDoc

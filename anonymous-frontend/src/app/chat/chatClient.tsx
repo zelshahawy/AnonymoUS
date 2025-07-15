@@ -49,8 +49,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [input, setInput] = useState<string>('');
 	const endRef = useRef<HTMLDivElement>(null);
 
-	// Always open "/ws" so Next.js proxies it on the same origin:
-	const WEBSOCKETURL = 'ws://localhost:8080/ws';
+	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8081/ws';
 
 	// 1) Load contacts from localStorage (per currentUser)
 	useEffect(() => {

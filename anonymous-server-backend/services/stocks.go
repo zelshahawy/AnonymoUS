@@ -19,7 +19,7 @@ type StockResponse struct {
 	EMA20  float64 `json:"ema20"`
 }
 
-var stockAPI = config.Config().GetString("STOCK_API") // adjust host/port
+var stockAPI = config.Config().GetString("STOCK_API")
 
 // parseStockCommand returns the ticker symbol if text starts with /stocks
 func parseStockCommand(text string) (symbol string, ok bool) {
