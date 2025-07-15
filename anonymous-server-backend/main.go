@@ -19,6 +19,7 @@ func main() {
 		"secret_key",
 		"google_client_id",
 		"google_client_secret",
+		"stock_api",
 	)
 	config.PrintEnvironment()
 
