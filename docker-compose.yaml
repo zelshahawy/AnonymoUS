@@ -16,6 +16,7 @@ services:
       - "8081:8081"
     depends_on:
       - mongo
+      - python-service
 
   frontend:
     build:
@@ -31,9 +32,9 @@ services:
 
   python-service:
     build:
-      context: ./python-service
+      context: ./finance-microservice
     ports:
-      - "5000:5000"
+      - "5005:5005"
     depends_on:
       - mongo
 

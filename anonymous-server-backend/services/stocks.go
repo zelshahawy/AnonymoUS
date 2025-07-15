@@ -33,7 +33,7 @@ func parseStockCommand(text string) (symbol string, ok bool) {
 // fetchStock hits your FastAPI service and decodes the JSON
 func fetchStock(symbol string) (*StockResponse, error) {
 	client := http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(stockAPI + symbol)
+	resp, err := client.Get(stockAPI + "/api/stocks/" + symbol)
 	if err != nil {
 		return nil, err
 	}

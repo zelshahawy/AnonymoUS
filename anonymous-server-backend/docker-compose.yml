@@ -19,6 +19,10 @@ services:
     labels:
       - "traefik.enable=true"
 
+  python-service:
+    build:
+      context: ../finance-microservice
+
   backend:
     build:
       context: .
@@ -33,4 +37,5 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
       - "traefik.http.services.backend.loadbalancer.server.port=8080"
-
+    depends_on:
+      - python-service

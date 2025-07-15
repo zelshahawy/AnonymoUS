@@ -28,3 +28,9 @@ async def get_stock(symbol: str):
             ticker.history(period="20d")["Close"].ewm(span=20).mean().iloc[-1], 2
         ),
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=5005)
