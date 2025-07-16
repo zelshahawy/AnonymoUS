@@ -25,3 +25,9 @@ body {
   --font-sans: 'Monaco', 'SF Mono', 'Menlo', monospace;
   --font-mono: 'Monaco', 'SF Mono', 'Menlo', monospace;
 }
+
+.grecaptcha-badge {
+  position: fixed !important;
+  bottom: auto !important;
+  top: 0px !important;
+}
