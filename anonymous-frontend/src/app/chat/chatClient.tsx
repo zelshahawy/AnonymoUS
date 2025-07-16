@@ -18,23 +18,17 @@ type Action =
 	| { type: 'clear' }
 	| { type: 'bot'; payload: Message };
 
-
 function messagesReducer(state: Message[], action: Action): Message[] {
 	switch (action.type) {
 		case 'history':
-			// just append—history comes in chronological order
 			return [...state, action.payload]
-
 		case 'chat':
-			// guard against duplicates if server might echo twice
 			if (state.some(m => m.messageid === action.payload.messageid)) {
 				return state
 			}
 			return [...state, action.payload]
-
 		case 'clear':
 			return [];
-
 		default:
 			return state
 	}
@@ -51,7 +45,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
 
-	// 1) Load contacts from localStorage (per currentUser)
+	// Load contacts from localStorage
 	useEffect(() => {
 		if (!currentUser) return;
 		const stored = window.localStorage.getItem(`contacts_${currentUser}`);
@@ -64,7 +58,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	}, [currentUser]);
 
-	// 2) Persist contacts whenever they change
+	// Persist contacts
 	useEffect(() => {
 		if (!currentUser) return;
 		window.localStorage.setItem(`contacts_${currentUser}`, JSON.stringify(contacts));
@@ -79,7 +73,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
-	// 3) Whenever peer changes, open a new WebSocket and request history.
+	// WebSocket connection
 	useEffect(() => {
 		console.log("ChatClient useEffect—peer =", peer, "token =", token);
 		console.log("WS URL base:", WEBSOCKETURL);
@@ -137,30 +131,32 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	return (
 		<>
 			<style jsx global>{`
-			.grecaptcha-badge {
-				display: none !important;
-			}
-		  `}</style>
-			<div className="flex h-screen">
+                .grecaptcha-badge {
+                    display: none !important;
+                }
+            `}</style>
+
+			{/* Strong Dracula: #282a36 (background), #44475a (current line), #bd93f9 (purple), #ff79c6 (pink), #50fa7b (green), #ff5555 (red), #f8f8f2 (foreground) */}
+			<div className="flex h-screen bg-[#282a36]">
 				{/* Sidebar: Contacts */}
-				<div className="w-60 bg-white border-r flex flex-col">
-					<div className="flex items-center justify-between px-4 py-3 border-b">
-						<span className="font-semibold text-lg text-black">Contacts</span>
+				<div className="w-60 bg-[#44475a] border-r-4 border-[#bd93f9] flex flex-col shadow-lg">
+					<div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#bd93f9] bg-[#282a36]">
+						<span className="font-bold text-lg text-[#f8f8f2]">Contacts</span>
 						<button
 							onClick={addContact}
-							className="text-white bg-blue-600 hover:bg-blue-700 rounded-full w-6 h-6 flex items-center justify-center"
+							className="text-[#282a36] bg-[#bd93f9] hover:bg-[#ff79c6] rounded-full w-8 h-8 flex items-center justify-center font-bold transition-colors"
 							title="Add contact"
 						>
 							+
 						</button>
 					</div>
 					<div className="flex-1 overflow-y-auto">
-						<p className="p-4 text-gray-500">Your username is {currentUser} </p>
+						<p className="p-4 text-[#bd93f9] font-semibold">Your username: {currentUser}</p>
 						{contacts.length === 0 && (
 							<div>
-								<p className="p-4 text-gray-500">No contacts. Click + to add.</p>
-								<p className="p-4 text-gray-500 text-sm">
-									Don&apos;t have anyone to message? Add <strong>testuser1</strong> or <strong>testuser2</strong> as a contact, then log in there to see and send messages.
+								<p className="p-4 text-[#f8f8f2]">No contacts. Click + to add.</p>
+								<p className="p-4 text-[#f8f8f2] text-sm">
+									Don&apos;t have anyone to message? Add <strong className="text-[#50fa7b]">testuser1</strong> or <strong className="text-[#50fa7b]">testuser2</strong> as a contact, then log in there to see and send messages.
 									Be careful though because all data for the testusers are deleted when you log out. You should use incognito mode for testing.
 								</p>
 							</div>
@@ -169,7 +165,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 							<div
 								key={idx}
 								onClick={() => setPeer(c)}
-								className={`px-4 py-3 cursor-pointer hover:bg-gray-100 text-gray-600 ${peer === c ? 'bg-gray-200 font-semibold' : ''
+								className={`px-4 py-3 cursor-pointer hover:bg-[#bd93f9] hover:text-[#282a36] text-[#f8f8f2] transition-colors ${peer === c ? 'bg-[#bd93f9] font-bold text-[#282a36]' : ''
 									}`}
 							>
 								{c}
@@ -181,25 +177,24 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				{/* Main Chat Pane */}
 				<div className="flex-1 flex flex-col">
 					{/* Header */}
-					{/* Header with Home & Logout */}
-					<div className="px-4 py-3 bg-blue-600 text-white flex justify-between items-center">
-						<div>
+					<div className="px-4 py-3 bg-[#44475a] text-[#f8f8f2] flex items-center border-b-2 border-[#bd93f9]">
+						<div className="flex-1">
 							{peer ? (
-								<span>
-									Chatting with <strong>{peer}</strong>
+								<span className="font-semibold">
+									Chatting with <strong className="text-[#50fa7b]">{peer}</strong>
 								</span>
 							) : (
-								<span className="text-gray-200">Select a contact to start chatting</span>
+								<span className="text-[#f8f8f2]">Select a contact to start chatting</span>
 							)}
 						</div>
 						<div className="flex space-x-2">
 							<Link href="/">
-								<button className="px-3 py-1 bg-white text-blue-600 rounded hover:bg-gray-100">
+								<button className="px-4 py-2 bg-[#50fa7b] text-[#282a36] rounded font-bold hover:bg-[#ff79c6] transition-colors">
 									Home
 								</button>
 							</Link>
 							<Link href="/logout">
-								<button className="px-3 py-1 bg-white text-blue-600 rounded hover:bg-gray-100">
+								<button className="px-4 py-2 bg-[#ff5555] text-[#f8f8f2] rounded font-bold hover:bg-[#ff79c6] transition-colors">
 									Logout
 								</button>
 							</Link>
@@ -207,20 +202,19 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 
 					{/* Messages area */}
-					<div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+					<div className="flex-1 overflow-y-auto p-4 bg-[#282a36]">
 						{!peer ? (
-							<p className="text-gray-500">No chat selected.</p>
+							<p className="text-[#f8f8f2] text-center">No chat selected.</p>
 						) : (
 							messages.map((m) => (
 								<div
 									key={m.messageid}
-									className={`mb-2 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'
-										}`}
+									className={`mb-3 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'}`}
 								>
 									<div
-										className={`px-4 py-2 rounded-lg max-w-xs break-words ${m.from === currentUser
-											? 'bg-blue-500 text-white rounded-br-none'
-											: 'bg-gray-200 text-gray-800 rounded-bl-none'
+										className={`px-4 py-3 rounded-lg max-w-xs break-words font-medium ${m.from === currentUser
+												? 'bg-[#bd93f9] text-[#282a36] rounded-br-none'
+												: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
 											}`}
 									>
 										{m.body}
@@ -232,7 +226,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 
 					{/* Input area */}
-					<div className="p-4 bg-white border-t flex items-center">
+					<div className="p-4 bg-[#44475a] border-t-2 border-[#bd93f9] flex items-center">
 						<input
 							type="text"
 							placeholder="Type a message..."
@@ -240,18 +234,18 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 							onChange={e => setInput(e.target.value)}
 							onKeyDown={handleKeyDown}
 							disabled={!peer}
-							className="flex-1 border border-black rounded px-3 py-2 mr-2 focus:outline-none focus:ring text-black"
+							className="flex-1 border-2 border-[#bd93f9] bg-[#282a36] text-[#f8f8f2] placeholder-[#f8f8f2] rounded px-4 py-3 mr-3 focus:outline-none focus:border-[#ff79c6] transition-colors font-medium"
 						/>
 						<button
 							onClick={sendMessage}
 							disabled={!peer}
-							className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+							className="bg-[#50fa7b] text-[#282a36] px-6 py-3 rounded font-bold hover:bg-[#ff79c6] disabled:opacity-50 disabled:hover:bg-[#50fa7b] transition-colors"
 						>
 							Send
 						</button>
 					</div>
 				</div>
-			</div >
+			</div>
 		</>
 	);
 }

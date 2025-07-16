@@ -27,7 +27,7 @@ export default function LandingPage() {
         </p>
         <Link
           href="/login"
-          className="px-8 py-3 bg-blue-600 text-white text-lg font-medium rounded hover:bg-blue-700 transition"
+          className="px-10 py-4 bg-[#50fa7b] text-[#282a36] text-lg font-bold rounded-xl hover:bg-[#ff79c6] transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-[#50fa7b]/50"
         >
           Log In to Chat
         </Link>

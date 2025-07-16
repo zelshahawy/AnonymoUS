@@ -1,7 +1,7 @@
 nav {
-	color: white;
-	--csil-beige: white;
-	--csil-border: #ECEBE4;
+	color: #f8f8f2;
+	--csil-beige: rgba(68, 71, 90, 0.9);
+	--csil-border: #bd93f9;
 	display: flex;
 	justify-content: stretch;
 	gap: 30px;
@@ -13,6 +13,7 @@ nav {
 	height: 2.0rem;
 	-webkit-font-smoothing: antialiased;
 	z-index: 5;
+	backdrop-filter: blur(10px);
 }
 
 .navOption {
@@ -23,32 +24,24 @@ nav {
 @keyframes disappearUp {
 	0% {
 		opacity: 1;
-		/* Fully visible */
 		transform: translateY(0);
-		/* Start at original position */
 	}
 
 	100% {
 		opacity: 0;
-		/* Fully transparent */
 		transform: translateY(-100px);
-		/* Move up 100px */
 	}
 }
 
 @keyframes dropDown {
 	0% {
 		opacity: 0;
-		/* Fully visible */
 		transform: translateY(-100px);
-		/* Start at original position */
 	}
 
 	100% {
 		opacity: 1;
-		/* Fully transparent */
 		transform: translateY(0);
-		/* Move up 100px */
 	}
 }
 
@@ -71,31 +64,23 @@ nav>ul {
 	position: relative;
 	border-radius: 0 5px 5px 0;
 	border-left: none;
-	border-width: 1px;
-
+	border-width: 2px;
 }
 
 nav>ul:before {
 	content: "";
 	position: absolute;
-	top: -1px;
-	/* Offset to align with the main border */
-	bottom: -1px;
-	/* Offset to align with the main border */
+	top: -2px;
+	bottom: -2px;
 	left: -13px;
-	/* Offset to align with the main border */
 	width: 20%;
-	/* Adjust to control the skewed portion */
 	background-color: inherit;
 	transform: skewX(-20deg);
-	/* Skew only the right side */
 	transform-origin: left;
-	border: 1px solid var(--csil-border);
-	/* Create the illusion of the border */
+	border: 2px solid var(--csil-border);
 	border-right: none;
 	z-index: -1;
 	border-radius: 5px 0 0 10px;
-
 }
 
 .circle {
@@ -103,39 +88,44 @@ nav>ul:before {
 	height: 8.5px;
 	border-radius: 50%;
 	background-color: transparent;
-	border-color: black;
-	border-width: .5px;
-	border-style: groove;
+	border-color: #bd93f9;
+	border-width: 2px;
+	border-style: solid;
 }
 
 .on {
-	background-color: rgb(255, 151, 241);
+	background-color: #bd93f9;
+	box-shadow: 0 0 10px rgba(189, 147, 249, 0.5);
 }
 
 nav>ul>* {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	transition: opacity .1s ease-in-out;
+	transition: all .2s ease-in-out;
+	color: #f8f8f2;
+}
+
+nav>ul>*:hover {
+	color: #bd93f9;
+	transform: translateY(-2px);
 }
 
 .dropDown:before {
 	content: "";
 	position: absolute;
 	top: -50px;
-	/* Adjust this value to cover the gap */
 	left: 0;
 	height: 50px;
-	/* Adjust this value to cover the gap */
 	width: 100%;
 }
 
 .dropDown {
 	position: absolute;
-	background-color: var(--csil-beige);
-	border-radius: 5px;
+	background-color: rgba(68, 71, 90, 0.95);
+	border-radius: 10px;
 	border-width: 2px;
-	border-color: var(--csil-border);
+	border-color: #bd93f9;
 	border-style: solid;
 	top: 40px;
 	padding: 20px;
@@ -144,6 +134,8 @@ nav>ul>* {
 	animation: pop-out .25s ease-in-out;
 	transition: opacity .25s ease-in-out;
 	transform-origin: top;
+	backdrop-filter: blur(10px);
+	box-shadow: 0 10px 30px rgba(189, 147, 249, 0.3);
 }
 
 .disappear {
@@ -178,7 +170,7 @@ nav>* {
 	border-color: var(--csil-border);
 	border-style: solid;
 	background-color: var(--csil-beige);
-	color: black;
+	color: #f8f8f2;
 }
 
 .fullLogo {
@@ -194,27 +186,28 @@ nav>* {
 	position: relative;
 	padding: .25rem 1rem;
 	border-radius: 5px 0 0 5px;
-	border-width: 1px;
+	border-width: 2px;
+	transition: all .2s ease-in-out;
+}
+
+.fullLogo:hover {
+	background-color: rgba(189, 147, 249, 0.2);
+	transform: translateY(-2px);
+	box-shadow: 0 5px 15px rgba(189, 147, 249, 0.3);
 }
 
 .fullLogo:before {
 	content: "";
 	position: absolute;
 	border-radius: 0 10px 5px 0;
-	top: -1px;
-	/* Offset to align with the main border */
-	bottom: -1px;
-	/* Offset to align with the main border */
+	top: -2px;
+	bottom: -2px;
 	right: -13px;
-	/* Offset to align with the main border */
 	width: 70%;
-	/* Adjust to control the skewed portion */
 	background-color: inherit;
 	transform: skewX(-20deg);
-	/* Skew only the right side */
 	transform-origin: left;
-	border: 1px solid var(--csil-border);
-	/* Create the illusion of the border */
+	border: 2px solid var(--csil-border);
 	border-left: none;
 	z-index: -1;
 }
@@ -224,24 +217,31 @@ nav>* {
 		display: block;
 	}
 
-	/* hide desktop menu */
 	nav>ul {
 		display: none;
 		flex-direction: column;
 		width: 100%;
+		background-color: rgba(68, 71, 90, 0.95);
+		backdrop-filter: blur(10px);
+		border-radius: 10px;
+		border: 2px solid #bd93f9;
 	}
 
-	/* show when open */
 	nav.mobile-open>ul.open {
 		display: flex;
 	}
 
 	nav>ul.open li {
 		padding: 0.75rem 1rem;
-		border-top: 1px solid #eee;
+		border-top: 1px solid #6272a4;
+		color: #f8f8f2;
 	}
 
-	/* submenus can stay hidden or expand on click */
+	nav>ul.open li:hover {
+		background-color: rgba(189, 147, 249, 0.2);
+		color: #bd93f9;
+	}
+
 	.dropDown {
 		display: none;
 	}
