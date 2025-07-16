@@ -28,6 +28,8 @@ body {
 
 .grecaptcha-badge {
   position: fixed !important;
-  bottom: auto !important;
-  top: 0px !important;
+  bottom: 16px !important;
+  right: 16px !important;
+  top: auto !important;
+  left: auto !important;
 }
