@@ -16,7 +16,7 @@ export default function LandingPage() {
           alt="AnonymousME Logo"
           width={300}
           height={300}
-          className="mb-10 rounded-full shadow-lg border-amber-500 bg-blue-100 hover:bg-blue-200 transition duration-300 transform hover:scale-105"
+          className="mb-10 rounded-full shadow-lg border-amber-500 bg-blue-100 hover:bg-[#bd93f9] transition duration-300 transform hover:scale-105"
         />
         <h1 className="text-5xl font-extrabold text-white mb-4">
           AnonymoUS
@@ -27,7 +27,7 @@ export default function LandingPage() {
         </p>
         <Link
           href="/login"
-          className="px-8 py-3 bg-blue-600 text-white text-lg font-medium rounded hover:bg-blue-700 transition"
+          className="px-10 py-4 bg-[#50fa7b] text-[#282a36] text-lg font-bold rounded-xl hover:bg-[#ff79c6] transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-[#50fa7b]/50"
         >
           Log In to Chat
         </Link>

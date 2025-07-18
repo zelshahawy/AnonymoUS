@@ -88,13 +88,6 @@ export default function LoginPage() {
 				src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`}
 				strategy="afterInteractive"
 			/>
-			<style jsx global>{`
-			.grecaptcha-badge {
-			  position: fixed !important;
-			  bottom: auto !important;
-			  top: 0px !important;
-			}
-		  `}</style>
 
 			<div className="min-h-screen flex flex-col items-center justify-center">
 				<h1 className="text-4xl font-bold mb-6">Log In</h1>

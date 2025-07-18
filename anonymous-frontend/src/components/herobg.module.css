@@ -1,14 +1,33 @@
 .wrapper {
 	width: 100vw;
-	height: 90vh;
-	background-color: #1C1D21;
-	position: absolute;
+	height: 100vh;
+	min-height: 100vh;
+	background: #282a36;
+	position: fixed;
 	top: 0;
 	overflow: hidden;
 	z-index: -2;
-	background-image: radial-gradient(circle at .05rem .05rem, rgba(226, 226, 226, 0.856) .05rem, transparent 0);
-	background-size: 30px 30px;
-	mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
-	mask-size: 100% 100%;
-	mask-repeat: no-repeat;
+	background-image: radial-gradient(circle at .08rem .08rem, rgba(189, 147, 249, 0.15) .08rem, transparent 0);
+	background-size: 40px 40px;
+}
+
+.wrapper::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: radial-gradient(circle at 80% 20%, rgba(189, 147, 249, 0.05) 0%, transparent 70%);
+	opacity: 0.6;
+}
+
+@keyframes pulse {
+	0% {
+		opacity: 0.8;
+	}
+
+	100% {
+		opacity: 1;
+	}
 }
