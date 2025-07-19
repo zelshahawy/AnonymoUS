@@ -27,6 +27,11 @@ function messagesReducer(state: Message[], action: Action): Message[] {
 				return state
 			}
 			return [...state, action.payload]
+		case 'bot':
+			if (state.some(m => m.messageid === action.payload.messageid)) {
+				return state
+			}
+			return [...state, action.payload]
 		case 'clear':
 			return [];
 		default:
@@ -211,13 +216,22 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 									key={m.messageid}
 									className={`mb-3 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'}`}
 								>
-									<div
-										className={`px-4 py-3 rounded-lg max-w-xs break-words font-medium ${m.from === currentUser
-												? 'bg-[#bd93f9] text-[#282a36] rounded-br-none'
-												: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
-											}`}
-									>
-										{m.body}
+									<div className="flex flex-col max-w-xs">
+										{m.type === 'bot' && (
+											<span className="text-xs text-[#50fa7b] mb-1 font-bold">
+												🤖 {m.from}
+											</span>
+										)}
+										<div
+											className={`px-4 py-3 rounded-lg break-words font-medium ${m.from === currentUser
+													? 'bg-[#bd93f9] text-[#282a36] rounded-br-none'
+													: m.type === 'bot'
+														? 'bg-[#50fa7b] text-[#282a36] rounded-bl-none border-2 border-[#50fa7b]'
+														: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
+												}`}
+										>
+											{m.body}
+										</div>
 									</div>
 								</div>
 							))
