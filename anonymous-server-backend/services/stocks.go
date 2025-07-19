@@ -66,7 +66,7 @@ func HandleStockCommand(in *hub.Message) []*hub.Message {
 	}
 
 	return []*hub.Message{{
-		From:      "StockBot",
+		From:      "bot",
 		To:        in.To,
 		Messageid: in.Messageid,
 		Body:      text,

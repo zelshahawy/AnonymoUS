@@ -224,10 +224,10 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 										)}
 										<div
 											className={`px-4 py-3 rounded-lg break-words font-medium ${m.from === currentUser
-													? 'bg-[#bd93f9] text-[#282a36] rounded-br-none'
-													: m.type === 'bot'
-														? 'bg-[#50fa7b] text-[#282a36] rounded-bl-none border-2 border-[#50fa7b]'
-														: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
+												? 'bg-[#bd93f9] text-[#282a36] rounded-br-none'
+												: m.type === 'bot'
+													? 'bg-[#50fa7b] text-[#282a36] rounded-bl-none border-2 border-[#50fa7b]'
+													: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
 												}`}
 										>
 											{m.body}
