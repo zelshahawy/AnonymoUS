@@ -27,8 +27,8 @@ export default function RegisterClient() {
 		const token = await window.grecaptcha.execute(SITE_KEY, { action: 'register' });
 
 		const res = await fetch(
-			process.env.NEXT_PUBLIC_REGISTER_URL ||
-			'http://localhost:8080/auth/register-external',
+			process.env.NEXT_PUBLIC_REGISTER_EXTERNAL_URL ||
+			'/api/auth/register-external',
 			{
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
