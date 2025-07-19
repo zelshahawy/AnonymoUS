@@ -27,6 +27,11 @@ function messagesReducer(state: Message[], action: Action): Message[] {
 				return state
 			}
 			return [...state, action.payload]
+		case 'bot':
+			if (state.some(m => m.messageid === action.payload.messageid)) {
+				return state
+			}
+			return [...state, action.payload]
 		case 'clear':
 			return [];
 		default:
