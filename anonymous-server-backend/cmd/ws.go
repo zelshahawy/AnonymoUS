@@ -119,9 +119,9 @@ func readPump(ctx context.Context, c *hub.Client) {
 
 			for _, bot := range services.HandleStockCommand(&msg) {
 				botMsg := hub.Message{
-					Type:      "chat",
+					Type:      "bot",
 					Messageid: hub.GenerateMessageID(),
-					From:      bot.From,
+					From:      msg.From,
 					To:        msg.To,
 					Body:      bot.Body,
 				}
