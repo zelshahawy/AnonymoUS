@@ -1,29 +1,10 @@
 services:
-  traefik:
-    image: traefik:v2.10
-    restart: always
-    command:
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --certificatesresolvers.myresolver.acme.email=ziad.a.elshahawy@gmail.com
-      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt
-    labels:
-      - "traefik.enable=true"
-
   python-service:
     build:
       context: ../finance-microservice
 
   backend:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile-local
@@ -37,5 +18,12 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
       - "traefik.http.services.backend.loadbalancer.server.port=8080"
+    networks:
+      - traefik-net
+      - default
     depends_on:
       - python-service
+
+networks:
+  traefik-net:
+    external: true
