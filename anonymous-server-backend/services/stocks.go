@@ -49,7 +49,7 @@ func fetchStock(symbol string) (*StockResponse, error) {
 	return &out, nil
 }
 
-// HandleStockCommand returns zero or one “bot” messages in response to a stock command
+// HandleStockCommand returns zero or one "bot" message in response to a stock command
 func HandleStockCommand(in *hub.Message) []*hub.Message {
 	sym, ok := parseStockCommand(in.Body)
 	if !ok {
@@ -65,6 +65,7 @@ func HandleStockCommand(in *hub.Message) []*hub.Message {
 			data.Symbol, data.Price, data.Change, data.EMA20)
 	}
 
+<<<<<<< HEAD
 	return []*hub.Message{{
 		From:      "bot",
 		To:        in.To,
@@ -72,4 +73,16 @@ func HandleStockCommand(in *hub.Message) []*hub.Message {
 		Body:      text,
 		Type:      "bot",
 	}}
+=======
+	// Return single bot message - WebSocket handler will send to both participants
+	return []*hub.Message{
+		{
+			From:      "StockBot",
+			To:        in.To,   // This will be ignored anyway in WS handler
+			Messageid: in.Messageid,
+			Body:      text,
+			Type:      "bot",
+		},
+	}
+>>>>>>> 0fb5fa8f02bc2131a9ad3a2687c82e3a68cc22b4
 }

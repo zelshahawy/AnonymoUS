@@ -119,7 +119,7 @@ func readPump(ctx context.Context, c *hub.Client) {
 
 			for _, bot := range services.HandleStockCommand(&msg) {
 				botMsg := hub.Message{
-					Type:      "chat", // or "bot" if you handle that specially
+					Type:      "chat",
 					Messageid: hub.GenerateMessageID(),
 					From:      bot.From,
 					To:        msg.To,
@@ -133,8 +133,8 @@ func readPump(ctx context.Context, c *hub.Client) {
 				}); err != nil {
 					log.Printf("failed to save bot message %s: %v", botMsg.Messageid, err)
 				}
-				hub.GlobalHub.Send(botMsg.From, &botMsg)
-				hub.GlobalHub.Send(botMsg.To, &botMsg)
+				hub.GlobalHub.Send(msg.From, &botMsg)
+				hub.GlobalHub.Send(msg.To, &botMsg)
 			}
 
 		default:

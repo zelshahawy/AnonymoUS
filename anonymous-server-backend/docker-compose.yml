@@ -14,10 +14,17 @@ services:
       - "8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`anon-backend.ziad-unit-64E.com`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=myresolver"
-      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik-net"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.backend-http.rule=Host(`anon-backend.ziad-unit-64E.com`)"
+      - "traefik.http.routers.backend-http.entrypoints=web"
+      - "traefik.http.routers.backend-http.middlewares=https-redirect"
+      - "traefik.http.routers.backend-https.rule=Host(`anon-backend.ziad-unit-64E.com`)"
+      - "traefik.http.routers.backend-https.entrypoints=websecure"
+      - "traefik.http.routers.backend-https.tls=true"
+      - "traefik.http.routers.backend-https.tls.certresolver=myresolver"
+      - "traefik.http.services.backend-https.loadbalancer.server.port=8080"
     networks:
       - traefik-net
       - default
