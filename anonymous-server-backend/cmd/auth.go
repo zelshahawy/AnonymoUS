@@ -71,7 +71,8 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	if err == services.ErrUserNotFound {
 		// New user: redirect to registration page
 		redirectURL := fmt.Sprintf(
-			config.Config().GetString("frontend_url")+"/auth/google/callback",
+			"%s/register?googleID=%s&email=%s",
+			config.Config().GetString("frontend_url"),
 			url.QueryEscape(info.ID),
 			url.QueryEscape(info.Email),
 		)
@@ -99,16 +100,20 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 func HandleExternalRegister(w http.ResponseWriter, r *http.Request) {
 	var p struct {
-		GoogleID, Email, Username, Password string
+		GoogleID, Email, Username, Password, RecaptchaToken string
 	}
-	json.NewDecoder(r.Body).Decode(&p)
-	// hash password, insert User{Username,p.Hash,p.GoogleID,p.Email,Active:true}
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
 	ctx := r.Context()
 	user, err := services.CreateExternalUser(ctx, p.GoogleID, p.Email, p.Username, p.Password)
 	if err != nil {
 		http.Error(w, "Failed to create user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	// generate JWT & set cookie
 	svcUser := services.User{Username: user.Username}
 	tok, err := services.GenerateJWTToken(svcUser)
@@ -116,8 +121,12 @@ func HandleExternalRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Token generation error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	setSessionCookie(w, tok)
-	w.WriteHeader(http.StatusOK)
+
+	// Return JSON response with token as expected by frontend
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": tok})
 }
 
 // setSessionCookie sets a session_token cookie with the given token string.
