@@ -1,12 +1,16 @@
 {
 	"rewrites": [
 		{
+			"source": "/api/auth/:path*",
+			"destination": "https://anon-backend.ziad-unit-64e.com/auth/:path*"
+		},
+		{
 			"source": "/api/:path*",
 			"destination": "https://anon-backend.ziad-unit-64e.com/:path*"
 		},
 		{
-			"source": "/auth/google/callback",
-			"destination": "https://anon-backend.ziad-unit-64e.com/auth/google/callback"
+			"source": "/auth/:path*",
+			"destination": "https://anon-backend.ziad-unit-64e.com/auth/:path*"
 		}
 	]
 }
