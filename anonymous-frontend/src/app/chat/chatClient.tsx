@@ -16,7 +16,7 @@ type Action =
 	| { type: 'history'; payload: Message }
 	| { type: 'chat'; payload: Message }
 	| { type: 'clear' }
-	| { type: 'bot'; payload: Message };
+	| { type: 'bot', payload: Message };
 
 function messagesReducer(state: Message[], action: Action): Message[] {
 	switch (action.type) {
@@ -107,7 +107,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		return () => {
 			ws.close();
 		};
-	}, [peer]);
+	}, [peer, WEBSOCKETURL, currentUser, token]);
 
 	useEffect(() => {
 		endRef.current?.scrollIntoView({ behavior: 'smooth' });
