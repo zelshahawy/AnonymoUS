@@ -1,5 +1,7 @@
 'use client';
 import Footer from '@/components/footer';
+import { mdiAccountKey, mdiBolt, mdiChartLine, mdiIncognito, mdiMessage, mdiShield } from '@mdi/js';
+import Icon from '@mdi/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
@@ -66,7 +68,10 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-12">
             {/* Privacy & Security */}
             <div className="bg-[#44475a] p-8 rounded-lg border-2 border-[#bd93f9] shadow-lg">
-              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b]">🔒 Privacy First</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b] flex items-center gap-3">
+                <Icon path={mdiShield} size={1.2} className="text-[#50fa7b]" />
+                Privacy First
+              </h3>
               <p className="text-[#f8f8f2] leading-relaxed">
                 Your conversations are private and secure. We do not store unnecessary data,
                 and your messages are protected with industry-standard security measures.
@@ -75,7 +80,10 @@ export default function LandingPage() {
 
             {/* Real-time Messaging */}
             <div className="bg-[#44475a] p-8 rounded-lg border-2 border-[#bd93f9] shadow-lg">
-              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b]">💬 Instant Messaging</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b] flex items-center gap-3">
+                <Icon path={mdiMessage} size={1.2} className="text-[#50fa7b]" />
+                Instant Messaging
+              </h3>
               <p className="text-[#f8f8f2] leading-relaxed">
                 Real-time WebSocket connections ensure your messages are delivered instantly.
                 No delays, no refresh needed - just seamless communication.
@@ -84,7 +92,10 @@ export default function LandingPage() {
 
             {/* Google Authentication */}
             <div className="bg-[#44475a] p-8 rounded-lg border-2 border-[#bd93f9] shadow-lg">
-              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b]">🔐 Secure Login</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b] flex items-center gap-3">
+                <Icon path={mdiAccountKey} size={1.2} className="text-[#50fa7b]" />
+                Secure Login
+              </h3>
               <p className="text-[#f8f8f2] leading-relaxed">
                 Sign in securely with your Google account. No need to remember another password -
                 we use OAuth 2.0 for safe and simple authentication.
@@ -93,7 +104,10 @@ export default function LandingPage() {
 
             {/* Stock Monitoring */}
             <div className="bg-[#44475a] p-8 rounded-lg border-2 border-[#bd93f9] shadow-lg">
-              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b]">📈 Stock Bot</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b] flex items-center gap-3">
+                <Icon path={mdiChartLine} size={1.2} className="text-[#50fa7b]" />
+                Stock Bot
+              </h3>
               <p className="text-[#f8f8f2] leading-relaxed">
                 Get real-time stock quotes directly in your chat! Just type a stock command
                 and our bot will provide current market data instantly.
@@ -102,7 +116,10 @@ export default function LandingPage() {
 
             {/* Anonymous */}
             <div className="bg-[#44475a] p-8 rounded-lg border-2 border-[#bd93f9] shadow-lg">
-              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b]">👤 Stay Anonymous</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b] flex items-center gap-3">
+                <Icon path={mdiIncognito} size={1.2} className="text-[#50fa7b]" />
+                Stay Anonymous
+              </h3>
               <p className="text-[#f8f8f2] leading-relaxed">
                 Choose your own username and chat without revealing personal information.
                 Your identity remains private while you connect with others.
@@ -111,7 +128,10 @@ export default function LandingPage() {
 
             {/* Easy to Use */}
             <div className="bg-[#44475a] p-8 rounded-lg border-2 border-[#bd93f9] shadow-lg">
-              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b]">⚡ Simple & Fast</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#50fa7b] flex items-center gap-3">
+                <Icon path={mdiBolt} size={1.2} className="text-[#50fa7b]" />
+                Simple & Fast
+              </h3>
               <p className="text-[#f8f8f2] leading-relaxed">
                 Clean, intuitive interface that gets out of your way. Add contacts,
                 start chatting, and enjoy a distraction-free messaging experience.
