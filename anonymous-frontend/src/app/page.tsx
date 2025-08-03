@@ -68,7 +68,7 @@ export default function LandingPage() {
             <div className="bg-[#44475a] p-8 rounded-lg border-2 border-[#bd93f9] shadow-lg">
               <h3 className="text-2xl font-bold mb-4 text-[#50fa7b]">🔒 Privacy First</h3>
               <p className="text-[#f8f8f2] leading-relaxed">
-                Your conversations are private and secure. We don't store unnecessary data,
+                Your conversations are private and secure. We do not store unnecessary data,
                 and your messages are protected with industry-standard security measures.
               </p>
             </div>
