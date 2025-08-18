@@ -24,8 +24,11 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
 		frontend := config.Config().GetString("frontend_url")
+		base := strings.TrimSuffix(frontend, "/")
+		
+		log.Printf("frontendurl: %v", base)
 		return strings.HasPrefix(origin, "http://localhost:3000") ||
-			strings.HasPrefix(origin, frontend)
+			strings.HasPrefix(origin, base)
 	},
 }
 
