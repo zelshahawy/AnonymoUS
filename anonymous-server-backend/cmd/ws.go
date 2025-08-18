@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/zelshahawy/Anonymous_backend/internal/hub"
 	"github.com/zelshahawy/Anonymous_backend/services"
+	"github.com/zelshahawy/Anonymous_backend/config"
 )
 
 const (
@@ -22,8 +23,9 @@ const (
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
+		frontend := config.Config().GetString("frontend_url")
 		return strings.HasPrefix(origin, "http://localhost:3000") ||
-			strings.HasPrefix(origin, "https://anonymous-sigma-three.vercel.app")
+			strings.HasPrefix(origin, frontend)
 	},
 }
 
