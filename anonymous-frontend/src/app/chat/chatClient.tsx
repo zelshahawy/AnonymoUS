@@ -133,6 +133,16 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
+	// Simple markdown parser for bold text
+	const parseMarkdown = (text: string) => {
+		return text.split(/(\*\*.*?\*\*)/).map((part, index) => {
+			if (part.startsWith('**') && part.endsWith('**')) {
+				return <strong key={index}>{part.slice(2, -2)}</strong>;
+			}
+			return part;
+		});
+	};
+
 	return (
 		<>
 			<style jsx global>{`
@@ -222,7 +232,17 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 											: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
 											}`}
 									>
-										{m.body}
+										{m.type === 'bot' ? (
+											<div className="whitespace-pre-line">
+												{m.body.split('\n').map((line, index) => (
+													<div key={index}>
+														{parseMarkdown(line)}
+													</div>
+												))}
+											</div>
+										) : (
+											m.body
+										)}
 									</div>
 								</div>
 							))

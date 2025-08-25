@@ -8,15 +8,13 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/zelshahawy/Anonymous_backend/config"
 	"github.com/zelshahawy/Anonymous_backend/internal/hub"
 	"github.com/zelshahawy/Anonymous_backend/services"
-	"github.com/zelshahawy/Anonymous_backend/config"
 )
 
 const (
-	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
-	// Send pings to peer with this period. Must be less than pongWait.
+	pongWait   = 60 * time.Second
 	pingPeriod = 30 * time.Second
 )
 
@@ -25,7 +23,7 @@ var upgrader = websocket.Upgrader{
 		origin := r.Header.Get("Origin")
 		frontend := config.Config().GetString("frontend_url")
 		base := strings.TrimSuffix(frontend, "/")
-		
+
 		log.Printf("frontendurl: %v", base)
 		return strings.HasPrefix(origin, "http://localhost:3000") ||
 			strings.HasPrefix(origin, base)
@@ -69,15 +67,61 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	readPump(ctx, client)
 }
 
-// readPump pumps messages from the WebSocket to the hub.
-// It also handles history requests and chat messages.
+// processBotCommands handles all bot commands and sends responses
+func processBotCommands(ctx context.Context, msg *hub.Message) {
+	log.Printf("Processing bot commands for message: %s", msg.Body)
+
+	// Get all bot responses from different command handlers
+	var allBotResponses []services.BotResponse
+
+	// Collect responses from stock command handler
+	stockResponses := services.HandleStockCommand(msg)
+	log.Printf("Stock command returned %d responses", len(stockResponses))
+	allBotResponses = append(allBotResponses, stockResponses...)
+
+	// Collect responses from top movers command handler
+	topMoversResponses := services.HandleTopMoversCommand(msg)
+	log.Printf("Top movers command returned %d responses", len(topMoversResponses))
+	allBotResponses = append(allBotResponses, topMoversResponses...)
+
+	log.Printf("Total bot responses: %d", len(allBotResponses))
+
+	// Process each bot response
+	for i, bot := range allBotResponses {
+		log.Printf("Processing bot response %d: %s", i+1, bot.Body)
+
+		botMsg := hub.Message{
+			Type:      "bot",
+			Messageid: hub.GenerateMessageID(),
+			From:      msg.From,
+			To:        msg.To,
+			Body:      bot.Body,
+		}
+
+		if err := services.SaveMessage(ctx, &services.MessageDoc{
+			MsgID: botMsg.Messageid,
+			From:  botMsg.From,
+			To:    botMsg.To,
+			Body:  botMsg.Body,
+			Type:  botMsg.Type, // Save the type
+		}); err != nil {
+			log.Printf("failed to save bot message %s: %v", botMsg.Messageid, err)
+		} else {
+			log.Printf("Successfully saved bot message %s", botMsg.Messageid)
+		}
+
+		hub.GlobalHub.Send(msg.From, &botMsg)
+		hub.GlobalHub.Send(msg.To, &botMsg)
+		log.Printf("Sent bot message to users %s and %s", msg.From, msg.To)
+	}
+}
+
 func readPump(ctx context.Context, c *hub.Client) {
 	defer func() {
 		hub.GlobalHub.Unregister(c)
 		c.Conn.Close()
 	}()
 
-	// Configure read deadline and pong handler
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error {
 		return c.Conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -97,8 +141,12 @@ func readPump(ctx context.Context, c *hub.Client) {
 				continue
 			}
 			for _, m := range history {
+				msgType := m.Type
+				if msgType == "" {
+					msgType = "chat" // Default for old messages
+				}
 				_ = c.Conn.WriteJSON(hub.Message{
-					Type:      "history",
+					Type:      msgType, // Use the stored type
 					Messageid: m.MsgID,
 					From:      m.From,
 					To:        m.To,
@@ -115,6 +163,7 @@ func readPump(ctx context.Context, c *hub.Client) {
 				From:  msg.From,
 				To:    msg.To,
 				Body:  msg.Body,
+				Type:  msg.Type, // Save the type
 			}); err != nil {
 				log.Printf("failed to save message %s: %v", msg.Messageid, err)
 			}
@@ -122,25 +171,7 @@ func readPump(ctx context.Context, c *hub.Client) {
 			hub.GlobalHub.Send(msg.From, &msg)
 			hub.GlobalHub.Send(msg.To, &msg)
 
-			for _, bot := range services.HandleStockCommand(&msg) {
-				botMsg := hub.Message{
-					Type:      "bot",
-					Messageid: hub.GenerateMessageID(),
-					From:      msg.From,
-					To:        msg.To,
-					Body:      bot.Body,
-				}
-				if err := services.SaveMessage(ctx, &services.MessageDoc{
-					MsgID: botMsg.Messageid,
-					From:  botMsg.From,
-					To:    botMsg.To,
-					Body:  botMsg.Body,
-				}); err != nil {
-					log.Printf("failed to save bot message %s: %v", botMsg.Messageid, err)
-				}
-				hub.GlobalHub.Send(msg.From, &botMsg)
-				hub.GlobalHub.Send(msg.To, &botMsg)
-			}
+			processBotCommands(ctx, &msg)
 
 		default:
 			log.Printf("unknown message type: %q", msg.Type)
@@ -160,7 +191,6 @@ func writePump(c *hub.Client) {
 		select {
 		case msg, ok := <-c.Send:
 			if !ok {
-				// Hub closed the channel.
 				return
 			}
 			if err := c.Conn.WriteJSON(msg); err != nil {

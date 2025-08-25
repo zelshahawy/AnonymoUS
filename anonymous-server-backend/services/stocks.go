@@ -30,6 +30,14 @@ func parseStockCommand(text string) (symbol string, ok bool) {
 	return "", false
 }
 
+func stockMovers(text string) (ok bool) {
+	parts := strings.Fields(text)
+	if len(parts) == 1 && parts[0] == "/top-movers" {
+		return true
+	}
+	return false
+}
+
 // fetchStock hits your FastAPI service and decodes the JSON
 func fetchStock(symbol string) (*StockResponse, error) {
 	client := http.Client{Timeout: 5 * time.Second}
@@ -49,8 +57,31 @@ func fetchStock(symbol string) (*StockResponse, error) {
 	return &out, nil
 }
 
+func fetchTopMovers() ([]StockResponse, error) {
+	client := http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(stockAPI + "/api/top-movers/")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("service returned %d", resp.StatusCode)
+	}
+	var out []StockResponse
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+type BotResponse struct {
+	From string
+	Body string
+}
+
 // HandleStockCommand returns zero or one "bot" message in response to a stock command
-func HandleStockCommand(in *hub.Message) []*hub.Message {
+func HandleStockCommand(in *hub.Message) []BotResponse {
 	sym, ok := parseStockCommand(in.Body)
 	if !ok {
 		return nil
@@ -65,11 +96,70 @@ func HandleStockCommand(in *hub.Message) []*hub.Message {
 			data.Symbol, data.Price, data.Change, data.EMA20)
 	}
 
-	return []*hub.Message{{
-		From:      "bot",
-		To:        in.To,
-		Messageid: in.Messageid,
-		Body:      text,
-		Type:      "bot",
+	return []BotResponse{{
+		From: "bot",
+		Body: text,
+	}}
+}
+
+func HandleTopMoversCommand(in *hub.Message) []BotResponse {
+	ok := stockMovers(in.Body)
+	if !ok {
+		return nil
+	}
+
+	data, err := fetchTopMovers()
+	var text string
+	if err != nil {
+		text = fmt.Sprintf("❌ Could not fetch top movers: %v", err)
+	} else {
+		var lines []string
+		lines = append(lines, "📊 **Top Movers Today**")
+		lines = append(lines, "")
+
+		// Separate gainers and losers
+		var gainers []StockResponse
+		var losers []StockResponse
+
+		for _, stock := range data {
+			if stock.Change > 0 {
+				gainers = append(gainers, stock)
+			} else {
+				losers = append(losers, stock)
+			}
+		}
+
+		// Add top 3 gainers
+		lines = append(lines, "🟢 **Top Gainers:**")
+		maxGainers := 3
+		if len(gainers) > maxGainers {
+			gainers = gainers[:maxGainers]
+		}
+		for _, stock := range gainers {
+			line := fmt.Sprintf("**%s** $%.2f (+%.1f%%)",
+				stock.Symbol, stock.Price, stock.Change)
+			lines = append(lines, line)
+		}
+
+		lines = append(lines, "")
+
+		// Add top 3 losers
+		lines = append(lines, "🔴 **Top Losers:**")
+		maxLosers := 3
+		if len(losers) > maxLosers {
+			losers = losers[:maxLosers]
+		}
+		for _, stock := range losers {
+			line := fmt.Sprintf("**%s** $%.2f (%.1f%%)",
+				stock.Symbol, stock.Price, stock.Change)
+			lines = append(lines, line)
+		}
+
+		text = strings.Join(lines, "\n")
+	}
+
+	return []BotResponse{{
+		From: "bot",
+		Body: text,
 	}}
 }

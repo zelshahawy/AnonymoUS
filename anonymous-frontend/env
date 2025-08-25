@@ -1,3 +1,4 @@
 NEXT_PUBLIC_LOGIN_URL=http://localhost:8080/login
 NEXT_PUBLIC_WEBSOCKET_URL=localhost:8080
 NEXT_PUBLIC_LOGOUT_URL='http://localhost:8080/logout
+JWT_SECRET="kjbajdfhiwieifbqewhfbu229rgqbefbu13fbjqwbq9psjewbfduwqdbqduqbf84fgy3q"
