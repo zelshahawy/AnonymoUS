@@ -1,9 +1,9 @@
 // src/app/chat/chatClient.tsx
 'use client';
 
+import AddContactModal from '@/components/AddContactModal';
 import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
-import AddContactModal from '@/components/AddContactModal';
 
 interface Message {
 	type: 'chat' | 'history' | 'bot';

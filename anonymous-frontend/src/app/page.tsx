@@ -1,4 +1,5 @@
 'use client';
+import LiveTypingEffect from '@/components/LiveTypingEffect';
 import Footer from '@/components/footer';
 import { mdiAccountKey, mdiBolt, mdiChartLine, mdiIncognito, mdiMessage, mdiShield } from '@mdi/js';
 import Icon from '@mdi/react';
@@ -37,7 +38,16 @@ export default function LandingPage() {
               AnonymoUS
             </h1>
             <p className="mb-8 text-center max-w-xl text-gray-200">
-              AnonymoUS is a privacy-focused, real-time peer-to-peer chat app that aims for collaborative trading and stock market monitoring.
+              AnonymoUS is a privacy-focused, real-time peer-to-peer chat app for <br /> {' '}
+              <LiveTypingEffect
+                phrases={[
+                  "collaborative trading",
+                  "stock monitoring",
+                  "secure messaging",
+                  "anonymous communication"
+                ]}
+              />
+              <br />
               No central storage of your messages, full end-to-end encryption, and seamless user experience.
             </p>
             <Link
@@ -136,6 +146,41 @@ export default function LandingPage() {
                 Clean, intuitive interface that gets out of your way. Add contacts,
                 start chatting, and enjoy a distraction-free messaging experience.
               </p>
+            </div>
+          </div>
+
+          {/* Statistics Section */}
+          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-[#50fa7b]">99.9%</div>
+              <div className="text-[#f8f8f2]">Uptime</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-[#8be9fd]">&lt; 50ms</div>
+              <div className="text-[#f8f8f2]">Message Latency</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-[#ff79c6]">24/7</div>
+              <div className="text-[#f8f8f2]">Stock Data</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-[#f1fa8c]">∞</div>
+              <div className="text-[#f8f8f2]">Messages</div>
+            </div>
+          </div>
+
+          {/* Command Examples */}
+          <div className="mt-20">
+            <h3 className="text-3xl font-bold mb-8 text-[#8be9fd] text-center">Bot Commands</h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-[#44475a] p-6 rounded-lg border border-[#6272a4]">
+                <code className="text-[#50fa7b] text-lg">/stocks SYMBOL</code>
+                <p className="text-[#f8f8f2] mt-2">Get real-time stock price and data</p>
+              </div>
+              <div className="bg-[#44475a] p-6 rounded-lg border border-[#6272a4]">
+                <code className="text-[#ff79c6] text-lg">/top-movers</code>
+                <p className="text-[#f8f8f2] mt-2">View today's biggest gainers and losers</p>
+              </div>
             </div>
           </div>
 
