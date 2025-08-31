@@ -179,7 +179,7 @@ export default function LandingPage() {
               </div>
               <div className="bg-[#44475a] p-6 rounded-lg border border-[#6272a4]">
                 <code className="text-[#ff79c6] text-lg">/top-movers</code>
-                <p className="text-[#f8f8f2] mt-2">View today's biggest gainers and losers</p>
+                <p className="text-[#f8f8f2] mt-2">View today&apos;s biggest gainers and losers</p>
               </div>
             </div>
           </div>
