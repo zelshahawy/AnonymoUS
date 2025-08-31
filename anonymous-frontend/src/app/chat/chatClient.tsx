@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
+import AddContactModal from '@/components/AddContactModal';
 
 interface Message {
 	type: 'chat' | 'history' | 'bot';
@@ -46,6 +47,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [socket, setSocket] = useState<WebSocket | null>(null);
 	const [messages, dispatch] = useReducer(messagesReducer, [] as Message[]);
 	const [input, setInput] = useState<string>('');
+	const [isModalOpen, setIsModalOpen] = useState(false);
 	const endRef = useRef<HTMLDivElement>(null);
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
@@ -70,11 +72,12 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	}, [contacts, currentUser]);
 
 	const addContact = () => {
-		const newUsername = prompt('Enter the username of the person you want to add:');
-		if (newUsername && newUsername.trim() && newUsername !== currentUser) {
-			if (!contacts.includes(newUsername.trim())) {
-				setContacts(prev => [...prev, newUsername.trim()]);
-			}
+		setIsModalOpen(true);
+	};
+
+	const handleAddContact = (newUsername: string) => {
+		if (!contacts.includes(newUsername)) {
+			setContacts(prev => [...prev, newUsername]);
 		}
 	};
 
@@ -271,6 +274,13 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 				</div>
 			</div>
+
+			<AddContactModal
+				isOpen={isModalOpen}
+				onClose={() => setIsModalOpen(false)}
+				onAdd={handleAddContact}
+				currentUser={currentUser}
+			/>
 		</>
 	);
 }
