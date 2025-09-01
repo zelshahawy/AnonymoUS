@@ -163,14 +163,16 @@ func readPump(ctx context.Context, c *hub.Client) {
 				From:  msg.From,
 				To:    msg.To,
 				Body:  msg.Body,
-				Type:  msg.Type, // Save the type
+				Type:  msg.Type,
 			}); err != nil {
 				log.Printf("failed to save message %s: %v", msg.Messageid, err)
 			}
 
+			// Send to both users (online or offline)
 			hub.GlobalHub.Send(msg.From, &msg)
 			hub.GlobalHub.Send(msg.To, &msg)
 
+			// Process bot commands
 			processBotCommands(ctx, &msg)
 
 		default:
