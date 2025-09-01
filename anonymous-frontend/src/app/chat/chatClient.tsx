@@ -66,13 +66,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	}, [currentUser]);
 
-	// Persist contacts
 	useEffect(() => {
 		if (!currentUser) return;
 		window.localStorage.setItem(`contacts_${currentUser}`, JSON.stringify(contacts));
 	}, [contacts, currentUser]);
 
-	// Load unread messages from localStorage
 	useEffect(() => {
 		if (!currentUser) return;
 		const stored = window.localStorage.getItem(`unread_${currentUser}`);
@@ -85,13 +83,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	}, [currentUser]);
 
-	// Persist unread messages
 	useEffect(() => {
 		if (!currentUser) return;
 		window.localStorage.setItem(`unread_${currentUser}`, JSON.stringify(unreadMessages));
 	}, [unreadMessages, currentUser]);
 
-	// Mark messages as read when switching to a contact
 	useEffect(() => {
 		if (peer && unreadMessages[peer] > 0) {
 			setUnreadMessages(prev => ({
@@ -111,7 +107,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
-	// Global WebSocket connection for receiving messages from any user
 	useEffect(() => {
 		if (!currentUser || !token) return;
 
@@ -124,7 +119,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		globalWs.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
 
-			// Only handle chat messages from others when we're not in their chat
 			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== peer) {
 				// Add to unread count
 				setUnreadMessages(prev => ({
@@ -132,7 +126,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					[msg.from]: (prev[msg.from] || 0) + 1
 				}));
 
-				// Add sender to contacts if not already there
 				setContacts(prev => {
 					if (!prev.includes(msg.from)) {
 						return [...prev, msg.from];
@@ -151,7 +144,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		};
 	}, [currentUser, token, peer, WEBSOCKETURL]);
 
-	// Chat-specific WebSocket connection
 	useEffect(() => {
 		console.log("ChatClient useEffect—peer =", peer, "token =", token);
 		console.log("WS URL base:", WEBSOCKETURL);
@@ -206,7 +198,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
-	// Simple markdown parser for bold text
 	const parseMarkdown = (text: string) => {
 		return text.split(/(\*\*.*?\*\*)/).map((part, index) => {
 			if (part.startsWith('**') && part.endsWith('**')) {
