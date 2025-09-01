@@ -119,18 +119,25 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 		ws.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
-			console.log('Received message:', msg);
+			console.log('Received message:', msg, 'Current peer:', peer);
 
-			// Handle messages for current active chat (including history)
-			if (peer && ((msg.from === currentUser && msg.to === peer) ||
-				(msg.from === peer && msg.to === currentUser) ||
-				(msg.type === 'history' && ((msg.from === peer && msg.to === currentUser) || (msg.from === currentUser && msg.to === peer))) ||
-				(msg.type === 'bot' && ((msg.from === peer && msg.to === currentUser) || (msg.from === currentUser && msg.to === peer))))) {
-				dispatch({ type: msg.type, payload: msg } as Action);
+			// Handle messages for current active chat
+			if (peer) {
+				// Check if message is relevant to current chat (between currentUser and peer)
+				const isRelevantMessage = (
+					(msg.from === currentUser && msg.to === peer) ||
+					(msg.from === peer && msg.to === currentUser)
+				);
+
+				if (isRelevantMessage) {
+					console.log('Dispatching message for current chat:', msg);
+					dispatch({ type: msg.type, payload: msg } as Action);
+				}
 			}
 
 			// Handle unread messages from others (not current peer and not from self)
 			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== peer) {
+				console.log('Adding unread message from:', msg.from);
 				setUnreadMessages(prev => ({
 					...prev,
 					[msg.from]: (prev[msg.from] || 0) + 1
@@ -159,8 +166,9 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		return () => {
 			ws.close();
 		};
-	}, [currentUser, token, WEBSOCKETURL, peer]);
+	}, [currentUser, token, WEBSOCKETURL]);
 
+	// Load history when peer changes
 	useEffect(() => {
 		if (peer && socket && socket.readyState === WebSocket.OPEN) {
 			dispatch({ type: 'clear' });
