@@ -48,6 +48,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [messages, dispatch] = useReducer(messagesReducer, [] as Message[]);
 	const [input, setInput] = useState<string>('');
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
 	const endRef = useRef<HTMLDivElement>(null);
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
@@ -70,6 +71,34 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		if (!currentUser) return;
 		window.localStorage.setItem(`contacts_${currentUser}`, JSON.stringify(contacts));
 	}, [contacts, currentUser]);
+
+	// Load unread messages from localStorage
+	useEffect(() => {
+		if (!currentUser) return;
+		const stored = window.localStorage.getItem(`unread_${currentUser}`);
+		if (stored) {
+			try {
+				setUnreadMessages(JSON.parse(stored));
+			} catch {
+				setUnreadMessages({});
+			}
+		}
+	}, [currentUser]);
+
+	// Persist unread messages
+	useEffect(() => {
+		if (!currentUser) return;
+		window.localStorage.setItem(`unread_${currentUser}`, JSON.stringify(unreadMessages));
+	}, [unreadMessages, currentUser]);
+
+	useEffect(() => {
+		if (peer && unreadMessages[peer] > 0) {
+			setUnreadMessages(prev => ({
+				...prev,
+				[peer]: 0
+			}));
+		}
+	}, [peer]);
 
 	const addContact = () => {
 		setIsModalOpen(true);
@@ -98,6 +127,22 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		ws.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
 			dispatch({ type: msg.type, payload: msg } as Action);
+
+			// Track unread messages for incoming messages from others
+			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== peer) {
+				setUnreadMessages(prev => ({
+					...prev,
+					[msg.from]: (prev[msg.from] || 0) + 1
+				}));
+
+				// Add sender to contacts if not already there
+				setContacts(prev => {
+					if (!prev.includes(msg.from)) {
+						return [...prev, msg.from];
+					}
+					return prev;
+				});
+			}
 		};
 		ws.onclose = () => {
 			console.log('WebSocket closed');
@@ -154,7 +199,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
                 }
             `}</style>
 
-			{/* Strong Dracula: #282a36 (background), #44475a (current line), #bd93f9 (purple), #ff79c6 (pink), #50fa7b (green), #ff5555 (red), #f8f8f2 (foreground) */}
 			<div className="flex h-screen bg-[#282a36]">
 				{/* Sidebar: Contacts */}
 				<div className="w-60 bg-[#44475a] border-r-4 border-[#bd93f9] flex flex-col shadow-lg">
@@ -183,10 +227,15 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 							<div
 								key={idx}
 								onClick={() => setPeer(c)}
-								className={`px-4 py-3 cursor-pointer hover:bg-[#bd93f9] hover:text-[#282a36] text-[#f8f8f2] transition-colors ${peer === c ? 'bg-[#bd93f9] font-bold text-[#282a36]' : ''
+								className={`px-4 py-3 cursor-pointer hover:bg-[#bd93f9] hover:text-[#282a36] text-[#f8f8f2] transition-colors flex items-center justify-between ${peer === c ? 'bg-[#bd93f9] font-bold text-[#282a36]' : ''
 									}`}
 							>
-								{c}
+								<span>{c}</span>
+								{unreadMessages[c] > 0 && (
+									<div className="bg-[#ff5555] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+										{unreadMessages[c] > 9 ? '9+' : unreadMessages[c]}
+									</div>
+								)}
 							</div>
 						))}
 					</div>
