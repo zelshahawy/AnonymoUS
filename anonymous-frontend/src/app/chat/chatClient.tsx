@@ -122,19 +122,21 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		ws.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
 
-			// Handle history and current chat messages
-			if ((msg.type === 'history' || msg.type === 'chat' || msg.type === 'bot') &&
-				peer && (msg.from === peer || msg.to === peer || msg.from === currentUser)) {
+			// Handle messages for current active chat
+			if (peer && ((msg.from === currentUser && msg.to === peer) ||
+				(msg.from === peer && msg.to === currentUser) ||
+				(msg.from === peer || msg.to === peer))) {
 				dispatch({ type: msg.type, payload: msg } as Action);
 			}
 
-			// Handle unread messages from others (not current peer)
+			// Handle unread messages from others (not current peer and not from self)
 			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== peer) {
 				setUnreadMessages(prev => ({
 					...prev,
 					[msg.from]: (prev[msg.from] || 0) + 1
 				}));
 
+				// Add sender to contacts if not already there
 				setContacts(prev => {
 					if (!prev.includes(msg.from)) {
 						return [...prev, msg.from];
@@ -153,8 +155,18 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		return () => {
 			ws.close();
 		};
-	}, [currentUser, token, WEBSOCKETURL]);
+	}, [currentUser, token, WEBSOCKETURL, peer]);
 
+	useEffect(() => {
+		if (peer && unreadMessages[peer] > 0) {
+			setUnreadMessages(prev => ({
+				...prev,
+				[peer]: 0
+			}));
+		}
+	}, [peer, unreadMessages]);
+
+	// Load history when peer changes
 	useEffect(() => {
 		if (peer && socket) {
 			dispatch({ type: 'clear' });
