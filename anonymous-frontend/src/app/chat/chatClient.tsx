@@ -121,9 +121,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			const msg: Message = JSON.parse(e.data);
 			console.log('Received message:', msg);
 
-			// Handle messages for current active chat
+			// Handle messages for current active chat (including history)
 			if (peer && ((msg.from === currentUser && msg.to === peer) ||
-				(msg.from === peer && msg.to === currentUser))) {
+				(msg.from === peer && msg.to === currentUser) ||
+				(msg.type === 'history' && ((msg.from === peer && msg.to === currentUser) || (msg.from === currentUser && msg.to === peer))) ||
+				(msg.type === 'bot' && ((msg.from === peer && msg.to === currentUser) || (msg.from === currentUser && msg.to === peer))))) {
 				dispatch({ type: msg.type, payload: msg } as Action);
 			}
 
@@ -157,7 +159,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		return () => {
 			ws.close();
 		};
-	}, [currentUser, token, WEBSOCKETURL]);
+	}, [currentUser, token, WEBSOCKETURL, peer]);
 
 	useEffect(() => {
 		if (peer && socket && socket.readyState === WebSocket.OPEN) {
@@ -168,7 +170,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	}, [peer, socket, currentUser]);
 
 	useEffect(() => {
-		if (peer && unreadMessages[peer] > 0) {
+		if (peer) {
 			setUnreadMessages(prev => ({
 				...prev,
 				[peer]: 0
