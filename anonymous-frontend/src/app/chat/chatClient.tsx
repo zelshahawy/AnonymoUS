@@ -91,6 +91,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		window.localStorage.setItem(`unread_${currentUser}`, JSON.stringify(unreadMessages));
 	}, [unreadMessages, currentUser]);
 
+	// Mark messages as read when switching to a contact
 	useEffect(() => {
 		if (peer && unreadMessages[peer] > 0) {
 			setUnreadMessages(prev => ({
@@ -110,7 +111,47 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
-	// WebSocket connection
+	// Global WebSocket connection for receiving messages from any user
+	useEffect(() => {
+		if (!currentUser || !token) return;
+
+		const globalWs = new WebSocket(`${WEBSOCKETURL}?token=${encodeURIComponent(token)}`);
+
+		globalWs.onopen = () => {
+			console.log('Global WebSocket connected');
+		};
+
+		globalWs.onmessage = (e: MessageEvent) => {
+			const msg: Message = JSON.parse(e.data);
+
+			// Only handle chat messages from others when we're not in their chat
+			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== peer) {
+				// Add to unread count
+				setUnreadMessages(prev => ({
+					...prev,
+					[msg.from]: (prev[msg.from] || 0) + 1
+				}));
+
+				// Add sender to contacts if not already there
+				setContacts(prev => {
+					if (!prev.includes(msg.from)) {
+						return [...prev, msg.from];
+					}
+					return prev;
+				});
+			}
+		};
+
+		globalWs.onclose = () => {
+			console.log('Global WebSocket closed');
+		};
+
+		return () => {
+			globalWs.close();
+		};
+	}, [currentUser, token, peer, WEBSOCKETURL]);
+
+	// Chat-specific WebSocket connection
 	useEffect(() => {
 		console.log("ChatClient useEffect—peer =", peer, "token =", token);
 		console.log("WS URL base:", WEBSOCKETURL);
@@ -127,22 +168,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		ws.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
 			dispatch({ type: msg.type, payload: msg } as Action);
-
-			// Track unread messages for incoming messages from others
-			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== peer) {
-				setUnreadMessages(prev => ({
-					...prev,
-					[msg.from]: (prev[msg.from] || 0) + 1
-				}));
-
-				// Add sender to contacts if not already there
-				setContacts(prev => {
-					if (!prev.includes(msg.from)) {
-						return [...prev, msg.from];
-					}
-					return prev;
-				});
-			}
 		};
 		ws.onclose = () => {
 			console.log('WebSocket closed');
