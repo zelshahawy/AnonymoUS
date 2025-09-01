@@ -50,6 +50,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
 	const endRef = useRef<HTMLDivElement>(null);
+	const peerRef = useRef<string>(''); // Add this ref to track current peer
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
 
@@ -107,6 +108,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
+	// Update peer ref whenever peer changes
+	useEffect(() => {
+		peerRef.current = peer;
+	}, [peer]);
+
 	// Single WebSocket connection that stays open
 	useEffect(() => {
 		if (!currentUser || !token) return;
@@ -119,14 +125,13 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 		ws.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
-			console.log('Received message:', msg, 'Current peer:', peer);
+			const currentPeer = peerRef.current;
+			console.log('Received message:', msg, 'Current peer:', currentPeer);
 
-			// Handle messages for current active chat
-			if (peer) {
-				// Check if message is relevant to current chat (between currentUser and peer)
+			if (currentPeer) {
 				const isRelevantMessage = (
-					(msg.from === currentUser && msg.to === peer) ||
-					(msg.from === peer && msg.to === currentUser)
+					(msg.from === currentUser && msg.to === currentPeer) ||
+					(msg.from === currentPeer && msg.to === currentUser)
 				);
 
 				if (isRelevantMessage) {
@@ -136,7 +141,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			}
 
 			// Handle unread messages from others (not current peer and not from self)
-			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== peer) {
+			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== currentPeer) {
 				console.log('Adding unread message from:', msg.from);
 				setUnreadMessages(prev => ({
 					...prev,
