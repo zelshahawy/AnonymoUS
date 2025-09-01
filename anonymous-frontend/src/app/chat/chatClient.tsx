@@ -110,17 +110,26 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	useEffect(() => {
 		if (!currentUser || !token) return;
 
-		const globalWs = new WebSocket(`${WEBSOCKETURL}?token=${encodeURIComponent(token)}`);
+		const ws = new WebSocket(`${WEBSOCKETURL}?token=${encodeURIComponent(token)}`);
 
-		globalWs.onopen = () => {
-			console.log('Global WebSocket connected');
+		ws.onopen = () => {
+			console.log('WebSocket connected');
+			if (peer) {
+				ws.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
+			}
 		};
 
-		globalWs.onmessage = (e: MessageEvent) => {
+		ws.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
 
+			// Handle history and current chat messages
+			if ((msg.type === 'history' || msg.type === 'chat' || msg.type === 'bot') &&
+				peer && (msg.from === peer || msg.to === peer || msg.from === currentUser)) {
+				dispatch({ type: msg.type, payload: msg } as Action);
+			}
+
+			// Handle unread messages from others (not current peer)
 			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== peer) {
-				// Add to unread count
 				setUnreadMessages(prev => ({
 					...prev,
 					[msg.from]: (prev[msg.from] || 0) + 1
@@ -135,44 +144,23 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			}
 		};
 
-		globalWs.onclose = () => {
-			console.log('Global WebSocket closed');
-		};
-
-		return () => {
-			globalWs.close();
-		};
-	}, [currentUser, token, peer, WEBSOCKETURL]);
-
-	useEffect(() => {
-		console.log("ChatClient useEffect—peer =", peer, "token =", token);
-		console.log("WS URL base:", WEBSOCKETURL);
-
-		if (!peer) {
-			return;
-		}
-		dispatch({ type: 'clear' });
-		const ws = new WebSocket(`${WEBSOCKETURL}?token=${encodeURIComponent(token)}`);
-		ws.onopen = () => {
-			console.log('WebSocket connected');
-			ws.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
-		};
-		ws.onmessage = (e: MessageEvent) => {
-			const msg: Message = JSON.parse(e.data);
-			dispatch({ type: msg.type, payload: msg } as Action);
-		};
 		ws.onclose = () => {
 			console.log('WebSocket closed');
-			if (!peer) {
-				window.location.href = '/home';
-			}
 		};
+
 		setSocket(ws);
 
 		return () => {
 			ws.close();
 		};
-	}, [peer, WEBSOCKETURL, currentUser, token]);
+	}, [currentUser, token, WEBSOCKETURL]);
+
+	useEffect(() => {
+		if (peer && socket) {
+			dispatch({ type: 'clear' });
+			socket.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
+		}
+	}, [peer, socket, currentUser]);
 
 	useEffect(() => {
 		endRef.current?.scrollIntoView({ behavior: 'smooth' });
