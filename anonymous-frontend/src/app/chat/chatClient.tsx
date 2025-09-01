@@ -107,6 +107,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
+	// Single WebSocket connection that stays open
 	useEffect(() => {
 		if (!currentUser || !token) return;
 
@@ -114,18 +115,15 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 		ws.onopen = () => {
 			console.log('WebSocket connected');
-			if (peer) {
-				ws.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
-			}
 		};
 
 		ws.onmessage = (e: MessageEvent) => {
 			const msg: Message = JSON.parse(e.data);
+			console.log('Received message:', msg);
 
 			// Handle messages for current active chat
 			if (peer && ((msg.from === currentUser && msg.to === peer) ||
-				(msg.from === peer && msg.to === currentUser) ||
-				(msg.from === peer || msg.to === peer))) {
+				(msg.from === peer && msg.to === currentUser))) {
 				dispatch({ type: msg.type, payload: msg } as Action);
 			}
 
@@ -150,12 +148,24 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			console.log('WebSocket closed');
 		};
 
+		ws.onerror = (error) => {
+			console.error('WebSocket error:', error);
+		};
+
 		setSocket(ws);
 
 		return () => {
 			ws.close();
 		};
-	}, [currentUser, token, WEBSOCKETURL, peer]);
+	}, [currentUser, token, WEBSOCKETURL]);
+
+	useEffect(() => {
+		if (peer && socket && socket.readyState === WebSocket.OPEN) {
+			dispatch({ type: 'clear' });
+			console.log('Loading history for peer:', peer);
+			socket.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
+		}
+	}, [peer, socket, currentUser]);
 
 	useEffect(() => {
 		if (peer && unreadMessages[peer] > 0) {
@@ -164,19 +174,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				[peer]: 0
 			}));
 		}
-	}, [peer, unreadMessages]);
-
-	// Load history when peer changes
-	useEffect(() => {
-		if (peer && socket) {
-			dispatch({ type: 'clear' });
-			socket.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
-		}
-	}, [peer, socket, currentUser]);
-
-	useEffect(() => {
-		endRef.current?.scrollIntoView({ behavior: 'smooth' });
-	}, [messages]);
+	}, [peer]);
 
 	const sendMessage = () => {
 		if (socket && input.trim() && peer) {
