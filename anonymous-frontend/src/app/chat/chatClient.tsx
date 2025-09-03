@@ -374,7 +374,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								isOpen={showCommandDropdown}
 								onSelect={handleCommandSelect}
 								onClose={() => setShowCommandDropdown(false)}
-								inputRef={inputRef}
 							/>
 						</div>
 						<button

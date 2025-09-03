@@ -12,7 +12,6 @@ interface CommandDropdownProps {
 	isOpen: boolean;
 	onSelect: (command: string) => void;
 	onClose: () => void;
-	inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const COMMANDS: Command[] = [
@@ -28,7 +27,7 @@ const COMMANDS: Command[] = [
 	}
 ];
 
-export default function CommandDropdown({ isOpen, onSelect, onClose, inputRef }: CommandDropdownProps) {
+export default function CommandDropdown({ isOpen, onSelect, onClose }: CommandDropdownProps) {
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
