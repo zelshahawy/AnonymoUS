@@ -2,6 +2,7 @@
 'use client';
 
 import AddContactModal from '@/components/AddContactModal';
+import CommandDropdown from '@/components/CommandDropdown';
 import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
@@ -49,8 +50,10 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [input, setInput] = useState<string>('');
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
+	const [showCommandDropdown, setShowCommandDropdown] = useState(false);
 	const endRef = useRef<HTMLDivElement>(null);
 	const peerRef = useRef<string>(''); // Add this ref to track current peer
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
 
@@ -204,9 +207,32 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setInput(value);
+
+		if (value === '/') {
+			setShowCommandDropdown(true);
+		} else {
+			setShowCommandDropdown(false);
+		}
+	};
+
+	const handleCommandSelect = (command: string) => {
+		setInput(command);
+		setShowCommandDropdown(false);
+		inputRef.current?.focus();
+	};
+
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === 'Escape') {
+			setShowCommandDropdown(false);
+			return;
+		}
+
 		if (e.key === 'Enter') {
 			e.preventDefault();
+			setShowCommandDropdown(false);
 			sendMessage();
 		}
 	};
@@ -332,20 +358,29 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 
 					{/* Input area */}
-					<div className="p-4 bg-[#44475a] border-t-2 border-[#bd93f9] flex items-center">
-						<input
-							type="text"
-							placeholder="Type a message..."
-							value={input}
-							onChange={e => setInput(e.target.value)}
-							onKeyDown={handleKeyDown}
-							disabled={!peer}
-							className="flex-1 border-2 border-[#bd93f9] bg-[#282a36] text-[#f8f8f2] placeholder-[#f8f8f2] rounded px-4 py-3 mr-3 focus:outline-none focus:border-[#ff79c6] transition-colors font-medium"
-						/>
+					<div className="p-4 bg-[#44475a] border-t-2 border-[#bd93f9] flex items-center relative">
+						<div className="flex-1 relative">
+							<input
+								ref={inputRef}
+								type="text"
+								placeholder="Type a message... (/ for commands)"
+								value={input}
+								onChange={handleInputChange}
+								onKeyDown={handleKeyDown}
+								disabled={!peer}
+								className="w-full border-2 border-[#bd93f9] bg-[#282a36] text-[#f8f8f2] placeholder-[#f8f8f2] rounded px-4 py-3 mr-3 focus:outline-none focus:border-[#ff79c6] transition-colors font-medium"
+							/>
+							<CommandDropdown
+								isOpen={showCommandDropdown}
+								onSelect={handleCommandSelect}
+								onClose={() => setShowCommandDropdown(false)}
+								inputRef={inputRef}
+							/>
+						</div>
 						<button
 							onClick={sendMessage}
 							disabled={!peer}
-							className="bg-[#50fa7b] text-[#282a36] px-6 py-3 rounded font-bold hover:bg-[#ff79c6] disabled:opacity-50 disabled:hover:bg-[#50fa7b] transition-colors"
+							className="bg-[#50fa7b] text-[#282a36] px-6 py-3 rounded font-bold hover:bg-[#ff79c6] disabled:opacity-50 disabled:hover:bg-[#50fa7b] transition-colors ml-3"
 						>
 							Send
 						</button>
