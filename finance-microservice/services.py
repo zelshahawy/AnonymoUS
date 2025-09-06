@@ -1,6 +1,8 @@
+from datetime import datetime
+
 import yfinance as yf
 from fastapi import HTTPException
-from models import StockResponse, TopMover
+from models import CryptoCurrency, MarketIndices, MarketNews, StockResponse, TopMover
 
 
 def get_stock_data(symbol: str) -> StockResponse:
@@ -53,3 +55,228 @@ def get_top_movers_data() -> list[TopMover]:
 
     except Exception as e:
         raise HTTPException(500, f"Error fetching top movers: {str(e)}")
+
+
+def get_market_news(symbol: str = None, limit: int = 10) -> list[MarketNews]:
+    """Get latest market news and financial headlines"""
+    try:
+        news_data = []
+
+        if symbol:
+            ticker = yf.Ticker(symbol.upper())
+            news = ticker.news
+
+            for article in news[:limit]:
+                news_data.append(
+                    MarketNews(
+                        title=article.get("title", ""),
+                        summary=article.get("summary", ""),
+                        url=article.get("link", ""),
+                        source=article.get("publisher", ""),
+                        timestamp=datetime.fromtimestamp(
+                            article.get("providerPublishTime", 0)
+                        ),
+                    )
+                )
+        else:
+            # Get general market news from major tickers
+            tickers = ["SPY", "AAPL", "TSLA", "NVDA", "MSFT"]
+
+            for ticker_symbol in tickers[:3]:  # Limit to avoid rate limits
+                ticker = yf.Ticker(ticker_symbol)
+                news = ticker.news
+
+                for article in news[:2]:  # 2 articles per ticker
+                    news_data.append(
+                        MarketNews(
+                            title=article.get("title", ""),
+                            summary=article.get("summary", ""),
+                            url=article.get("link", ""),
+                            source=article.get("publisher", ""),
+                            timestamp=datetime.fromtimestamp(
+                                article.get("providerPublishTime", 0)
+                            ),
+                        )
+                    )
+
+        return news_data[:limit]
+
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching market news: {str(e)}")
+
+
+def get_crypto_prices(
+    symbols: list[str] = ["BTC-USD", "ETH-USD", "ADA-USD"],
+) -> list[CryptoCurrency]:
+    """Get cryptocurrency prices"""
+    try:
+        crypto_data = []
+
+        for symbol in symbols:
+            ticker = yf.Ticker(symbol)
+            data = ticker.history(period="1d")
+
+            if not data.empty:
+                last = data.iloc[-1]
+                crypto_data.append(
+                    CryptoCurrency(
+                        symbol=symbol.replace("-USD", ""),
+                        price=round(last["Close"], 2),
+                        change=round(
+                            (last["Close"] - last["Open"]) / last["Open"] * 100, 2
+                        ),
+                        volume=int(last["Volume"]),
+                    )
+                )
+
+        return crypto_data
+
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching crypto prices: {str(e)}")
+
+
+def get_market_indices() -> MarketIndices:
+    """Get major market indices (S&P 500, Dow, Nasdaq)"""
+    try:
+        indices = {"^GSPC": "S&P 500", "^DJI": "Dow Jones", "^IXIC": "Nasdaq"}
+
+        results = {}
+
+        for symbol, name in indices.items():
+            ticker = yf.Ticker(symbol)
+            data = ticker.history(period="1d")
+
+            if not data.empty:
+                last = data.iloc[-1]
+                results[name.lower().replace(" ", "_")] = {
+                    "name": name,
+                    "value": round(last["Close"], 2),
+                    "change": round(
+                        (last["Close"] - last["Open"]) / last["Open"] * 100, 2
+                    ),
+                }
+
+        return MarketIndices(**results)
+
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching market indices: {str(e)}")
+
+
+def get_sector_performance() -> dict:
+    """Get sector ETF performance"""
+    try:
+        sectors = {
+            "XLK": "Technology",
+            "XLF": "Financials",
+            "XLV": "Healthcare",
+            "XLE": "Energy",
+            "XLI": "Industrials",
+            "XLP": "Consumer Staples",
+            "XLY": "Consumer Discretionary",
+            "XLB": "Materials",
+            "XLRE": "Real Estate",
+        }
+
+        sector_data = []
+
+        for etf, sector_name in sectors.items():
+            ticker = yf.Ticker(etf)
+            data = ticker.history(period="1d")
+
+            if not data.empty:
+                last = data.iloc[-1]
+                sector_data.append(
+                    {
+                        "sector": sector_name,
+                        "etf": etf,
+                        "price": round(last["Close"], 2),
+                        "change": round(
+                            (last["Close"] - last["Open"]) / last["Open"] * 100, 2
+                        ),
+                    }
+                )
+
+        # Sort by performance
+        sector_data.sort(key=lambda x: x["change"], reverse=True)
+
+        return {"sectors": sector_data}
+
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching sector performance: {str(e)}")
+
+
+def get_trending_stocks() -> list[dict]:
+    """Get trending/most active stocks"""
+    try:
+        # Get most active stocks
+        trending = []
+        active_tickers = [
+            "AAPL",
+            "TSLA",
+            "NVDA",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "NFLX",
+            "AMD",
+            "INTC",
+        ]
+
+        for symbol in active_tickers[:8]:  # Limit to 8 stocks
+            ticker = yf.Ticker(symbol)
+            data = ticker.history(period="1d")
+
+            if not data.empty:
+                last = data.iloc[-1]
+                trending.append(
+                    {
+                        "symbol": symbol,
+                        "price": round(last["Close"], 2),
+                        "change": round(
+                            (last["Close"] - last["Open"]) / last["Open"] * 100, 2
+                        ),
+                        "volume": int(last["Volume"]),
+                    }
+                )
+
+        # Sort by volume (most active)
+        trending.sort(key=lambda x: x["volume"], reverse=True)
+
+        return trending
+
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching trending stocks: {str(e)}")
+
+
+def search_stocks(query: str, limit: int = 10) -> list[dict]:
+    """Search for stocks by symbol or company name"""
+    try:
+        # This is a simple implementation - you could enhance with a proper search API
+        common_stocks = [
+            {"symbol": "AAPL", "name": "Apple Inc."},
+            {"symbol": "GOOGL", "name": "Alphabet Inc."},
+            {"symbol": "MSFT", "name": "Microsoft Corporation"},
+            {"symbol": "TSLA", "name": "Tesla, Inc."},
+            {"symbol": "AMZN", "name": "Amazon.com, Inc."},
+            {"symbol": "META", "name": "Meta Platforms, Inc."},
+            {"symbol": "NVDA", "name": "NVIDIA Corporation"},
+            {"symbol": "NFLX", "name": "Netflix, Inc."},
+            {"symbol": "AMD", "name": "Advanced Micro Devices"},
+            {"symbol": "INTC", "name": "Intel Corporation"},
+        ]
+
+        query_lower = query.lower()
+        results = []
+
+        for stock in common_stocks:
+            if (
+                query_lower in stock["symbol"].lower()
+                or query_lower in stock["name"].lower()
+            ):
+                results.append(stock)
+
+        return results[:limit]
+
+    except Exception as e:
+        raise HTTPException(500, f"Error searching stocks: {str(e)}")
