@@ -208,7 +208,6 @@ def get_sector_performance() -> dict:
 def get_trending_stocks() -> list[dict]:
     """Get trending/most active stocks"""
     try:
-        # Get most active stocks
         trending = []
         active_tickers = [
             "AAPL",
@@ -223,7 +222,7 @@ def get_trending_stocks() -> list[dict]:
             "INTC",
         ]
 
-        for symbol in active_tickers[:8]:  # Limit to 8 stocks
+        for symbol in active_tickers[:8]:
             ticker = yf.Ticker(symbol)
             data = ticker.history(period="1d")
 
@@ -247,36 +246,3 @@ def get_trending_stocks() -> list[dict]:
 
     except Exception as e:
         raise HTTPException(500, f"Error fetching trending stocks: {str(e)}")
-
-
-def search_stocks(query: str, limit: int = 10) -> list[dict]:
-    """Search for stocks by symbol or company name"""
-    try:
-        # This is a simple implementation - you could enhance with a proper search API
-        common_stocks = [
-            {"symbol": "AAPL", "name": "Apple Inc."},
-            {"symbol": "GOOGL", "name": "Alphabet Inc."},
-            {"symbol": "MSFT", "name": "Microsoft Corporation"},
-            {"symbol": "TSLA", "name": "Tesla, Inc."},
-            {"symbol": "AMZN", "name": "Amazon.com, Inc."},
-            {"symbol": "META", "name": "Meta Platforms, Inc."},
-            {"symbol": "NVDA", "name": "NVIDIA Corporation"},
-            {"symbol": "NFLX", "name": "Netflix, Inc."},
-            {"symbol": "AMD", "name": "Advanced Micro Devices"},
-            {"symbol": "INTC", "name": "Intel Corporation"},
-        ]
-
-        query_lower = query.lower()
-        results = []
-
-        for stock in common_stocks:
-            if (
-                query_lower in stock["symbol"].lower()
-                or query_lower in stock["name"].lower()
-            ):
-                results.append(stock)
-
-        return results[:limit]
-
-    except Exception as e:
-        raise HTTPException(500, f"Error searching stocks: {str(e)}")
