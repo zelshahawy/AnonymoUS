@@ -13,7 +13,7 @@ import (
 
 var RecaptchaSecret = config.Config().GetString("recaptcha_secret")
 
-// LoginHandler handles the login request, parses either JSON or form data,
+// handles the login request, parses either JSON or form data,
 // validates it, and returns a JWT token.
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("LoginHandler called")
