@@ -24,6 +24,26 @@ const COMMANDS: Command[] = [
 		command: '/top-movers',
 		description: 'View today\'s biggest gainers and losers',
 		icon: '📊'
+	},
+	{
+		command: '/news ',
+		description: 'Get market news (e.g., /news TSLA or /news)',
+		icon: '📰'
+	},
+	{
+		command: '/crypto',
+		description: 'View cryptocurrency prices',
+		icon: '₿'
+	},
+	{
+		command: '/indices',
+		description: 'View major market indices (S&P 500, Dow, Nasdaq)',
+		icon: '📊'
+	},
+	{
+		command: '/trending',
+		description: 'View most active stocks',
+		icon: '🔥'
 	}
 ];
 
