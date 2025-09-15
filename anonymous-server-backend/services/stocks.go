@@ -3,6 +3,8 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -80,13 +82,22 @@ func httpGetJSON(url string, out interface{}) error {
 	client := http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
+		log.Printf("httpGetJSON GET error: %v url=%s", err, url)
 		return err
 	}
 	defer resp.Body.Close()
+
+	bodyBytes, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("service returned %d", resp.StatusCode)
+		log.Printf("httpGetJSON non-OK response: status=%d url=%s body=%s", resp.StatusCode, url, string(bodyBytes))
+		return fmt.Errorf("service returned %d: %s", resp.StatusCode, string(bodyBytes))
 	}
-	return json.NewDecoder(resp.Body).Decode(out)
+
+	if err := json.Unmarshal(bodyBytes, out); err != nil {
+		log.Printf("httpGetJSON decode error: %v url=%s body=%s", err, url, string(bodyBytes))
+		return err
+	}
+	return nil
 }
 
 // formatStockLines formats an array of simple stock maps into lines

@@ -71,23 +71,20 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 func processBotCommands(ctx context.Context, msg *hub.Message) {
 	log.Printf("Processing bot commands for message: %s", msg.Body)
 
-	// Get all bot responses from different command handlers
-	var allBotResponses []services.BotResponse
+	var allResponses []services.BotResponse
 
-	// Collect responses from stock command handler
-	stockResponses := services.HandleStockCommand(msg)
-	log.Printf("Stock command returned %d responses", len(stockResponses))
-	allBotResponses = append(allBotResponses, stockResponses...)
+	// Collect responses from all command handlers
+	allResponses = append(allResponses, services.HandleStockCommand(msg)...)
+	allResponses = append(allResponses, services.HandleTopMoversCommand(msg)...)
+	allResponses = append(allResponses, services.HandleNewsCommand(msg)...)
+	allResponses = append(allResponses, services.HandleCryptoCommand(msg)...)
+	allResponses = append(allResponses, services.HandleIndicesCommand(msg)...)
+	allResponses = append(allResponses, services.HandleTrendingCommand(msg)...)
 
-	// Collect responses from top movers command handler
-	topMoversResponses := services.HandleTopMoversCommand(msg)
-	log.Printf("Top movers command returned %d responses", len(topMoversResponses))
-	allBotResponses = append(allBotResponses, topMoversResponses...)
-
-	log.Printf("Total bot responses: %d", len(allBotResponses))
+	log.Printf("Total bot responses: %d", len(allResponses))
 
 	// Process each bot response
-	for i, bot := range allBotResponses {
+	for i, bot := range allResponses {
 		log.Printf("Processing bot response %d: %s", i+1, bot.Body)
 
 		botMsg := hub.Message{
