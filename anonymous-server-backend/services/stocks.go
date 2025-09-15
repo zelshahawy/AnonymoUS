@@ -75,6 +75,61 @@ func fetchTopMovers() ([]StockResponse, error) {
 	return out, nil
 }
 
+// httpGetJSON performs a GET and decodes JSON into out
+func httpGetJSON(url string, out interface{}) error {
+	client := http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("service returned %d", resp.StatusCode)
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// formatStockLines formats an array of simple stock maps into lines
+func formatStockLines(title string, stocks []map[string]interface{}, limit int) string {
+	lines := []string{title, ""}
+	for i, s := range stocks {
+		if i >= limit {
+			break
+		}
+		sym, _ := s["symbol"].(string)
+		price, _ := s["price"].(float64)
+		change, _ := s["change"].(float64)
+		emoji := "🔴"
+		if change > 0 {
+			emoji = "🟢"
+		}
+		lines = append(lines, fmt.Sprintf("%s **%s** $%.2f (%+.1f%%)", emoji, sym, price, change))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// formatNewsLines formats news items into a compact list
+func formatNewsLines(sym string, news []map[string]interface{}, limit int) string {
+	lines := []string{}
+	if sym != "" {
+		lines = append(lines, fmt.Sprintf("📰 **%s News:**", sym))
+	} else {
+		lines = append(lines, "📰 **Market News:**")
+	}
+	lines = append(lines, "")
+	for i, a := range news {
+		if i >= limit {
+			break
+		}
+		title, _ := a["title"].(string)
+		if len(title) > 100 {
+			title = title[:100] + "..."
+		}
+		lines = append(lines, fmt.Sprintf("• %s", title))
+	}
+	return strings.Join(lines, "\n")
+}
+
 type BotResponse struct {
 	From string
 	Body string
@@ -162,4 +217,101 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 		From: "bot",
 		Body: text,
 	}}
+}
+
+// parseNewsCommand returns the symbol if text starts with /news
+func parseNewsCommand(text string) (symbol string, ok bool) {
+	parts := strings.Fields(text)
+	if len(parts) >= 1 && parts[0] == "/news" {
+		if len(parts) == 2 {
+			return strings.ToUpper(parts[1]), true
+		}
+		return "", true
+	}
+	return "", false
+}
+
+// HandleNewsCommand returns bot messages for news commands
+func HandleNewsCommand(in *hub.Message) []BotResponse {
+	sym, ok := parseNewsCommand(in.Body)
+	if !ok {
+		return nil
+	}
+
+	var newsData []map[string]interface{}
+	url := stockAPI + "/api/news?limit=5"
+	if sym != "" {
+		url = stockAPI + "/api/news?symbol=" + sym + "&limit=3"
+	}
+	if err := httpGetJSON(url, &newsData); err != nil {
+		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch news: %v", err)}}
+	}
+
+	return []BotResponse{{From: "bot", Body: formatNewsLines(sym, newsData, 3)}}
+}
+
+// parseCryptoCommand checks for /crypto
+func parseCryptoCommand(text string) bool {
+	parts := strings.Fields(text)
+	return len(parts) == 1 && parts[0] == "/crypto"
+}
+
+// HandleCryptoCommand returns crypto prices
+func HandleCryptoCommand(in *hub.Message) []BotResponse {
+	if !parseCryptoCommand(in.Body) {
+		return nil
+	}
+
+	var cryptoData []map[string]interface{}
+	if err := httpGetJSON(stockAPI+"/api/crypto", &cryptoData); err != nil {
+		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch crypto data: %v", err)}}
+	}
+
+	return []BotResponse{{From: "bot", Body: formatStockLines("₿ **Crypto Prices:**", cryptoData, len(cryptoData))}}
+}
+
+// parseIndicesCommand checks for /indices
+func parseIndicesCommand(text string) bool {
+	parts := strings.Fields(text)
+	return len(parts) == 1 && parts[0] == "/indices"
+}
+
+// HandleIndicesCommand returns market indices
+func HandleIndicesCommand(in *hub.Message) []BotResponse {
+	if !parseIndicesCommand(in.Body) {
+		return nil
+	}
+
+	var idx map[string]map[string]interface{}
+	if err := httpGetJSON(stockAPI+"/api/indices", &idx); err != nil {
+		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch indices data: %v", err)}}
+	}
+
+	// convert to slice of maps for formatting
+	vals := []map[string]interface{}{}
+	for _, v := range idx {
+		vals = append(vals, v)
+	}
+
+	return []BotResponse{{From: "bot", Body: formatStockLines("📊 **Market Indices:**", vals, len(vals))}}
+}
+
+// parseTrendingCommand checks for /trending
+func parseTrendingCommand(text string) bool {
+	parts := strings.Fields(text)
+	return len(parts) == 1 && parts[0] == "/trending"
+}
+
+// HandleTrendingCommand returns trending stocks
+func HandleTrendingCommand(in *hub.Message) []BotResponse {
+	if !parseTrendingCommand(in.Body) {
+		return nil
+	}
+
+	var trending []map[string]interface{}
+	if err := httpGetJSON(stockAPI+"/api/trending", &trending); err != nil {
+		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch trending data: %v", err)}}
+	}
+
+	return []BotResponse{{From: "bot", Body: formatStockLines("🔥 **Trending Stocks:**", trending, 5)}}
 }
