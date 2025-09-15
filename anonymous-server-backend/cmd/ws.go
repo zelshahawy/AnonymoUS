@@ -83,7 +83,6 @@ func processBotCommands(ctx context.Context, msg *hub.Message) {
 
 	log.Printf("Total bot responses: %d", len(allResponses))
 
-	// Process each bot response
 	for i, bot := range allResponses {
 		log.Printf("Processing bot response %d: %s", i+1, bot.Body)
 
@@ -100,7 +99,7 @@ func processBotCommands(ctx context.Context, msg *hub.Message) {
 			From:  botMsg.From,
 			To:    botMsg.To,
 			Body:  botMsg.Body,
-			Type:  botMsg.Type, // Save the type
+			Type:  botMsg.Type,
 		}); err != nil {
 			log.Printf("failed to save bot message %s: %v", botMsg.Messageid, err)
 		} else {
