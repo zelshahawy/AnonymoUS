@@ -75,6 +75,61 @@ func fetchTopMovers() ([]StockResponse, error) {
 	return out, nil
 }
 
+// httpGetJSON performs a GET and decodes JSON into out
+func httpGetJSON(url string, out interface{}) error {
+	client := http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("service returned %d", resp.StatusCode)
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// formatStockLines formats an array of simple stock maps into lines
+func formatStockLines(title string, stocks []map[string]interface{}, limit int) string {
+	lines := []string{title, ""}
+	for i, s := range stocks {
+		if i >= limit {
+			break
+		}
+		sym, _ := s["symbol"].(string)
+		price, _ := s["price"].(float64)
+		change, _ := s["change"].(float64)
+		emoji := "🔴"
+		if change > 0 {
+			emoji = "🟢"
+		}
+		lines = append(lines, fmt.Sprintf("%s **%s** $%.2f (%+.1f%%)", emoji, sym, price, change))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// formatNewsLines formats news items into a compact list
+func formatNewsLines(sym string, news []map[string]interface{}, limit int) string {
+	lines := []string{}
+	if sym != "" {
+		lines = append(lines, fmt.Sprintf("📰 **%s News:**", sym))
+	} else {
+		lines = append(lines, "📰 **Market News:**")
+	}
+	lines = append(lines, "")
+	for i, a := range news {
+		if i >= limit {
+			break
+		}
+		title, _ := a["title"].(string)
+		if len(title) > 100 {
+			title = title[:100] + "..."
+		}
+		lines = append(lines, fmt.Sprintf("• %s", title))
+	}
+	return strings.Join(lines, "\n")
+}
+
 type BotResponse struct {
 	From string
 	Body string
@@ -164,7 +219,7 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 	}}
 }
 
-// parseNewsCommand returns the symbol (optional) if text starts with /news
+// parseNewsCommand returns the symbol if text starts with /news
 func parseNewsCommand(text string) (symbol string, ok bool) {
 	parts := strings.Fields(text)
 	if len(parts) >= 1 && parts[0] == "/news" {
@@ -183,47 +238,16 @@ func HandleNewsCommand(in *hub.Message) []BotResponse {
 		return nil
 	}
 
-	client := http.Client{Timeout: 5 * time.Second}
-	var url string
+	var newsData []map[string]interface{}
+	url := stockAPI + "/api/news?limit=5"
 	if sym != "" {
 		url = stockAPI + "/api/news?symbol=" + sym + "&limit=3"
-	} else {
-		url = stockAPI + "/api/news?limit=5"
 	}
-
-	resp, err := client.Get(url)
-	if err != nil {
+	if err := httpGetJSON(url, &newsData); err != nil {
 		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch news: %v", err)}}
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ News service error: %d", resp.StatusCode)}}
-	}
 
-	var newsData []map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&newsData); err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not parse news data: %v", err)}}
-	}
-
-	lines := []string{}
-	if sym != "" {
-		lines = append(lines, fmt.Sprintf("📰 **%s News:**", sym))
-	} else {
-		lines = append(lines, "📰 **Market News:**")
-	}
-	lines = append(lines, "")
-	for i, a := range newsData {
-		if i >= 3 {
-			break
-		}
-		title, _ := a["title"].(string)
-		if len(title) > 100 {
-			title = title[:100] + "..."
-		}
-		lines = append(lines, fmt.Sprintf("• %s", title))
-	}
-
-	return []BotResponse{{From: "bot", Body: strings.Join(lines, "\n")}}
+	return []BotResponse{{From: "bot", Body: formatNewsLines(sym, newsData, 3)}}
 }
 
 // parseCryptoCommand checks for /crypto
@@ -237,34 +261,13 @@ func HandleCryptoCommand(in *hub.Message) []BotResponse {
 	if !parseCryptoCommand(in.Body) {
 		return nil
 	}
-	client := http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(stockAPI + "/api/crypto")
-	if err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch crypto data: %v", err)}}
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Crypto service error: %d", resp.StatusCode)}}
-	}
 
 	var cryptoData []map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&cryptoData); err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not parse crypto data: %v", err)}}
+	if err := httpGetJSON(stockAPI+"/api/crypto", &cryptoData); err != nil {
+		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch crypto data: %v", err)}}
 	}
 
-	lines := []string{"₿ **Crypto Prices:**", ""}
-	for _, c := range cryptoData {
-		sym, _ := c["symbol"].(string)
-		price, _ := c["price"].(float64)
-		change, _ := c["change"].(float64)
-		emoji := "🔴"
-		if change > 0 {
-			emoji = "🟢"
-		}
-		lines = append(lines, fmt.Sprintf("%s **%s** $%.2f (%+.1f%%)", emoji, sym, price, change))
-	}
-
-	return []BotResponse{{From: "bot", Body: strings.Join(lines, "\n")}}
+	return []BotResponse{{From: "bot", Body: formatStockLines("₿ **Crypto Prices:**", cryptoData, len(cryptoData))}}
 }
 
 // parseIndicesCommand checks for /indices
@@ -278,34 +281,19 @@ func HandleIndicesCommand(in *hub.Message) []BotResponse {
 	if !parseIndicesCommand(in.Body) {
 		return nil
 	}
-	client := http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(stockAPI + "/api/indices")
-	if err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch indices data: %v", err)}}
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Indices service error: %d", resp.StatusCode)}}
-	}
 
 	var idx map[string]map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&idx); err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not parse indices data: %v", err)}}
+	if err := httpGetJSON(stockAPI+"/api/indices", &idx); err != nil {
+		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch indices data: %v", err)}}
 	}
 
-	lines := []string{"📊 **Market Indices:**", ""}
+	// convert to slice of maps for formatting
+	vals := []map[string]interface{}{}
 	for _, v := range idx {
-		name, _ := v["name"].(string)
-		value, _ := v["value"].(float64)
-		change, _ := v["change"].(float64)
-		emoji := "🔴"
-		if change > 0 {
-			emoji = "🟢"
-		}
-		lines = append(lines, fmt.Sprintf("%s **%s** %.2f (%+.1f%%)", emoji, name, value, change))
+		vals = append(vals, v)
 	}
 
-	return []BotResponse{{From: "bot", Body: strings.Join(lines, "\n")}}
+	return []BotResponse{{From: "bot", Body: formatStockLines("📊 **Market Indices:**", vals, len(vals))}}
 }
 
 // parseTrendingCommand checks for /trending
@@ -319,35 +307,11 @@ func HandleTrendingCommand(in *hub.Message) []BotResponse {
 	if !parseTrendingCommand(in.Body) {
 		return nil
 	}
-	client := http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(stockAPI + "/api/trending")
-	if err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch trending data: %v", err)}}
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Trending service error: %d", resp.StatusCode)}}
-	}
 
 	var trending []map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&trending); err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not parse trending data: %v", err)}}
+	if err := httpGetJSON(stockAPI+"/api/trending", &trending); err != nil {
+		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch trending data: %v", err)}}
 	}
 
-	lines := []string{"🔥 **Trending Stocks:**", ""}
-	for i, s := range trending {
-		if i >= 5 {
-			break
-		}
-		sym, _ := s["symbol"].(string)
-		price, _ := s["price"].(float64)
-		change, _ := s["change"].(float64)
-		emoji := "🔴"
-		if change > 0 {
-			emoji = "🟢"
-		}
-		lines = append(lines, fmt.Sprintf("%s **%s** $%.2f (%+.1f%%)", emoji, sym, price, change))
-	}
-
-	return []BotResponse{{From: "bot", Body: strings.Join(lines, "\n")}}
+	return []BotResponse{{From: "bot", Body: formatStockLines("🔥 **Trending Stocks:**", trending, 5)}}
 }
