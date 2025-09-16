@@ -13,7 +13,6 @@ import (
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	frontend := config.Config().GetString("frontend_url")
 
-	// 1) Try to parse the JWT so we know which user is logging out
 	if cookie, err := r.Cookie("auth_token"); err == nil {
 		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.StandardClaims{}, func(t *jwt.Token) (any, error) {
 			return services.SecretKey, nil
@@ -22,7 +21,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 			if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
 				services.RevokeJTI(claims.Id, time.Unix(claims.ExpiresAt, 0))
 				user := claims.Subject
-				// 2) If it's one of the test accounts, delete their data
 				if user == "testuser1" || user == "testuser2" {
 					if err := services.DeleteUserData(user); err != nil {
 						log.Printf("failed to delete data for %s: %v", user, err)
@@ -32,7 +30,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 3) Clear the auth_token cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    "",
@@ -42,6 +39,5 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode,
 	})
 
-	// 4) Redirect back to your frontend
 	http.Redirect(w, r, frontend+"/", http.StatusSeeOther)
 }

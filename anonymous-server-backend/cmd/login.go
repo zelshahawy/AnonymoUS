@@ -13,7 +13,7 @@ import (
 
 var RecaptchaSecret = config.Config().GetString("recaptcha_secret")
 
-// LoginHandler handles the login request, parses either JSON or form data,
+// handles the login request, parses either JSON or form data,
 // validates it, and returns a JWT token.
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("LoginHandler called")
@@ -42,8 +42,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fmt.Printf("recaptchaToken=%q\n", loginRequest.RecaptchaToken)
-
 	if err := loginRequest.Validate(); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid request: %v", err), http.StatusBadRequest)
 		return
@@ -59,8 +57,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    response.Token,
-		Path:     "/",                            // or whatever path your app uses
-		Expires:  time.Now().Add(24 * time.Hour), // time.Time
+		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,

@@ -15,8 +15,6 @@ import (
 	"github.com/zelshahawy/Anonymous_backend/config"
 )
 
-// LoginRequest represents the login request payload
-
 type LoginRequest struct {
 	Username       string `json:"username"`
 	Password       string `json:"password"`
@@ -51,8 +49,8 @@ type LoginResponse struct {
 type User struct {
 	Username     string `json:"username"`
 	Password     string `json:"password"`
-	PasswordHash string `bson:"passwordHash,omitempty"` // only for local users
-	GoogleID     string `bson:"googleID,omitempty"`     // only for Google users
+	PasswordHash string `bson:"passwordHash,omitempty"`
+	GoogleID     string `bson:"googleID,omitempty"`
 	Email        string `bson:"email,omitempty"`
 	Active       bool   `bson:"active"`
 }
