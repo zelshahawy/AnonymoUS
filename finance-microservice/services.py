@@ -136,30 +136,73 @@ def get_crypto_prices(
 
 
 def get_market_indices() -> MarketIndices:
-    """Get major market indices (S&P 500, Dow, Nasdaq)"""
+    """
+    Get major U.S. market indices (S&P 500, Dow, Nasdaq Composite).
+
+    Returns a MarketIndices model with fields:
+    - sp500, dow_jones, nasdaq
+    Each field is a dict: {"name": str, "value": float, "change": float}
+    where `change` is % change vs previous close.
+    """
     try:
-        indices = {"^GSPC": "S&P 500", "^DJI": "Dow Jones", "^IXIC": "Nasdaq"}
+        index_map: dict[str, tuple[str, str]] = {
+            "^GSPC": ("sp500", "S&P 500"),
+            "^DJI": ("dow_jones", "Dow Jones"),
+            "^IXIC": ("nasdaq", "Nasdaq Composite"),
+        }
 
-        results = {}
+        tickers = list(index_map.keys())
 
-        for symbol, name in indices.items():
-            ticker = yf.Ticker(symbol)
-            data = ticker.history(period="1d")
+        df = yf.download(
+            tickers=tickers,
+            period="2d",
+            interval="1d",
+            group_by="ticker",
+            auto_adjust=False,
+            threads=True,
+            progress=False,
+        )
 
-            if not data.empty:
-                last = data.iloc[-1]
-                results[name.lower().replace(" ", "_")] = {
+        results: dict[str, dict] = {}
+
+        for symbol, (field, name) in index_map.items():
+            try:
+                data = df if len(tickers) == 1 else df[symbol]
+                if data.empty:
+                    continue
+
+                last_two = data.tail(2)
+                if len(last_two) == 1:
+                    last = last_two.iloc[-1]
+                    prev_close = float(last.get("Close", 0.0))
+                else:
+                    prev = last_two.iloc[0]
+                    last = last_two.iloc[1]
+                    prev_close = float(prev.get("Close", 0.0))
+
+                close = float(last.get("Close", 0.0))
+                if prev_close:
+                    pct_change = (close - prev_close) / prev_close * 100.0
+                else:
+                    pct_change = 0.0
+
+                results[field] = {
                     "name": name,
-                    "value": round(last["Close"], 2),
-                    "change": round(
-                        (last["Close"] - last["Open"]) / last["Open"] * 100, 2
-                    ),
+                    "value": round(close, 2),
+                    "change": round(pct_change, 2),
                 }
+            except Exception:
+                continue
+
+        if not results:
+            raise RuntimeError("No index data returned.")
 
         return MarketIndices(**results)
 
     except Exception as e:
-        raise HTTPException(500, f"Error fetching market indices: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching market indices: {e}"
+        )
 
 
 def get_sector_performance() -> dict:
@@ -239,7 +282,6 @@ def get_trending_stocks() -> list[dict]:
                     }
                 )
 
-        # Sort by volume (most active)
         trending.sort(key=lambda x: x["volume"], reverse=True)
 
         return trending

@@ -26,11 +26,6 @@ const COMMANDS: Command[] = [
 		icon: '📊'
 	},
 	{
-		command: '/news ',
-		description: 'Get market news (e.g., /news TSLA or /news)',
-		icon: '📰'
-	},
-	{
 		command: '/crypto',
 		description: 'View cryptocurrency prices',
 		icon: '₿'
