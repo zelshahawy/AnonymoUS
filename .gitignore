@@ -2,3 +2,5 @@
 cookies.txt
 env.local
 Anonymous_backend
+
+uv.lock
