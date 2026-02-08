@@ -25,6 +25,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      # -------------------------
+      # Go (anonymous-server-backend)
+      # -------------------------
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -43,39 +46,48 @@ jobs:
           gofmt -w .
           "$HOME/go/bin/goimports" -w .
 
+      # -------------------------
+      # Node/Next/TS (anonymous-frontend) using pnpm
+      # -------------------------
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: anonymous-frontend/pnpm-lock.yaml
 
       - name: Install frontend deps
         working-directory: anonymous-frontend
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+          pnpm install --frozen-lockfile
 
       - name: Format Next/TS (Prettier + optional ESLint fix)
         working-directory: anonymous-frontend
         run: |
-          if node -e "const p=require('./package.json'); process.exit((p.devDependencies?.prettier||p.dependencies?.prettier||p.scripts?.format)?0:1)"; then
+          if node -e "const p=require('./package.json'); process.exit((p.scripts?.format||p.devDependencies?.prettier||p.dependencies?.prettier)?0:1)"; then
             if node -e "const p=require('./package.json'); process.exit(p.scripts?.format?0:1)"; then
-              npm run format
+              pnpm run format
             else
-              npx prettier -w .
+              pnpm exec prettier -w .
             fi
           else
             echo "Prettier not found in package.json; skipping."
           fi
 
           if node -e "const p=require('./package.json'); process.exit((p.devDependencies?.eslint||p.dependencies?.eslint)?0:1)"; then
-            npx eslint . --fix
+            pnpm exec eslint . --fix
           else
             echo "ESLint not found in package.json; skipping."
           fi
 
+      # -------------------------
+      # Create PR with all changes
+      # -------------------------
       - name: Create pull request if changes
         uses: peter-evans/create-pull-request@v6
         with:
