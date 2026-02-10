@@ -1,11 +1,9 @@
 "use client";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { FC, useEffect, useState } from "react";
 import "./Navbar.css";
-
-const UserProfile = dynamic(() => import("./UserProfile"), { ssr: false });
+import UserProfile from "./UserProfile";
 
 const NavItem: FC<{
 	name: string;

@@ -20,21 +20,22 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 			});
 			if (res.ok) {
 				const data = await res.json();
+				console.log('User fetched:', data.username);
 				setUser(data.username);
 				return;
+			} else {
+				console.log('Failed to fetch user, status:', res.status);
 			}
 		} catch (err) {
 			console.error('Failed to fetch user:', err);
 		}
 
-		setUser(propUser);
+		setUser(undefined);
 	};
 
 	useEffect(() => {
-		// Check on mount
 		checkUser();
 
-		// Check when page regains focus
 		const handleFocus = () => checkUser();
 		const handleVisibilityChange = () => {
 			if (!document.hidden) {

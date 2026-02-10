@@ -143,7 +143,7 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 }
 
 func GetCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
-	username, ok := r.Context().Value("username").(string)
+	username, ok := services.UserIDFromContext(r.Context())
 	if !ok || username == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
