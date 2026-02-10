@@ -299,8 +299,9 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				{/* Main Chat Pane */}
 				<div className="flex-1 flex flex-col">
 					{/* Header */}
-					<div className="px-4 py-3 bg-[#44475a] text-[#f8f8f2] flex items-center border-b-2 border-[#bd93f9]">
-						<div className="flex-1">
+					<div className="px-4 py-3 bg-[#44475a] text-[#f8f8f2] flex items-center justify-between border-b-2 border-[#bd93f9]">
+						<UserProfile user={currentUser} />
+						<div className="flex-1 text-center">
 							{peer ? (
 								<span className="font-semibold">
 									Chatting with <strong className="text-[#50fa7b]">{peer}</strong>
@@ -309,18 +310,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								<span className="text-[#f8f8f2]">Select a contact to start chatting</span>
 							)}
 						</div>
-						<div className="flex space-x-2">
-							<Link href="/">
-								<button className="px-4 py-2 bg-[#50fa7b] text-[#282a36] rounded font-bold hover:bg-[#ff79c6] transition-colors">
-									Home
-								</button>
-							</Link>
-							<Link href="/logout">
-								<button className="px-4 py-2 bg-[#ff5555] text-[#f8f8f2] rounded font-bold hover:bg-[#ff79c6] transition-colors">
-									Logout
-								</button>
-							</Link>
-						</div>
+						<Link href="/">
+							<button className="px-4 py-2 bg-[#50fa7b] text-[#282a36] rounded font-bold hover:bg-[#ff79c6] transition-colors">
+								Home
+							</button>
+						</Link>
 					</div>
 
 					{/* Messages area */}
