@@ -10,25 +10,25 @@ interface UserProfileProps {
 
 export default function UserProfile({ user: propUser }: UserProfileProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	const [user, setUser] = useState<string | undefined>(propUser);
-	const [mounted, setMounted] = useState(false);
+	const [user, setUser] = useState<string | undefined>(undefined);
+	const [isClient, setIsClient] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		setMounted(true);
-		// Initial check for logged-in user
-		const storedUser = typeof window !== 'undefined' ? window.localStorage.getItem('user') : null;
+		setIsClient(true);
+		// Check localStorage for logged-in user
+		const storedUser = window.localStorage.getItem('user');
 		if (storedUser) {
 			setUser(storedUser);
 		} else {
 			setUser(propUser);
 		}
-	}, []);
+	}, [propUser]);
 
 	useEffect(() => {
 		// Listen for storage changes (e.g., from other tabs or logout)
 		const handleStorageChange = () => {
-			const storedUser = typeof window !== 'undefined' ? window.localStorage.getItem('user') : null;
+			const storedUser = window.localStorage.getItem('user');
 			if (storedUser) {
 				setUser(storedUser);
 			} else {
@@ -37,7 +37,12 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 		};
 
 		window.addEventListener('storage', handleStorageChange);
-		return () => window.removeEventListener('storage', handleStorageChange);
+		// Also check on focus to catch same-tab changes
+		window.addEventListener('focus', handleStorageChange);
+		return () => {
+			window.removeEventListener('storage', handleStorageChange);
+			window.removeEventListener('focus', handleStorageChange);
+		};
 	}, [propUser]);
 
 	useEffect(() => {
@@ -54,23 +59,6 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 	const getInitials = (name: string) => {
 		return name.slice(0, 2).toUpperCase();
 	};
-
-	// Show loading state while mounting
-	if (!mounted) {
-		return (
-			<div className="relative" ref={dropdownRef}>
-				<button
-					className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#44475a] text-[#f8f8f2] font-bold border-2 border-[#bd93f9]"
-					disabled
-				>
-					<div className="w-6 h-6 rounded-full bg-[#282a36] flex items-center justify-center">
-						<Icon path={mdiAccount} size={0.5} color="#bd93f9" />
-					</div>
-					<span className="text-sm">Profile</span>
-				</button>
-			</div>
-		);
-	}
 
 	if (!user) {
 		return (
