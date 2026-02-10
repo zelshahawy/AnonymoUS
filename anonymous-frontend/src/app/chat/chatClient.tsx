@@ -278,15 +278,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 					<div className="flex-1 overflow-y-auto">
 						<p className="p-4 text-[#bd93f9] font-semibold">Your username: {currentUser}</p>
-						{contacts.length === 0 && (
-							<div>
-								<p className="p-4 text-[#f8f8f2]">No contacts. Click + to add.</p>
-								<p className="p-4 text-[#f8f8f2] text-sm">
-									Don&apos;t have anyone to message? Add <strong className="text-[#50fa7b]">testuser1</strong> or <strong className="text-[#50fa7b]">testuser2</strong> as a contact, then log in there to see and send messages.
-									Be careful though because all data for the testusers are deleted when you log out. You should use incognito mode for testing.
-								</p>
-							</div>
-						)}
 						{contacts.map((c, idx) => (
 							<div
 								key={idx}

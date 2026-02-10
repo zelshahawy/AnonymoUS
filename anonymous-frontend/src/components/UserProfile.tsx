@@ -16,6 +16,9 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 
 	useEffect(() => {
 		setMounted(true);
+	}, []);
+
+	useEffect(() => {
 		// Check localStorage for logged-in user
 		const storedUser = typeof window !== 'undefined' ? window.localStorage.getItem('user') : null;
 		if (storedUser) {
