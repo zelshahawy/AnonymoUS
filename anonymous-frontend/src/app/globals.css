@@ -21,7 +21,7 @@ body {
 
 .grecaptcha-badge {
   position: fixed !important;
-  bottom: 16px !important;
+  bottom: 26px !important;
   right: 16px !important;
   top: auto !important;
   left: auto !important;
