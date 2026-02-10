@@ -3,6 +3,7 @@
 
 import AddContactModal from '@/components/AddContactModal';
 import CommandDropdown from '@/components/CommandDropdown';
+import UserProfile from '@/components/UserProfile';
 import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
