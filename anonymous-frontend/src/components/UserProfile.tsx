@@ -8,29 +8,6 @@ interface UserProfileProps {
 	user?: string;
 }
 
-const decodeJWT = (token: string): { username?: string } => {
-	try {
-		const parts = token.split('.');
-		if (parts.length !== 3) return {};
-		const decoded = JSON.parse(atob(parts[1]));
-		return decoded;
-	} catch {
-		return {};
-	}
-};
-
-const getUserFromCookie = (): string | null => {
-	const cookies = document.cookie.split(';');
-	for (const cookie of cookies) {
-		const [name, value] = cookie.trim().split('=');
-		if (name === 'auth_token') {
-			const decoded = decodeJWT(decodeURIComponent(value));
-			return decoded.username || null;
-		}
-	}
-	return null;
-};
-
 export default function UserProfile({ user: propUser }: UserProfileProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [user, setUser] = useState<string | undefined>(undefined);
@@ -50,20 +27,27 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 			console.error('Failed to fetch user:', err);
 		}
 
-		const cookieUser = getUserFromCookie();
-		setUser(cookieUser || propUser);
+		setUser(propUser);
 	};
 
 	useEffect(() => {
+		// Check on mount
 		checkUser();
 
-		const interval = setInterval(checkUser, 1000);
+		// Check when page regains focus
+		const handleFocus = () => checkUser();
+		const handleVisibilityChange = () => {
+			if (!document.hidden) {
+				checkUser();
+			}
+		};
 
-		window.addEventListener('focus', checkUser);
+		window.addEventListener('focus', handleFocus);
+		document.addEventListener('visibilitychange', handleVisibilityChange);
 
 		return () => {
-			clearInterval(interval);
-			window.removeEventListener('focus', checkUser);
+			window.removeEventListener('focus', handleFocus);
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
 		};
 	}, [propUser]);
 
