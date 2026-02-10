@@ -16,16 +16,28 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 
 	useEffect(() => {
 		setMounted(true);
-	}, []);
-
-	useEffect(() => {
-		// Check localStorage for logged-in user
+		// Initial check for logged-in user
 		const storedUser = typeof window !== 'undefined' ? window.localStorage.getItem('user') : null;
 		if (storedUser) {
 			setUser(storedUser);
 		} else {
 			setUser(propUser);
 		}
+	}, []);
+
+	useEffect(() => {
+		// Listen for storage changes (e.g., from other tabs or logout)
+		const handleStorageChange = () => {
+			const storedUser = typeof window !== 'undefined' ? window.localStorage.getItem('user') : null;
+			if (storedUser) {
+				setUser(storedUser);
+			} else {
+				setUser(propUser);
+			}
+		};
+
+		window.addEventListener('storage', handleStorageChange);
+		return () => window.removeEventListener('storage', handleStorageChange);
 	}, [propUser]);
 
 	useEffect(() => {
