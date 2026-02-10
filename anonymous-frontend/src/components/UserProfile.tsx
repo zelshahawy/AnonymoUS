@@ -8,9 +8,20 @@ interface UserProfileProps {
 	user?: string;
 }
 
-export default function UserProfile({ user }: UserProfileProps) {
+export default function UserProfile({ user: propUser }: UserProfileProps) {
 	const [isOpen, setIsOpen] = useState(false);
+	const [user, setUser] = useState<string | undefined>(propUser);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		// Check localStorage for logged-in user
+		const storedUser = typeof window !== 'undefined' ? window.localStorage.getItem('user') : null;
+		if (storedUser) {
+			setUser(storedUser);
+		} else {
+			setUser(propUser);
+		}
+	}, [propUser]);
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -38,6 +49,7 @@ export default function UserProfile({ user }: UserProfileProps) {
 					<div className="w-6 h-6 rounded-full bg-[#282a36] flex items-center justify-center">
 						<Icon path={mdiAccount} size={0.5} color="#bd93f9" />
 					</div>
+					<span className="text-sm">Profile</span>
 				</button>
 
 				{isOpen && (

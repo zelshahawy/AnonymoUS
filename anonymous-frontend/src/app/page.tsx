@@ -7,6 +7,14 @@ import Herobg from '../components/herobg';
 export default function LandingPage() {
   return (
     <>
+      <style jsx global>{`
+        .grecaptcha-badge {
+          position: fixed !important;
+          bottom: 80px !important;
+          right: 10px !important;
+          z-index: 40 !important;
+        }
+      `}</style>
       <Herobg />
       <div className="relative min-h-screen flex flex-col">
         <div className="relative z-10 flex-1 flex flex-col">
