@@ -8,40 +8,49 @@ interface UserProfileProps {
 	user?: string;
 }
 
+const decodeJWT = (token: string): { username?: string } => {
+	try {
+		const parts = token.split('.');
+		if (parts.length !== 3) return {};
+		const decoded = JSON.parse(atob(parts[1]));
+		return decoded;
+	} catch {
+		return {};
+	}
+};
+
+const getUserFromCookie = (): string | null => {
+	const cookies = document.cookie.split(';');
+	for (const cookie of cookies) {
+		const [name, value] = cookie.trim().split('=');
+		if (name === 'auth_token') {
+			const decoded = decodeJWT(decodeURIComponent(value));
+			return decoded.username || null;
+		}
+	}
+	return null;
+};
+
 export default function UserProfile({ user: propUser }: UserProfileProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [user, setUser] = useState<string | undefined>(undefined);
-	const [isClient, setIsClient] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		setIsClient(true);
-		// Check localStorage for logged-in user
-		const storedUser = window.localStorage.getItem('user');
-		if (storedUser) {
-			setUser(storedUser);
-		} else {
-			setUser(propUser);
-		}
-	}, [propUser]);
+	const checkUser = () => {
+		const cookieUser = getUserFromCookie();
+		setUser(cookieUser || propUser);
+	};
 
 	useEffect(() => {
-		// Listen for storage changes (e.g., from other tabs or logout)
-		const handleStorageChange = () => {
-			const storedUser = window.localStorage.getItem('user');
-			if (storedUser) {
-				setUser(storedUser);
-			} else {
-				setUser(propUser);
-			}
-		};
+		checkUser();
 
-		window.addEventListener('storage', handleStorageChange);
-		// Also check on focus to catch same-tab changes
-		window.addEventListener('focus', handleStorageChange);
+		const interval = setInterval(checkUser, 500);
+
+		window.addEventListener('focus', checkUser);
+
 		return () => {
-			window.removeEventListener('storage', handleStorageChange);
-			window.removeEventListener('focus', handleStorageChange);
+			clearInterval(interval);
+			window.removeEventListener('focus', checkUser);
 		};
 	}, [propUser]);
 
