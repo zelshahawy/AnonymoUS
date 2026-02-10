@@ -62,13 +62,21 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	useEffect(() => {
 		if (!currentUser) return;
 		const stored = window.localStorage.getItem(`contacts_${currentUser}`);
+		let loadedContacts: string[] = [];
+
 		if (stored) {
 			try {
-				setContacts(JSON.parse(stored));
+				loadedContacts = JSON.parse(stored);
 			} catch {
-				setContacts([]);
+				loadedContacts = [];
 			}
 		}
+
+		// Add default test users if not already present
+		const testUsers = ['testuser1', 'testuser2'].filter(u => u !== currentUser);
+		const mergedContacts = Array.from(new Set([...loadedContacts, ...testUsers]));
+
+		setContacts(mergedContacts);
 	}, [currentUser]);
 
 	useEffect(() => {

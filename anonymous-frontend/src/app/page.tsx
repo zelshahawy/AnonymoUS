@@ -24,7 +24,7 @@ export default function LandingPage() {
               {/* Header Section */}
               <div className="text-center mb-10">
                 <h1 className="text-5xl font-bold text-[#f8f8f2] mb-3" >
-                  Anonymous <span style={{ fontFamily: 'Georgia, serif italic' }}> for</span> Traders
+                  Anonymous <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}> for</span> Traders
                 </h1>
                 <p className="text-[28px] text-[#bd93f9] mb-6">
                   Real-time messaging with built-in stock data. Get live quotes instantly with bot commands.
