@@ -141,3 +141,14 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		SameSite: http.SameSiteLaxMode,
 	})
 }
+
+func GetCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
+	username, ok := r.Context().Value("username").(string)
+	if !ok || username == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"username": username})
+}

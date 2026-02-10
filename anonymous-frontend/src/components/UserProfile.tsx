@@ -36,7 +36,20 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 	const [user, setUser] = useState<string | undefined>(undefined);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	const checkUser = () => {
+	const checkUser = async () => {
+		try {
+			const res = await fetch('/api/me', {
+				credentials: 'include',
+			});
+			if (res.ok) {
+				const data = await res.json();
+				setUser(data.username);
+				return;
+			}
+		} catch (err) {
+			console.error('Failed to fetch user:', err);
+		}
+
 		const cookieUser = getUserFromCookie();
 		setUser(cookieUser || propUser);
 	};
@@ -44,7 +57,7 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 	useEffect(() => {
 		checkUser();
 
-		const interval = setInterval(checkUser, 500);
+		const interval = setInterval(checkUser, 1000);
 
 		window.addEventListener('focus', checkUser);
 
@@ -119,7 +132,7 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 				<div className="w-6 h-6 rounded-full bg-[#282a36] flex items-center justify-center text-[#bd93f9] font-bold text-xs">
 					{getInitials(user)}
 				</div>
-				<span className="hidden sm:inline text-sm">{user}</span>
+				<span className="text-sm">{user}</span>
 			</button>
 
 			{isOpen && (
