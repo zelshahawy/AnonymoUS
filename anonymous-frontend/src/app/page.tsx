@@ -27,7 +27,7 @@ export default function LandingPage() {
                   Anonymous <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}> for</span> Traders
                 </h1>
                 <p className="text-[28px] text-[#bd93f9] mb-6">
-                  Real-time messaging with built-in stock data. Get live quotes instantly with bot commands.
+                  Real-time messaging with built-in stock data and in-house bot custom to your need! Get live quotes and other valuable info instantly with our bot commands.
                 </p>
               </div>
 
