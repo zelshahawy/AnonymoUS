@@ -353,7 +353,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 									className={`mb-3 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'}`}
 								>
 									<div
-										className={`px-4 py-3 rounded-lg max-w-xs break-words font-medium ${m.from === currentUser
+										className={`px-4 py-3 rounded-lg max-w-xs wrap-break-word font-medium ${m.from === currentUser
 											? 'bg-[#bd93f9] text-[#282a36] rounded-br-none'
 											: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
 											}`}
