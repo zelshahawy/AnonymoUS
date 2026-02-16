@@ -12,9 +12,10 @@ interface CommandDropdownProps {
 	isOpen: boolean;
 	onSelect: (command: string) => void;
 	onClose: () => void;
+	selectedIndex: number;
 }
 
-const COMMANDS: Command[] = [
+export const COMMANDS: Command[] = [
 	{
 		command: '/stocks ',
 		description: 'Get stock price and data (e.g., /stocks AAPL)',
@@ -42,7 +43,7 @@ const COMMANDS: Command[] = [
 	}
 ];
 
-export default function CommandDropdown({ isOpen, onSelect, onClose }: CommandDropdownProps) {
+export default function CommandDropdown({ isOpen, onSelect, onClose, selectedIndex }: CommandDropdownProps) {
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -71,19 +72,25 @@ export default function CommandDropdown({ isOpen, onSelect, onClose }: CommandDr
 			<div className="px-3 py-2 text-xs text-[#6272a4] bg-[#282a36] border-b border-[#6272a4]">
 				Bot Commands
 			</div>
-			{COMMANDS.map((cmd, index) => (
-				<div
-					key={index}
-					onClick={() => onSelect(cmd.command)}
-					className="px-4 py-3 hover:bg-[#bd93f9] hover:text-[#282a36] text-[#f8f8f2] cursor-pointer transition-colors flex items-center gap-3"
-				>
-					<span className="text-lg">{cmd.icon}</span>
-					<div className="flex-1">
-						<div className="font-medium text-sm">{cmd.command}</div>
-						<div className="text-xs opacity-75">{cmd.description}</div>
+			{COMMANDS.map((cmd, index) => {
+				const isSelected = index === selectedIndex;
+				return (
+					<div
+						key={index}
+						onClick={() => onSelect(cmd.command)}
+						className={`px-4 py-3 text-[#f8f8f2] cursor-pointer transition-colors flex items-center gap-3 ${isSelected
+							? 'bg-[#bd93f9] text-[#282a36]'
+							: 'hover:bg-[#bd93f9] hover:text-[#282a36]'
+							}`}
+					>
+						<span className="text-lg">{cmd.icon}</span>
+						<div className="flex-1">
+							<div className="font-medium text-sm">{cmd.command}</div>
+							<div className="text-xs opacity-75">{cmd.description}</div>
+						</div>
 					</div>
-				</div>
-			))}
+				);
+			})}
 		</div>
 	);
 }

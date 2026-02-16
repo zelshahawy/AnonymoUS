@@ -2,7 +2,7 @@
 'use client';
 
 import AddContactModal from '@/components/AddContactModal';
-import CommandDropdown from '@/components/CommandDropdown';
+import CommandDropdown, { COMMANDS } from '@/components/CommandDropdown';
 import UserProfile from '@/components/UserProfile';
 import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
@@ -52,6 +52,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
 	const [showCommandDropdown, setShowCommandDropdown] = useState(false);
+	const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 	const endRef = useRef<HTMLDivElement>(null);
 	const peerRef = useRef<string>(''); // Add this ref to track current peer
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -222,6 +223,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 		if (value === '/') {
 			setShowCommandDropdown(true);
+			setSelectedCommandIndex(0);
 		} else {
 			setShowCommandDropdown(false);
 		}
@@ -230,18 +232,41 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const handleCommandSelect = (command: string) => {
 		setInput(command);
 		setShowCommandDropdown(false);
+		setSelectedCommandIndex(0);
 		inputRef.current?.focus();
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+		if (showCommandDropdown && COMMANDS.length > 0) {
+			if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				setSelectedCommandIndex((prev) => (prev + 1) % COMMANDS.length);
+				return;
+			}
+
+			if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				setSelectedCommandIndex((prev) => (prev - 1 + COMMANDS.length) % COMMANDS.length);
+				return;
+			}
+
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				handleCommandSelect(COMMANDS[selectedCommandIndex].command);
+				return;
+			}
+		}
+
 		if (e.key === 'Escape') {
 			setShowCommandDropdown(false);
+			setSelectedCommandIndex(0);
 			return;
 		}
 
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			setShowCommandDropdown(false);
+			setSelectedCommandIndex(0);
 			sendMessage();
 		}
 	};
@@ -367,7 +392,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 							<CommandDropdown
 								isOpen={showCommandDropdown}
 								onSelect={handleCommandSelect}
-								onClose={() => setShowCommandDropdown(false)}
+								onClose={() => {
+									setShowCommandDropdown(false);
+									setSelectedCommandIndex(0);
+								}}
+								selectedIndex={selectedCommandIndex}
 							/>
 						</div>
 						<button
