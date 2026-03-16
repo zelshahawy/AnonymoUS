@@ -157,16 +157,6 @@ export default function LoginPage() {
 								</div>
 
 								<div className="flex gap-4 items-start">
-									<div className="w-12 h-12 rounded-lg bg-[#ff79c6] flex items-center justify-center flex-shrink-0">
-										<Icon path={mdiShieldLock} size={1.2} color="#282a36" />
-									</div>
-									<div>
-										<h3 className="text-lg font-bold text-[#f8f8f2] mb-1">Secure & Private</h3>
-										<p className="text-[#50fa7b]">Your conversations are protected with modern security</p>
-									</div>
-								</div>
-
-								<div className="flex gap-4 items-start">
 									<div className="w-12 h-12 rounded-lg bg-[#ffb86c] flex items-center justify-center flex-shrink-0">
 										<Icon path={mdiLightningBolt} size={1.2} color="#282a36" />
 									</div>
@@ -241,27 +231,6 @@ export default function LoginPage() {
 									</div>
 
 									<button
-										type='button'
-										onClick={() => window.location.href = REGISTERURL}
-										disabled={isLoading}
-										className="w-full bg-gradient-to-r from-[#bd93f9] to-[#ff79c6] hover:from-[#ff79c6] hover:to-[#bd93f9] text-[#282a36] py-4 rounded-lg font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg shadow-lg"
-									>
-										<span className="text-xl">G</span>
-										Sign up with Google
-									</button>
-
-									<p className="text-center text-[#6272a4] text-xs mt-2">Fastest way to get started</p>
-
-									<div className="relative my-6">
-										<div className="absolute inset-0 flex items-center">
-											<div className="w-full border-t border-[#6272a4]"></div>
-										</div>
-										<div className="relative flex justify-center text-sm">
-											<span className="px-2 bg-[#44475a] text-[#6272a4]">or</span>
-										</div>
-									</div>
-
-									<button
 										type="submit"
 										disabled={isLoading}
 										className="w-full bg-[#50fa7b] hover:bg-[#ff79c6] text-[#282a36] py-3 rounded-lg font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -278,6 +247,28 @@ export default function LoginPage() {
 											</>
 										)}
 									</button>
+
+									<div className="relative my-6">
+										<div className="absolute inset-0 flex items-center">
+											<div className="w-full border-t border-[#6272a4]"></div>
+										</div>
+										<div className="relative flex justify-center text-sm">
+											<span className="px-2 bg-[#44475a] text-[#6272a4]">or</span>
+										</div>
+									</div>
+
+									<button
+										type='button'
+										onClick={() => window.location.href = REGISTERURL}
+										disabled={isLoading}
+										className="w-full bg-gradient-to-r from-[#bd93f9] to-[#ff79c6] hover:from-[#ff79c6] hover:to-[#bd93f9] text-[#282a36] py-4 rounded-lg font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg shadow-lg"
+									>
+										<span className="text-xl">G</span>
+										Sign up with Google
+									</button>
+
+									<p className="text-center text-[#50fa7b] text-xs mt-2">Fastest way to get started</p>
+
 								</form>
 
 								<div className="mt-8 p-4 bg-[#282a36] border border-[#6272a4] rounded-lg">
