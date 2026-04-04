@@ -216,33 +216,33 @@ nav>* {
 
 @media (max-width: 768px) {
 	nav {
-		margin-left: 0.75rem;
-		margin-right: 0.75rem;
-		margin-top: 0.5rem;
-		width: calc(100% - 1.5rem);
+		margin-left: 0.5rem;
+		margin-right: 0.5rem;
+		margin-top: 0.35rem;
+		width: calc(100% - 1rem);
 		z-index: 60;
 	}
 
 	nav.mobile-nav {
-		height: auto;
-		padding: 0.4rem 0.6rem;
-		border: 2px solid #bd93f9;
-		border-radius: 14px;
+		min-height: 2.7rem;
+		padding: 0.22rem 0.35rem;
+		border: 1px solid #bd93f9;
+		border-radius: 12px;
 		background-color: rgba(40, 42, 54, 0.92);
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.75rem;
+		gap: 0.45rem;
 	}
 
 	.mobile-home {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 2.2rem;
-		height: 2.2rem;
-		border: 2px solid #bd93f9;
-		border-radius: 0.75rem;
+		width: 1.85rem;
+		height: 1.85rem;
+		border: 1px solid #bd93f9;
+		border-radius: 0.6rem;
 		background-color: rgba(68, 71, 90, 0.9);
 		transition: background-color 0.2s ease, transform 0.2s ease;
 	}
@@ -255,20 +255,21 @@ nav>* {
 	.mobile-actions {
 		display: flex;
 		align-items: center;
-		gap: 0.55rem;
+		gap: 0.38rem;
 	}
 
 	.mobile-chat-link {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		padding: 0.45rem 0.95rem;
-		border: 2px solid #bd93f9;
+		padding: 0.3rem 0.75rem;
+		border: 1px solid #bd93f9;
 		border-radius: 999px;
 		background-color: rgba(68, 71, 90, 0.9);
 		color: #f8f8f2;
-		font-weight: 700;
-		font-size: 0.9rem;
+		font-weight: 650;
+		font-size: 0.82rem;
+		line-height: 1;
 		transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 	}
 
@@ -279,8 +280,9 @@ nav>* {
 	}
 
 	.mobile-profile button {
-		padding: 0.45rem !important;
+		padding: 0.3rem !important;
 		border-radius: 999px !important;
+		border-width: 1px !important;
 	}
 
 	.mobile-profile button span {
@@ -288,8 +290,34 @@ nav>* {
 	}
 
 	.mobile-profile button>div {
-		width: 1.6rem !important;
-		height: 1.6rem !important;
+		width: 1.2rem !important;
+		height: 1.2rem !important;
+	}
+}
+
+@media (max-width: 480px) {
+	nav.mobile-nav {
+		min-height: 2.4rem;
+		padding: 0.15rem 0.28rem;
+	}
+
+	.mobile-home {
+		width: 1.7rem;
+		height: 1.7rem;
+	}
+
+	.mobile-chat-link {
+		padding: 0.24rem 0.62rem;
+		font-size: 0.76rem;
+	}
+
+	.mobile-profile button {
+		padding: 0.24rem !important;
+	}
+
+	.mobile-profile button>div {
+		width: 1.05rem !important;
+		height: 1.05rem !important;
 	}
 
 	nav>ul {
