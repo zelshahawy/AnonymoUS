@@ -121,12 +121,10 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		}
 	};
 
-	// Update peer ref whenever peer changes
 	useEffect(() => {
 		peerRef.current = peer;
 	}, [peer]);
 
-	// Single WebSocket connection that stays open
 	useEffect(() => {
 		if (!currentUser || !token) return;
 
