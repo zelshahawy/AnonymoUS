@@ -122,7 +122,7 @@ export default function Navbar() {
 		return () => window.removeEventListener("resize", syncViewport);
 	}, [])
 
-	const navVisibilityClass = isMobileView ? "" : firstDrop ? "" : show ? "active" : "hidden";
+	const navVisibilityClass = isMobileView ? "" : firstDrop ? "" : show ? "nav-active" : "nav-hidden";
 
 	if (isMobileView) {
 		return (

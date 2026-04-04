@@ -47,11 +47,11 @@ nav {
 	}
 }
 
-.hidden {
+nav.nav-hidden {
 	animation: disappearUp 0.2s forwards
 }
 
-.active {
+nav.nav-active {
 	animation: dropDown 0.2s forwards
 }
 
