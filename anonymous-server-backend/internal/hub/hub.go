@@ -12,6 +12,7 @@ type Message struct {
 	To        string `json:"to"`
 	Body      string `json:"body"`
 	Type      string `json:"type"` // "chat" or "history"
+	Count     int    `json:"count,omitempty"`
 }
 
 type Client struct {
@@ -56,6 +57,9 @@ func (h *Hub) Unregister(c *Client) {
 }
 
 func (h *Hub) Send(to string, msg *Message) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
 	for _, c := range h.clients[to] {
 		// avoid blocking the loop if one channel is full
 		select {
@@ -65,4 +69,9 @@ func (h *Hub) Send(to string, msg *Message) {
 	}
 }
 
-// (optional) you can add a Run loop if you want centralized broadcast logic.
+func (h *Hub) IsUserConnected(userID string) bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	return len(h.clients[userID]) > 0
+}

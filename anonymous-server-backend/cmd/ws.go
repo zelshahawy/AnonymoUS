@@ -64,7 +64,35 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	go writePump(client)
+	sendOfflineNotifications(ctx, client)
 	readPump(ctx, client)
+}
+
+func sendOfflineNotifications(ctx context.Context, c *hub.Client) {
+	counts, err := services.LoadUnreadChatCounts(ctx, c.UserID)
+	if err != nil {
+		log.Printf("failed loading unread counts for %s: %v", c.UserID, err)
+		return
+	}
+
+	if len(counts) == 0 {
+		return
+	}
+
+	for sender, count := range counts {
+		hub.GlobalHub.Send(c.UserID, &hub.Message{
+			Type:      "notification",
+			Messageid: hub.GenerateMessageID(),
+			From:      sender,
+			To:        c.UserID,
+			Body:      "You have unread messages",
+			Count:     count,
+		})
+	}
+
+	if err := services.MarkUnreadChatMessagesNotified(ctx, c.UserID); err != nil {
+		log.Printf("failed marking unread messages notified for %s: %v", c.UserID, err)
+	}
 }
 
 // processBotCommands handles all bot commands and sends responses
@@ -95,11 +123,12 @@ func processBotCommands(ctx context.Context, msg *hub.Message) {
 		}
 
 		if err := services.SaveMessage(ctx, &services.MessageDoc{
-			MsgID: botMsg.Messageid,
-			From:  botMsg.From,
-			To:    botMsg.To,
-			Body:  botMsg.Body,
-			Type:  botMsg.Type,
+			MsgID:    botMsg.Messageid,
+			From:     botMsg.From,
+			To:       botMsg.To,
+			Body:     botMsg.Body,
+			Type:     botMsg.Type,
+			Notified: hub.GlobalHub.IsUserConnected(botMsg.To),
 		}); err != nil {
 			log.Printf("failed to save bot message %s: %v", botMsg.Messageid, err)
 		} else {
@@ -155,11 +184,12 @@ func readPump(ctx context.Context, c *hub.Client) {
 			msg.Messageid = hub.GenerateMessageID()
 
 			if err := services.SaveMessage(ctx, &services.MessageDoc{
-				MsgID: msg.Messageid,
-				From:  msg.From,
-				To:    msg.To,
-				Body:  msg.Body,
-				Type:  msg.Type,
+				MsgID:    msg.Messageid,
+				From:     msg.From,
+				To:       msg.To,
+				Body:     msg.Body,
+				Type:     msg.Type,
+				Notified: hub.GlobalHub.IsUserConnected(msg.To),
 			}); err != nil {
 				log.Printf("failed to save message %s: %v", msg.Messageid, err)
 			}

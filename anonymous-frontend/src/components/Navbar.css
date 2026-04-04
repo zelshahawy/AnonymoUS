@@ -6,6 +6,8 @@ nav {
 	justify-content: stretch;
 	gap: 30px;
 	position: fixed;
+	top: 0;
+	left: 0;
 	margin-left: 3rem;
 	margin-right: 3rem;
 	margin-top: 1rem;
@@ -213,33 +215,85 @@ nav>* {
 }
 
 @media (max-width: 768px) {
-	.menu-toggle {
-		display: block;
+	nav {
+		margin-left: 0.75rem;
+		margin-right: 0.75rem;
+		margin-top: 0.5rem;
+		width: calc(100% - 1.5rem);
+		z-index: 60;
+	}
+
+	nav.mobile-nav {
+		height: auto;
+		padding: 0.4rem 0.6rem;
+		border: 2px solid #bd93f9;
+		border-radius: 14px;
+		background-color: rgba(40, 42, 54, 0.92);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.mobile-home {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.2rem;
+		height: 2.2rem;
+		border: 2px solid #bd93f9;
+		border-radius: 0.75rem;
+		background-color: rgba(68, 71, 90, 0.9);
+		transition: background-color 0.2s ease, transform 0.2s ease;
+	}
+
+	.mobile-home:hover {
+		background-color: rgba(189, 147, 249, 0.2);
+		transform: translateY(-1px);
+	}
+
+	.mobile-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+	}
+
+	.mobile-chat-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.45rem 0.95rem;
+		border: 2px solid #bd93f9;
+		border-radius: 999px;
+		background-color: rgba(68, 71, 90, 0.9);
+		color: #f8f8f2;
+		font-weight: 700;
+		font-size: 0.9rem;
+		transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+	}
+
+	.mobile-chat-link:hover {
+		background-color: #bd93f9;
+		color: #282a36;
+		transform: translateY(-1px);
+	}
+
+	.mobile-profile button {
+		padding: 0.45rem !important;
+		border-radius: 999px !important;
+	}
+
+	.mobile-profile button span {
+		display: none;
+	}
+
+	.mobile-profile button>div {
+		width: 1.6rem !important;
+		height: 1.6rem !important;
 	}
 
 	nav>ul {
 		display: none;
-		flex-direction: column;
-		width: 100%;
-		background-color: rgba(68, 71, 90, 0.95);
-		backdrop-filter: blur(10px);
-		border-radius: 10px;
-		border: 2px solid #bd93f9;
-	}
-
-	nav.mobile-open>ul.open {
-		display: flex;
-	}
-
-	nav>ul.open li {
-		padding: 0.75rem 1rem;
-		border-top: 1px solid #6272a4;
-		color: #f8f8f2;
-	}
-
-	nav>ul.open li:hover {
-		background-color: rgba(189, 147, 249, 0.2);
-		color: #bd93f9;
 	}
 
 	.dropDown {

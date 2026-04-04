@@ -16,6 +16,7 @@ type MessageDoc struct {
 	To        string    `bson:"to"`
 	Body      string    `bson:"body"`
 	Type      string    `bson:"type, omitempty"` // Add this field
+	Notified  bool      `bson:"notified"`
 	Timestamp time.Time `bson:"timestamp"`
 }
 

@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { FC, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useState } from "react";
 import "./Navbar.css";
 import UserProfile from "./UserProfile";
 
@@ -54,7 +54,7 @@ export default function Navbar() {
 		"Chat": [["Chat", "/chat"]],
 		"Inquiries": [["Email", "mailto:ziad.a.elshahawy@gmail.com"]],
 	}
-	const [mobileOpen, setMobileOpen] = useState(false)
+	const [isMobileView, setIsMobileView] = useState(false);
 	const [show, setShow] = useState(true);
 	const [pulledOut, setPulledOut] = useState(
 		new Array(Object.entries(navigation).length).fill(false)
@@ -72,7 +72,13 @@ export default function Navbar() {
 	};
 	const [lastScrollY, setLastScrollY] = useState(0);
 
-	const controlNavbar = () => {
+	const controlNavbar = useCallback(() => {
+		if (isMobileView) {
+			if (!show) setShow(true);
+			if (!firstDrop) setDrop(true);
+			return;
+		}
+
 		if (window.scrollY > lastScrollY) {
 			// if scroll down hide the navbar
 			if (firstDrop) {
@@ -86,33 +92,65 @@ export default function Navbar() {
 
 		// remember current page location to use in the next move
 		setLastScrollY(window.scrollY);
-	};
+	}, [firstDrop, isMobileView, lastScrollY, show]);
 
 	useEffect(() => {
+		if (isMobileView) return;
 		window.addEventListener("scroll", controlNavbar);
 
 		// cleanup function
 		return () => {
 			window.removeEventListener("scroll", controlNavbar);
 		};
-	}, [lastScrollY]);
+	}, [controlNavbar, isMobileView]);
 
 	useEffect(() => {
-		const onResize = () => {
-			if (window.innerWidth > 768) setMobileOpen(false)
-		}
-		window.addEventListener("resize", onResize)
-		return () => window.removeEventListener("resize", onResize)
+		const syncViewport = () => {
+			const isMobile = window.innerWidth <= 768;
+			setIsMobileView(isMobile);
+
+			if (!isMobile) {
+				return;
+			}
+
+			setShow(true);
+			setDrop(true);
+		};
+
+		syncViewport();
+		window.addEventListener("resize", syncViewport);
+		return () => window.removeEventListener("resize", syncViewport);
 	}, [])
 
+	const navVisibilityClass = isMobileView ? "" : firstDrop ? "" : show ? "active" : "hidden";
+
+	if (isMobileView) {
+		return (
+			<nav className="mobile-nav">
+				<Link href="/" className="mobile-home" aria-label="Home">
+					<Image src="/chat-logo.png" alt="Home" width={18} height={18} />
+				</Link>
+
+				<div className="mobile-actions">
+					<Link href="/chat" className="mobile-chat-link">
+						Chat
+					</Link>
+					<div className="mobile-profile">
+						<UserProfile />
+					</div>
+				</div>
+			</nav>
+		);
+	}
+
 	return (
-		<nav className={`${firstDrop ? "" : show ? "active" : "hidden"}${mobileOpen ? " mobile-open" : ""}`}>
+		<nav className={navVisibilityClass}>
 			<Link href="/" className="fullLogo">
 				<Image src="/chat-logo.png" alt="Home" width={17} height={17} />
 				Home
 			</Link>
 
-			<ul className={mobileOpen ? "open" : ""}>
+			<ul>
 				{
 					Object.entries(navigation).map(([key, options], i) =>
 						options.length === 1 ? (

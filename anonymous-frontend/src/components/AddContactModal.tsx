@@ -15,18 +15,21 @@ export default function AddContactModal({ isOpen, onClose, onAdd, currentUser }:
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
+		const trimmedUsername = username.trim();
+		const normalizedUsername = trimmedUsername.toLowerCase();
+		const normalizedCurrentUser = currentUser.trim().toLowerCase();
 
-		if (!username.trim()) {
+		if (!trimmedUsername) {
 			setError('Username cannot be empty');
 			return;
 		}
 
-		if (username.trim() === currentUser) {
+		if (normalizedUsername === normalizedCurrentUser) {
 			setError('You cannot add yourself as a contact');
 			return;
 		}
 
-		onAdd(username.trim());
+		onAdd(trimmedUsername);
 		setUsername('');
 		setError('');
 		onClose();

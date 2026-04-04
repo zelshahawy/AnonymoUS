@@ -8,11 +8,12 @@ import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
 interface Message {
-	type: 'chat' | 'history' | 'bot';
+	type: 'chat' | 'history' | 'bot' | 'notification';
 	from: string;
 	to: string;
 	body: string;
 	messageid: string;
+	count?: number;
 }
 
 type Action =
@@ -42,6 +43,46 @@ function messagesReducer(state: Message[], action: Action): Message[] {
 	}
 }
 
+const normalizeUsername = (value: string) => value.trim().toLowerCase();
+
+const isSameUser = (left: string, right: string) => normalizeUsername(left) === normalizeUsername(right);
+
+const hasContact = (list: string[], username: string) => {
+	const normalizedCandidate = normalizeUsername(username);
+	return list.some(contact => normalizeUsername(contact) === normalizedCandidate);
+};
+
+const dedupeContactsCaseInsensitive = (list: string[]) => {
+	const seen = new Set<string>();
+	const deduped: string[] = [];
+
+	for (const rawName of list) {
+		const trimmedName = rawName.trim();
+		if (!trimmedName) continue;
+
+		const normalizedName = normalizeUsername(trimmedName);
+		if (seen.has(normalizedName)) continue;
+
+		seen.add(normalizedName);
+		deduped.push(trimmedName);
+	}
+
+	return deduped;
+};
+
+const normalizeUnreadMap = (rawMap: Record<string, number>) => {
+	const normalizedMap: Record<string, number> = {};
+
+	for (const [key, value] of Object.entries(rawMap)) {
+		const normalizedKey = normalizeUsername(key);
+		if (!normalizedKey) continue;
+		const count = Number.isFinite(value) ? value : 0;
+		normalizedMap[normalizedKey] = (normalizedMap[normalizedKey] || 0) + count;
+	}
+
+	return normalizedMap;
+};
+
 export default function ChatClient({ user, token }: { user: string, token: string }) {
 	const currentUser = user
 	const [contacts, setContacts] = useState<string[]>([]);
@@ -54,7 +95,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [showCommandDropdown, setShowCommandDropdown] = useState(false);
 	const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 	const endRef = useRef<HTMLDivElement>(null);
-	const peerRef = useRef<string>(''); // Add this ref to track current peer
+	const peerRef = useRef<string>('');
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
@@ -67,15 +108,17 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 		if (stored) {
 			try {
-				loadedContacts = JSON.parse(stored);
+				const parsed = JSON.parse(stored) as unknown;
+				if (Array.isArray(parsed)) {
+					loadedContacts = parsed.filter((entry): entry is string => typeof entry === 'string');
+				}
 			} catch {
 				loadedContacts = [];
 			}
 		}
 
-		// Add default test users if not already present
-		const testUsers = ['testuser1', 'testuser2'].filter(u => u !== currentUser);
-		const mergedContacts = Array.from(new Set([...loadedContacts, ...testUsers]));
+		const testUsers = ['testuser1', 'testuser2'].filter(u => !isSameUser(u, currentUser));
+		const mergedContacts = dedupeContactsCaseInsensitive([...loadedContacts, ...testUsers]);
 
 		setContacts(mergedContacts);
 	}, [currentUser]);
@@ -90,11 +133,16 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		const stored = window.localStorage.getItem(`unread_${currentUser}`);
 		if (stored) {
 			try {
-				setUnreadMessages(JSON.parse(stored));
+				const parsed = JSON.parse(stored) as unknown;
+				if (parsed && typeof parsed === 'object') {
+					setUnreadMessages(normalizeUnreadMap(parsed as Record<string, number>));
+					return;
+				}
 			} catch {
-				setUnreadMessages({});
+				// Keep fallback below.
 			}
 		}
+		setUnreadMessages({});
 	}, [currentUser]);
 
 	useEffect(() => {
@@ -103,22 +151,30 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	}, [unreadMessages, currentUser]);
 
 	useEffect(() => {
-		if (peer && unreadMessages[peer] > 0) {
-			setUnreadMessages(prev => ({
-				...prev,
-				[peer]: 0
-			}));
-		}
-	}, [peer]);
+		if (!peer) return;
+		const peerKey = normalizeUsername(peer);
+		if (!peerKey || unreadMessages[peerKey] === 0) return;
+
+		setUnreadMessages(prev => ({
+			...prev,
+			[peerKey]: 0,
+		}));
+	}, [peer, unreadMessages]);
 
 	const addContact = () => {
 		setIsModalOpen(true);
 	};
 
 	const handleAddContact = (newUsername: string) => {
-		if (!contacts.includes(newUsername)) {
-			setContacts(prev => [...prev, newUsername]);
-		}
+		const trimmedUsername = newUsername.trim();
+		if (!trimmedUsername) return;
+
+		setContacts(prev => {
+			if (hasContact(prev, trimmedUsername)) {
+				return prev;
+			}
+			return [...prev, trimmedUsername];
+		});
 	};
 
 	useEffect(() => {
@@ -139,10 +195,33 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			const currentPeer = peerRef.current;
 			console.log('Received message:', msg, 'Current peer:', currentPeer);
 
+			if (msg.type === 'notification') {
+				const senderKey = normalizeUsername(msg.from);
+				const unreadIncrement =
+					typeof msg.count === 'number' && Number.isFinite(msg.count) && msg.count > 0
+						? msg.count
+						: 1;
+
+				if (!isSameUser(msg.from, currentPeer)) {
+					setUnreadMessages(prev => ({
+						...prev,
+						[senderKey]: (prev[senderKey] || 0) + unreadIncrement,
+					}));
+				}
+
+				setContacts(prev => {
+					if (!hasContact(prev, msg.from)) {
+						return [...prev, msg.from.trim()];
+					}
+					return prev;
+				});
+				return;
+			}
+
 			if (currentPeer) {
 				const isRelevantMessage = (
-					(msg.from === currentUser && msg.to === currentPeer) ||
-					(msg.from === currentPeer && msg.to === currentUser)
+					(isSameUser(msg.from, currentUser) && isSameUser(msg.to, currentPeer)) ||
+					(isSameUser(msg.from, currentPeer) && isSameUser(msg.to, currentUser))
 				);
 
 				if (isRelevantMessage) {
@@ -152,17 +231,18 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			}
 
 			// Handle unread messages from others (not current peer and not from self)
-			if (msg.type === 'chat' && msg.from !== currentUser && msg.from !== currentPeer) {
+			if (msg.type === 'chat' && !isSameUser(msg.from, currentUser) && !isSameUser(msg.from, currentPeer)) {
 				console.log('Adding unread message from:', msg.from);
+				const senderKey = normalizeUsername(msg.from);
 				setUnreadMessages(prev => ({
 					...prev,
-					[msg.from]: (prev[msg.from] || 0) + 1
+					[senderKey]: (prev[senderKey] || 0) + 1,
 				}));
 
 				// Add sender to contacts if not already there
 				setContacts(prev => {
-					if (!prev.includes(msg.from)) {
-						return [...prev, msg.from];
+					if (!hasContact(prev, msg.from)) {
+						return [...prev, msg.from.trim()];
 					}
 					return prev;
 				});
@@ -194,13 +274,8 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	}, [peer, socket, currentUser]);
 
 	useEffect(() => {
-		if (peer) {
-			setUnreadMessages(prev => ({
-				...prev,
-				[peer]: 0
-			}));
-		}
-	}, [peer]);
+		endRef.current?.scrollIntoView({ behavior: 'smooth' });
+	}, [messages]);
 
 	const sendMessage = () => {
 		if (socket && input.trim() && peer) {
@@ -286,48 +361,69 @@ export default function ChatClient({ user, token }: { user: string, token: strin
                 }
             `}</style>
 
-			<div className="flex h-screen bg-[#282a36]">
+			<div className="flex h-screen overflow-hidden bg-[#282a36]">
 				{/* Sidebar: Contacts */}
-				<div className="w-60 bg-[#44475a] border-r-4 border-[#bd93f9] flex flex-col shadow-lg">
-					<div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#bd93f9] bg-[#282a36]">
-						<span className="font-bold text-lg text-[#f8f8f2]">Contacts</span>
-						<button
-							onClick={addContact}
-							className="text-[#282a36] bg-[#bd93f9] hover:bg-[#ff79c6] rounded-full w-8 h-8 flex items-center justify-center font-bold transition-colors"
-							title="Add contact"
-						>
-							+
-						</button>
+				<div className={`${peer ? 'hidden' : 'flex'} md:flex w-full md:w-60 md:shrink-0 bg-[#44475a] border-r-0 md:border-r-4 border-[#bd93f9] flex-col shadow-lg`}>
+					<div className="sticky top-0 z-20 border-b-2 border-[#bd93f9] bg-[#282a36]">
+						<div className="flex items-center justify-between px-4 py-3">
+							<span className="font-bold text-lg text-[#f8f8f2]">Contacts</span>
+							<button
+								onClick={addContact}
+								className="text-[#282a36] bg-[#bd93f9] hover:bg-[#ff79c6] rounded-full w-8 h-8 flex items-center justify-center font-bold transition-colors"
+								title="Add contact"
+							>
+								+
+							</button>
+						</div>
+						<p className="px-4 pb-3 text-[#bd93f9] font-semibold">Your username: {currentUser}</p>
 					</div>
 					<div className="flex-1 overflow-y-auto">
-						<p className="p-4 text-[#bd93f9] font-semibold">Your username: {currentUser}</p>
-						{contacts.map((c, idx) => (
-							<div
-								key={idx}
-								onClick={() => setPeer(c)}
-								className={`px-4 py-3 cursor-pointer hover:bg-[#bd93f9] hover:text-[#282a36] text-[#f8f8f2] transition-colors flex items-center justify-between ${peer === c ? 'bg-[#bd93f9] font-bold text-[#282a36]' : ''
-									}`}
-							>
-								<span>{c}</span>
-								{unreadMessages[c] > 0 && (
-									<div className="bg-[#ff5555] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-										{unreadMessages[c] > 9 ? '9+' : unreadMessages[c]}
+						{contacts.map((c, idx) => {
+							const unreadCount = unreadMessages[normalizeUsername(c)] || 0;
+							return (
+								<div
+									key={`${c}-${idx}`}
+									onClick={() => setPeer(c)}
+									className={`px-4 py-3 cursor-pointer hover:bg-[#bd93f9] hover:text-[#282a36] text-[#f8f8f2] transition-colors flex items-center justify-between border-b border-[#6272a4] ${peer === c ? 'bg-[#bd93f9] font-bold text-[#282a36]' : ''
+										}`}
+								>
+									<div className="flex items-center gap-3 min-w-0">
+										<div className="w-10 h-10 rounded-full bg-[#282a36] border border-[#bd93f9] text-[#bd93f9] flex items-center justify-center font-bold text-xs shrink-0">
+											{c.slice(0, 2).toUpperCase()}
+										</div>
+										<span className="truncate">{c}</span>
 									</div>
-								)}
-							</div>
-						))}
+									{unreadCount > 0 && (
+										<div className="bg-[#ff5555] text-white text-xs rounded-full min-w-5 h-5 px-1 flex items-center justify-center font-bold">
+											{unreadCount > 9 ? '9+' : unreadCount}
+										</div>
+									)}
+								</div>
+							);
+						})}
 					</div>
 				</div>
 
 				{/* Main Chat Pane */}
-				<div className="flex-1 flex flex-col">
+				<div className={`${peer ? 'flex' : 'hidden'} md:flex flex-1 min-w-0 flex-col`}>
 					{/* Header */}
-					<div className="px-4 py-3 bg-[#44475a] text-[#f8f8f2] flex items-center justify-between border-b-2 border-[#bd93f9]">
-						<Link href="/">
-							<button className="px-4 py-2 bg-[#50fa7b] text-[#282a36] rounded font-bold hover:bg-[#ff79c6] transition-colors">
-								Home
-							</button>
-						</Link>
+					<div className="sticky top-0 z-20 px-3 py-3 md:px-4 md:py-3 bg-[#44475a] text-[#f8f8f2] flex items-center gap-2 md:gap-0 justify-between border-b-2 border-[#bd93f9]">
+						<div className="flex items-center gap-2">
+							{peer && (
+								<button
+									onClick={() => setPeer('')}
+									className="md:hidden px-3 py-2 bg-[#282a36] text-[#f8f8f2] rounded font-bold hover:bg-[#bd93f9] hover:text-[#282a36] transition-colors"
+									title="Back to contacts"
+								>
+									Back
+								</button>
+							)}
+							<Link href="/" className="hidden md:block">
+								<button className="px-4 py-2 bg-[#50fa7b] text-[#282a36] rounded font-bold hover:bg-[#ff79c6] transition-colors">
+									Home
+								</button>
+							</Link>
+						</div>
 						<div className="flex-1 text-center">
 							{peer ? (
 								<span className="font-semibold">
@@ -375,7 +471,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 
 					{/* Input area */}
-					<div className="p-4 bg-[#44475a] border-t-2 border-[#bd93f9] flex items-center relative">
+					<div className="sticky bottom-0 z-20 p-3 md:p-4 bg-[#44475a] border-t-2 border-[#bd93f9] flex items-center relative">
 						<div className="flex-1 relative">
 							<input
 								ref={inputRef}
@@ -400,7 +496,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						<button
 							onClick={sendMessage}
 							disabled={!peer}
-							className="bg-[#50fa7b] text-[#282a36] px-6 py-3 rounded font-bold hover:bg-[#ff79c6] disabled:opacity-50 disabled:hover:bg-[#50fa7b] transition-colors ml-3"
+							className="bg-[#50fa7b] text-[#282a36] px-4 md:px-6 py-3 rounded font-bold hover:bg-[#ff79c6] disabled:opacity-50 disabled:hover:bg-[#50fa7b] transition-colors ml-3"
 						>
 							Send
 						</button>

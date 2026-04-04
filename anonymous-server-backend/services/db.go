@@ -6,6 +6,7 @@ import (
 
 	"github.com/zelshahawy/Anonymous_backend/config"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -43,4 +44,61 @@ func LoadRecentMessages(ctx context.Context, userID, otherUserID string, limit i
 	}
 
 	return messages, nil
+}
+
+// LoadUnreadChatCounts returns unread chat-message counts grouped by sender.
+func LoadUnreadChatCounts(ctx context.Context, userID string) (map[string]int, error) {
+	counts := make(map[string]int)
+
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{
+			"to":       userID,
+			"type":     "chat",
+			"notified": false,
+		}}},
+		{{Key: "$group", Value: bson.M{
+			"_id":   "$from",
+			"count": bson.M{"$sum": 1},
+		}}},
+	}
+
+	cursor, err := config.DBClients.MessagesCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var row struct {
+		From  string `bson:"_id"`
+		Count int    `bson:"count"`
+	}
+
+	for cursor.Next(ctx) {
+		if err := cursor.Decode(&row); err != nil {
+			log.Printf("failed to decode unread-count row: %v", err)
+			continue
+		}
+		if row.From == "" || row.Count <= 0 {
+			continue
+		}
+		counts[row.From] = row.Count
+	}
+
+	return counts, nil
+}
+
+// MarkUnreadChatMessagesNotified marks unread chat messages to user as notified.
+func MarkUnreadChatMessagesNotified(ctx context.Context, userID string) error {
+	_, err := config.DBClients.MessagesCollection.UpdateMany(
+		ctx,
+		bson.M{
+			"to":       userID,
+			"type":     "chat",
+			"notified": false,
+		},
+		bson.M{
+			"$set": bson.M{"notified": true},
+		},
+	)
+	return err
 }
