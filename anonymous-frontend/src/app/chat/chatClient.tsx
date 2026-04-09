@@ -469,7 +469,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 
 					{/* Input area */}
-					<div className="sticky bottom-0 z-20 p-3 md:p-4 bg-[#44475a] border-t-2 border-[#bd93f9] flex items-center relative">
+					<div className="sticky bottom-0 z-20 p-3 md:p-4 bg-[#44475a] border-t-2 border-[#bd93f9] flex items-center">
 						<div className="flex-1 relative">
 							<input
 								ref={inputRef}

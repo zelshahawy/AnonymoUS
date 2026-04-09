@@ -1,8 +1,87 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import yfinance as yf
 from fastapi import HTTPException
 from models import CryptoCurrency, MarketIndices, MarketNews, StockResponse, TopMover
+
+
+def _extract_datetime(article: dict, content: dict) -> datetime:
+    provider_publish_time = article.get("providerPublishTime")
+    if isinstance(provider_publish_time, (int, float)) and provider_publish_time > 0:
+        return datetime.fromtimestamp(provider_publish_time, tz=timezone.utc)
+
+    for key in ("pubDate", "displayTime"):
+        raw = content.get(key)
+        if isinstance(raw, str) and raw:
+            try:
+                return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+
+    return datetime.now(timezone.utc)
+
+
+def _extract_url(article: dict, content: dict) -> str:
+    legacy_link = article.get("link")
+    if isinstance(legacy_link, str) and legacy_link:
+        return legacy_link
+
+    clickthrough = content.get("clickThroughUrl")
+    if isinstance(clickthrough, dict):
+        clickthrough_url = clickthrough.get("url")
+        if isinstance(clickthrough_url, str) and clickthrough_url:
+            return clickthrough_url
+
+    canonical = content.get("canonicalUrl")
+    if isinstance(canonical, dict):
+        canonical_url = canonical.get("url")
+        if isinstance(canonical_url, str) and canonical_url:
+            return canonical_url
+
+    preview_url = content.get("previewUrl")
+    if isinstance(preview_url, str):
+        return preview_url
+    return ""
+
+
+def _extract_source(article: dict, content: dict) -> str:
+    legacy_source = article.get("publisher")
+    if isinstance(legacy_source, str) and legacy_source:
+        return legacy_source
+
+    provider = content.get("provider")
+    if isinstance(provider, dict):
+        for key in ("displayName", "name", "sourceId"):
+            value = provider.get(key)
+            if isinstance(value, str) and value:
+                return value
+    return ""
+
+
+def _normalize_news_article(article: dict) -> MarketNews | None:
+    content = article.get("content")
+    if not isinstance(content, dict):
+        content = {}
+
+    title = article.get("title")
+    if not isinstance(title, str) or not title:
+        title = content.get("title")
+    if not isinstance(title, str) or not title:
+        return None
+
+    summary = article.get("summary")
+    if not isinstance(summary, str) or not summary:
+        summary = content.get("summary")
+    if not isinstance(summary, str):
+        summary = ""
+
+    return MarketNews(
+        title=title,
+        summary=summary,
+        url=_extract_url(article, content),
+        source=_extract_source(article, content),
+        timestamp=_extract_datetime(article, content),
+    )
 
 
 def get_stock_data(symbol: str) -> StockResponse:
@@ -60,44 +139,50 @@ def get_top_movers_data() -> list[TopMover]:
 def get_market_news(symbol: str | None = None, limit: int = 10) -> list[MarketNews]:
     """Get latest market news and financial headlines"""
     try:
-        news_data = []
+        news_data: list[MarketNews] = []
+        seen_titles: set[str] = set()
+
+        def add_articles(articles: list[dict], max_count: int):
+            for article in articles[:max_count]:
+                parsed = _normalize_news_article(article)
+                if not parsed:
+                    continue
+                title_key = parsed.title.strip().lower()
+                if title_key in seen_titles:
+                    continue
+                seen_titles.add(title_key)
+                news_data.append(parsed)
+                if len(news_data) >= limit:
+                    break
 
         if symbol:
             ticker = yf.Ticker(symbol.upper())
-            news = ticker.news
-
-            for article in news[:limit]:
-                news_data.append(
-                    MarketNews(
-                        title=article.get("title", ""),
-                        summary=article.get("summary", ""),
-                        url=article.get("link", ""),
-                        source=article.get("publisher", ""),
-                        timestamp=datetime.fromtimestamp(
-                            article.get("providerPublishTime", 0)
-                        ),
-                    )
-                )
+            news = ticker.news or []
+            add_articles(news, limit)
         else:
-            # Get general market news from major tickers
-            tickers = ["SPY", "AAPL", "TSLA", "NVDA", "MSFT"]
+            tickers = [
+                "SPY",
+                "QQQ",
+                "DIA",
+                "IWM",
+                "AAPL",
+                "MSFT",
+                "NVDA",
+                "TSLA",
+                "AMZN",
+                "GOOGL",
+                "META",
+                "AMD",
+                "JPM",
+                "XOM",
+            ]
 
-            for ticker_symbol in tickers[:3]:  # Limit to avoid rate limits
+            for ticker_symbol in tickers:
                 ticker = yf.Ticker(ticker_symbol)
-                news = ticker.news
-
-                for article in news[:2]:  # 2 articles per ticker
-                    news_data.append(
-                        MarketNews(
-                            title=article.get("title", ""),
-                            summary=article.get("summary", ""),
-                            url=article.get("link", ""),
-                            source=article.get("publisher", ""),
-                            timestamp=datetime.fromtimestamp(
-                                article.get("providerPublishTime", 0)
-                            ),
-                        )
-                    )
+                news = ticker.news or []
+                add_articles(news, 2)
+                if len(news_data) >= limit:
+                    break
 
         return news_data[:limit]
 
