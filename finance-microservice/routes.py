@@ -25,7 +25,7 @@ async def get_top_movers():
 
 
 @router.get("/api/news", response_model=list[MarketNews])
-async def get_news(symbol: str = None, limit: int = Query(10, le=50)):
+async def get_news(symbol: str | None = None, limit: int = Query(10, le=50)):
     """Get market news, optionally for a specific symbol"""
     return get_market_news(symbol, limit)
 

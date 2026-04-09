@@ -225,12 +225,10 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				);
 
 				if (isRelevantMessage) {
-					console.log('Dispatching message for current chat:', msg);
 					dispatch({ type: msg.type, payload: msg } as Action);
 				}
 			}
 
-			// Handle unread messages from others (not current peer and not from self)
 			if (msg.type === 'chat' && !isSameUser(msg.from, currentUser) && !isSameUser(msg.from, currentPeer)) {
 				console.log('Adding unread message from:', msg.from);
 				const senderKey = normalizeUsername(msg.from);

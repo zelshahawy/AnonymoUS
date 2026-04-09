@@ -5,7 +5,6 @@ import { useEffect, useRef } from 'react';
 interface Command {
 	command: string;
 	description: string;
-	icon: string;
 }
 
 interface CommandDropdownProps {
@@ -19,27 +18,26 @@ export const COMMANDS: Command[] = [
 	{
 		command: '/stocks ',
 		description: 'Get stock price and data (e.g., /stocks AAPL)',
-		icon: '📈'
 	},
 	{
 		command: '/top-movers',
 		description: 'View today\'s biggest gainers and losers',
-		icon: '📊'
 	},
 	{
 		command: '/crypto',
 		description: 'View cryptocurrency prices',
-		icon: '₿'
 	},
 	{
 		command: '/indices',
 		description: 'View major market indices (S&P 500, Dow, Nasdaq)',
-		icon: '📊'
 	},
 	{
 		command: '/trending',
 		description: 'View most active stocks',
-		icon: '🔥'
+	},
+	{
+		command: '/news',
+		description: "View the latest news"
 	}
 ];
 
@@ -83,7 +81,6 @@ export default function CommandDropdown({ isOpen, onSelect, onClose, selectedInd
 							: 'hover:bg-[#bd93f9] hover:text-[#282a36]'
 							}`}
 					>
-						<span className="text-lg">{cmd.icon}</span>
 						<div className="flex-1">
 							<div className="font-medium text-sm">{cmd.command}</div>
 							<div className="text-xs opacity-75">{cmd.description}</div>

@@ -197,7 +197,7 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 
 		// Add top 3 gainers
 		lines = append(lines, "🟢 **Top Gainers:**")
-		maxGainers := 3
+		maxGainers := 5
 		if len(gainers) > maxGainers {
 			gainers = gainers[:maxGainers]
 		}
@@ -211,7 +211,7 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 
 		// Add top 3 losers
 		lines = append(lines, "🔴 **Top Losers:**")
-		maxLosers := 3
+		maxLosers := 5
 		if len(losers) > maxLosers {
 			losers = losers[:maxLosers]
 		}

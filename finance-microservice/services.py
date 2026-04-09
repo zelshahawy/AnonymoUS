@@ -57,7 +57,7 @@ def get_top_movers_data() -> list[TopMover]:
         raise HTTPException(500, f"Error fetching top movers: {str(e)}")
 
 
-def get_market_news(symbol: str = None, limit: int = 10) -> list[MarketNews]:
+def get_market_news(symbol: str | None = None, limit: int = 10) -> list[MarketNews]:
     """Get latest market news and financial headlines"""
     try:
         news_data = []
