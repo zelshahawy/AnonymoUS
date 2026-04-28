@@ -16,6 +16,10 @@ var RecaptchaSecret = config.Config().GetString("recaptcha_secret")
 // handles the login request, parses either JSON or form data,
 // validates it, and returns a JWT token.
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		return
+	}
+
 	fmt.Println("LoginHandler called")
 	ct := r.Header.Get("Content-Type")
 

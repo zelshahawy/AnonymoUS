@@ -128,7 +128,7 @@ func httpGetJSON(url string, out interface{}) error {
 }
 
 // formatStockLines formats an array of simple stock maps into lines
-func formatStockLines(title string, stocks []map[string]interface{}, limit int) string {
+func formatStockLines(title string, stocks []map[string]any, limit int) string {
 	lines := []string{title, ""}
 	for i, s := range stocks {
 		if i >= limit {
@@ -147,7 +147,7 @@ func formatStockLines(title string, stocks []map[string]interface{}, limit int) 
 }
 
 // formatNewsLines formats news items into a compact list
-func formatNewsLines(sym string, news []map[string]interface{}, limit int) string {
+func formatNewsLines(sym string, news []map[string]any, limit int) string {
 	lines := []string{}
 	if sym != "" {
 		lines = append(lines, fmt.Sprintf("📰 **%s News:**", sym))
@@ -320,13 +320,13 @@ func HandleIndicesCommand(in *hub.Message) []BotResponse {
 		return nil
 	}
 
-	var idx map[string]map[string]interface{}
+	var idx map[string]map[string]any
 	if err := httpGetJSON(stockAPI+"/api/indices", &idx); err != nil {
 		return []BotResponse{{From: "bot", Body: friendlyError("indices", err)}}
 	}
 
 	// convert to slice of maps for formatting
-	vals := []map[string]interface{}{}
+	vals := []map[string]any{}
 	for _, v := range idx {
 		vals = append(vals, v)
 	}
@@ -379,7 +379,7 @@ func HandleTrendingCommand(in *hub.Message) []BotResponse {
 		return nil
 	}
 
-	var trending []map[string]interface{}
+	var trending []map[string]any
 	if err := httpGetJSON(stockAPI+"/api/trending", &trending); err != nil {
 		return []BotResponse{{From: "bot", Body: friendlyError("trending", err)}}
 	}

@@ -29,10 +29,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// parse & validate JWT
 		claims := &jwt.StandardClaims{}
 		token, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (any, error) {
-			// ensure token is signed with HMAC
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
@@ -43,13 +41,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// inject user ID into context and call next
 		ctx := context.WithValue(r.Context(), userIDKey, claims.Subject)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-// UserIDFromContext retrieves the user ID from the request context.
 // Returns the ID and a boolean indicating whether it was present.
 func UserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value(userIDKey).(string)
@@ -64,7 +60,6 @@ func RevokeJTI(jti string, exp time.Time) {
 }
 
 // IsJTIRevoked reports true if the JTI has been revoked.
-// It also auto-cleans any entries that have expired.
 func IsJTIRevoked(jti string) bool {
 	mu.RLock()
 	exp, ok := revokedJTIs[jti]

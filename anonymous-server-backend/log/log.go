@@ -10,30 +10,30 @@ import (
 // Logger defines a set of methods for writing application logs. Derived from and
 // inspired by logrus.Entry.
 type Logger interface {
-	Debug(args ...interface{})
-	Debugf(format string, args ...interface{})
-	Debugln(args ...interface{})
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
-	Errorln(args ...interface{})
-	Fatal(args ...interface{})
-	Fatalf(format string, args ...interface{})
-	Fatalln(args ...interface{})
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
-	Infoln(args ...interface{})
-	Panic(args ...interface{})
-	Panicf(format string, args ...interface{})
-	Panicln(args ...interface{})
-	Print(args ...interface{})
-	Printf(format string, args ...interface{})
-	Println(args ...interface{})
-	Warn(args ...interface{})
-	Warnf(format string, args ...interface{})
-	Warning(args ...interface{})
-	Warningf(format string, args ...interface{})
-	Warningln(args ...interface{})
-	Warnln(args ...interface{})
+	Debug(args ...any)
+	Debugf(format string, args ...any)
+	Debugln(args ...any)
+	Error(args ...any)
+	Errorf(format string, args ...any)
+	Errorln(args ...any)
+	Fatal(args ...any)
+	Fatalf(format string, args ...any)
+	Fatalln(args ...any)
+	Info(args ...any)
+	Infof(format string, args ...any)
+	Infoln(args ...any)
+	Panic(args ...any)
+	Panicf(format string, args ...any)
+	Panicln(args ...any)
+	Print(args ...any)
+	Printf(format string, args ...any)
+	Println(args ...any)
+	Warn(args ...any)
+	Warnf(format string, args ...any)
+	Warning(args ...any)
+	Warningf(format string, args ...any)
+	Warningln(args ...any)
+	Warnln(args ...any)
 }
 
 var defaultLogger *logrus.Logger
@@ -71,10 +71,10 @@ func newLogrusLogger(cfg config.Provider) *logrus.Logger {
 }
 
 // Fields is a map string interface to define fields in the structured log
-type Fields map[string]interface{}
+type Fields map[string]any
 
 // With allow us to define fields in out structured logs
-func (f Fields) With(k string, v interface{}) Fields {
+func (f Fields) With(k string, v any) Fields {
 	f[k] = v
 	return f
 }
@@ -93,121 +93,121 @@ func WithFields(fields Fields) Logger {
 }
 
 // Debug package-level convenience method.
-func Debug(args ...interface{}) {
+func Debug(args ...any) {
 	defaultLogger.Debug(args...)
 }
 
 // Debugf package-level convenience method.
-func Debugf(format string, args ...interface{}) {
+func Debugf(format string, args ...any) {
 	defaultLogger.Debugf(format, args...)
 }
 
 // Debugln package-level convenience method.
-func Debugln(args ...interface{}) {
+func Debugln(args ...any) {
 	defaultLogger.Debugln(args...)
 }
 
 // Error package-level convenience method.
-func Error(args ...interface{}) {
+func Error(args ...any) {
 	defaultLogger.Error(args...)
 }
 
 // Errorf package-level convenience method.
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	defaultLogger.Errorf(format, args...)
 }
 
 // Errorln package-level convenience method.
-func Errorln(args ...interface{}) {
+func Errorln(args ...any) {
 	defaultLogger.Errorln(args...)
 }
 
 // Fatal package-level convenience method.
-func Fatal(args ...interface{}) {
+func Fatal(args ...any) {
 	defaultLogger.Fatal(args...)
 }
 
 // Fatalf package-level convenience method.
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	defaultLogger.Fatalf(format, args...)
 }
 
 // Fatalln package-level convenience method.
-func Fatalln(args ...interface{}) {
+func Fatalln(args ...any) {
 	defaultLogger.Fatalln(args...)
 }
 
 // Info package-level convenience method.
-func Info(args ...interface{}) {
+func Info(args ...any) {
 	defaultLogger.Info(args...)
 }
 
 // Infof package-level convenience method.
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	defaultLogger.Infof(format, args...)
 }
 
 // Infoln package-level convenience method.
-func Infoln(args ...interface{}) {
+func Infoln(args ...any) {
 	defaultLogger.Infoln(args...)
 }
 
 // Panic package-level convenience method.
-func Panic(args ...interface{}) {
+func Panic(args ...any) {
 	defaultLogger.Panic(args...)
 }
 
 // Panicf package-level convenience method.
-func Panicf(format string, args ...interface{}) {
+func Panicf(format string, args ...any) {
 	defaultLogger.Panicf(format, args...)
 }
 
 // Panicln package-level convenience method.
-func Panicln(args ...interface{}) {
+func Panicln(args ...any) {
 	defaultLogger.Panicln(args...)
 }
 
 // Print package-level convenience method.
-func Print(args ...interface{}) {
+func Print(args ...any) {
 	defaultLogger.Print(args...)
 }
 
 // Printf package-level convenience method.
-func Printf(format string, args ...interface{}) {
+func Printf(format string, args ...any) {
 	defaultLogger.Printf(format, args...)
 }
 
 // Println package-level convenience method.
-func Println(args ...interface{}) {
+func Println(args ...any) {
 	defaultLogger.Println(args...)
 }
 
 // Warn package-level convenience method.
-func Warn(args ...interface{}) {
+func Warn(args ...any) {
 	defaultLogger.Warn(args...)
 }
 
 // Warnf package-level convenience method.
-func Warnf(format string, args ...interface{}) {
+func Warnf(format string, args ...any) {
 	defaultLogger.Warnf(format, args...)
 }
 
 // Warning package-level convenience method.
-func Warning(args ...interface{}) {
+func Warning(args ...any) {
 	defaultLogger.Warning(args...)
 }
 
 // Warningf package-level convenience method.
-func Warningf(format string, args ...interface{}) {
+func Warningf(format string, args ...any) {
 	defaultLogger.Warningf(format, args...)
 }
 
 // Warningln package-level convenience method.
-func Warningln(args ...interface{}) {
+func Warningln(args ...any) {
 	defaultLogger.Warningln(args...)
 }
 
 // Warnln package-level convenience method.
-func Warnln(args ...interface{}) {
+func Warnln(args ...any) {
 	defaultLogger.Warnln(args...)
 }

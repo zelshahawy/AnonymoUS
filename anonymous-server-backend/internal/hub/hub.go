@@ -22,7 +22,7 @@ type Client struct {
 }
 
 type Hub struct {
-	// map of userID → client
+	// map of userID -> client
 	clients map[string][]*Client
 	mu      sync.RWMutex
 }

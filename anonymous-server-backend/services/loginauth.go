@@ -92,17 +92,15 @@ func ValidateToken(tokenString string) (*jwt.StandardClaims, error) {
 
 // ProcessLogin looks up the user, checks bcrypt, and returns a JWT.
 func ProcessLogin(req LoginRequest) (LoginResponse, error) {
-	// 1) Basic validation
 	if err := req.Validate(); err != nil {
 		fmt.Println("Invalid login request:", err)
 		return LoginResponse{}, err
 	}
 	req.Username = strings.TrimSpace(req.Username)
 	req.Password = strings.TrimSpace(req.Password)
-	fmt.Printf("ProcessLogin → incoming username=%q password=%q\n", req.Username, req.Password)
+	fmt.Printf("ProcessLogin -> incoming username=%q password=%q\n", req.Username, req.Password)
 
 	ctx := context.Background()
-	// 2) Fetch user record from Mongo
 	userDoc, err := FindUserByUsername(ctx, req.Username)
 	if err == ErrUserNotFound {
 		fmt.Println("User not found:", req.Username)
@@ -113,7 +111,6 @@ func ProcessLogin(req LoginRequest) (LoginResponse, error) {
 	}
 	fmt.Println("Found user:", userDoc.Username)
 	fmt.Println("passwordHash:", userDoc.PasswordHash)
-	// 3) Compare password hash
 	if bcrypt.CompareHashAndPassword(
 		[]byte(userDoc.PasswordHash),
 		[]byte(req.Password),
