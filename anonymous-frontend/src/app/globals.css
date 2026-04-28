@@ -22,7 +22,7 @@ body {
 .grecaptcha-badge {
   position: fixed !important;
   bottom: 26px !important;
-  right: 16px !important;
+  left: 16px !important;
+  right: auto !important;
   top: auto !important;
-  left: auto !important;
 }

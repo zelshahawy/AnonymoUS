@@ -83,56 +83,15 @@ export default function LoginPage() {
 				strategy="afterInteractive"
 			/>
 
-			<style jsx>{`
-				@keyframes slideInLeft {
-					from {
-						opacity: 0;
-						transform: translateX(-50px);
-					}
-					to {
-						opacity: 1;
-						transform: translateX(0);
-					}
-				}
-				@keyframes slideInRight {
-					from {
-						opacity: 0;
-						transform: translateX(50px);
-					}
-					to {
-						opacity: 1;
-						transform: translateX(0);
-					}
-				}
-				@keyframes float {
-					0%, 100% {
-						transform: translateY(0px);
-					}
-					50% {
-						transform: translateY(-20px);
-					}
-				}
-				.animate-slide-left {
-					animation: slideInLeft 0.8s ease-out;
-				}
-				.animate-slide-right {
-					animation: slideInRight 0.8s ease-out;
-				}
-				.animate-float {
-					animation: float 3s ease-in-out infinite;
-				}
-			`}</style>
-
 			<div className="min-h-screen flex items-center justify-center px-4 py-8">
 				<div className="w-full max-w-6xl">
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-						<div className="animate-slide-left hidden lg:block">
+						<div className="hidden lg:block">
 							<div className="mb-8">
 								<h1 className="text-6xl font-bold text-[#f8f8f2] mb-4 flex items-center">
 									<Icon path={mdiChat} size={2} color="#bd93f9" className="mr-3" />
-									Connect
+									Anonymous
 								</h1>
-								<p className="text-2xl text-[#bd93f9] font-semibold">Instantly</p>
 							</div>
 
 							<div className="space-y-6">
@@ -176,15 +135,10 @@ export default function LoginPage() {
 									</div>
 								</div>
 							</div>
-
-							<div className="mt-12 relative h-40">
-								<div className="absolute top-0 left-0 w-32 h-32 bg-[#bd93f9] rounded-full opacity-10 blur-3xl animate-float"></div>
-								<div className="absolute bottom-0 right-0 w-40 h-40 bg-[#50fa7b] rounded-full opacity-10 blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
-							</div>
 						</div>
 
-						<div className="animate-slide-right">
-							<div className="bg-gradient-to-br from-[#44475a] to-[#3d3f4d] p-8 lg:p-10 rounded-2xl shadow-2xl border-2 border-[#bd93f9] backdrop-blur-sm">
+						<div>
+							<div className="p-8 lg:p-10">
 								<div className="mb-8">
 									<h2 className="text-4xl font-bold text-[#f8f8f2] mb-2">Welcome Back</h2>
 									<p className="text-[#76df5c]">Sign in to continue to your chats</p>
@@ -206,7 +160,7 @@ export default function LoginPage() {
 											<input
 												value={username}
 												onChange={(e) => setUsername(e.target.value)}
-												className="w-full pl-12 pr-4 py-3 bg-[#282a36] border-2 border-[#6272a4] text-[#f8f8f2] placeholder-[#6272a4] rounded-lg focus:outline-none focus:border-[#bd93f9] focus:ring-2 focus:ring-[#bd93f9] focus:ring-opacity-30 transition-all"
+												className="w-full pl-12 pr-4 py-3 bg-[#282a36] border border-[#6272a4] text-[#f8f8f2] placeholder-[#6272a4] rounded-lg focus:outline-none focus:border-[#bd93f9] transition-colors"
 												placeholder="testuser1"
 												disabled={isLoading}
 											/>
@@ -223,7 +177,7 @@ export default function LoginPage() {
 												type="password"
 												value={password}
 												onChange={(e) => setPassword(e.target.value)}
-												className="w-full pl-12 pr-4 py-3 bg-[#282a36] border-2 border-[#6272a4] text-[#f8f8f2] placeholder-[#6272a4] rounded-lg focus:outline-none focus:border-[#bd93f9] focus:ring-2 focus:ring-[#bd93f9] focus:ring-opacity-30 transition-all"
+												className="w-full pl-12 pr-4 py-3 bg-[#282a36] border border-[#6272a4] text-[#f8f8f2] placeholder-[#6272a4] rounded-lg focus:outline-none focus:border-[#bd93f9] transition-colors"
 												placeholder="testpassword1"
 												disabled={isLoading}
 											/>
@@ -253,7 +207,7 @@ export default function LoginPage() {
 											<div className="w-full border-t border-[#6272a4]"></div>
 										</div>
 										<div className="relative flex justify-center text-sm">
-											<span className="px-2 bg-[#44475a] text-[#6272a4]">or</span>
+											<span className="px-2 bg-[#282a36] text-[#6272a4]">or</span>
 										</div>
 									</div>
 
