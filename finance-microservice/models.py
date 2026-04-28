@@ -38,6 +38,17 @@ class MarketIndices(BaseModel):
     nasdaq: Optional[dict] = None
 
 
+class ChartPoint(BaseModel):
+    date: str
+    close: float
+
+
+class ChartResponse(BaseModel):
+    symbol: str
+    period: str
+    points: list[ChartPoint]
+
+
 class StockAlert(BaseModel):
     symbol: str
     price: float

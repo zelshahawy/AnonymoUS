@@ -108,6 +108,7 @@ func processBotCommands(ctx context.Context, msg *hub.Message) {
 	allResponses = append(allResponses, services.HandleCryptoCommand(msg)...)
 	allResponses = append(allResponses, services.HandleIndicesCommand(msg)...)
 	allResponses = append(allResponses, services.HandleTrendingCommand(msg)...)
+	allResponses = append(allResponses, services.HandleChartCommand(msg)...)
 
 	log.Printf("Total bot responses: %d", len(allResponses))
 

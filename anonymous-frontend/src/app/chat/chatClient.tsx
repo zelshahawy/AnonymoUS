@@ -3,6 +3,7 @@
 
 import AddContactModal from '@/components/AddContactModal';
 import CommandDropdown, { COMMANDS } from '@/components/CommandDropdown';
+import StockChart, { isChartData, parseChartData } from '@/components/StockChart';
 import UserProfile from '@/components/UserProfile';
 import Link from 'next/link';
 import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
@@ -450,7 +451,12 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 											: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
 											}`}
 									>
-										{m.type === 'bot' ? (
+										{m.type === 'bot' && isChartData(m.body) ? (
+											(() => {
+												const chart = parseChartData(m.body);
+												return chart ? <StockChart data={chart} /> : <span>Failed to load chart</span>;
+											})()
+										) : m.type === 'bot' ? (
 											<div className="whitespace-pre-line">
 												{m.body.split('\n').map((line, index) => (
 													<div key={index}>

@@ -38,6 +38,10 @@ export const COMMANDS: Command[] = [
 	{
 		command: '/news',
 		description: "View the latest news"
+	},
+	{
+		command: '/chart ',
+		description: 'View price chart (e.g., /chart AAPL or /chart AAPL 6mo)',
 	}
 ];
 

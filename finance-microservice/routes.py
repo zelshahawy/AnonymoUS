@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query
-from models import CryptoCurrency, MarketIndices, MarketNews, StockResponse, TopMover
+from models import ChartResponse, CryptoCurrency, MarketIndices, MarketNews, StockResponse, TopMover
 from services import (
+    get_chart_data,
     get_crypto_prices,
     get_market_indices,
     get_market_news,
@@ -53,3 +54,9 @@ async def get_sectors():
 async def get_trending():
     """Get trending/most active stocks"""
     return get_trending_stocks()
+
+
+@router.get("/api/chart/{symbol}", response_model=ChartResponse)
+async def get_chart(symbol: str, period: str = Query("1mo")):
+    """Get historical price data for charting"""
+    return get_chart_data(symbol, period)

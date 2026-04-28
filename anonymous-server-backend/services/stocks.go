@@ -13,6 +13,33 @@ import (
 	"github.com/zelshahawy/Anonymous_backend/internal/hub"
 )
 
+// friendlyError turns raw Go/HTTP errors into short, human-readable messages.
+func friendlyError(context string, err error) string {
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "no such host"),
+		strings.Contains(msg, "connection refused"),
+		strings.Contains(msg, "dial tcp"):
+		return "Couldn't reach the market data service right now. Try again in a bit!"
+	case strings.Contains(msg, "timeout"),
+		strings.Contains(msg, "deadline exceeded"):
+		return "The request timed out. The market data service might be slow — give it another shot!"
+	case strings.Contains(msg, "service returned 404"):
+		return fmt.Sprintf("Couldn't find data for **%s**. Double-check the symbol and try again.", context)
+	case strings.Contains(msg, "service returned 5"),
+		strings.Contains(msg, "service returned 502"),
+		strings.Contains(msg, "service returned 503"):
+		return "The market data service is having issues. Hang tight and try again shortly!"
+	case strings.Contains(msg, "service returned 429"):
+		return "Too many requests — slow down a bit and try again in a few seconds."
+	case strings.Contains(msg, "unmarshal"),
+		strings.Contains(msg, "decode"):
+		return "Got an unexpected response from the market data service. Try again later."
+	default:
+		return fmt.Sprintf("Something went wrong fetching %s. Try again in a moment!", context)
+	}
+}
+
 // StockResponse mirrors your Python API response
 type StockResponse struct {
 	Symbol string  `json:"symbol"`
@@ -156,7 +183,7 @@ func HandleStockCommand(in *hub.Message) []BotResponse {
 	data, err := fetchStock(sym)
 	var text string
 	if err != nil {
-		text = fmt.Sprintf("❌ Could not fetch %s: %v", sym, err)
+		text = friendlyError(sym, err)
 	} else {
 		text = fmt.Sprintf("📈 %s  Price: $%.2f  Change: %.2f%%  EMA20: $%.2f",
 			data.Symbol, data.Price, data.Change, data.EMA20)
@@ -177,7 +204,7 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 	data, err := fetchTopMovers()
 	var text string
 	if err != nil {
-		text = fmt.Sprintf("❌ Could not fetch top movers: %v", err)
+		text = friendlyError("top movers", err)
 	} else {
 		var lines []string
 		lines = append(lines, "📊 **Top Movers Today**")
@@ -255,7 +282,7 @@ func HandleNewsCommand(in *hub.Message) []BotResponse {
 		url = stockAPI + "/api/news?symbol=" + sym + "&limit=3"
 	}
 	if err := httpGetJSON(url, &newsData); err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch news: %v", err)}}
+		return []BotResponse{{From: "bot", Body: friendlyError("news", err)}}
 	}
 
 	return []BotResponse{{From: "bot", Body: formatNewsLines(sym, newsData, 3)}}
@@ -275,7 +302,7 @@ func HandleCryptoCommand(in *hub.Message) []BotResponse {
 
 	var cryptoData []map[string]interface{}
 	if err := httpGetJSON(stockAPI+"/api/crypto", &cryptoData); err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch crypto data: %v", err)}}
+		return []BotResponse{{From: "bot", Body: friendlyError("crypto", err)}}
 	}
 
 	return []BotResponse{{From: "bot", Body: formatStockLines("₿ **Crypto Prices:**", cryptoData, len(cryptoData))}}
@@ -295,7 +322,7 @@ func HandleIndicesCommand(in *hub.Message) []BotResponse {
 
 	var idx map[string]map[string]interface{}
 	if err := httpGetJSON(stockAPI+"/api/indices", &idx); err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch indices data: %v", err)}}
+		return []BotResponse{{From: "bot", Body: friendlyError("indices", err)}}
 	}
 
 	// convert to slice of maps for formatting
@@ -305,6 +332,39 @@ func HandleIndicesCommand(in *hub.Message) []BotResponse {
 	}
 
 	return []BotResponse{{From: "bot", Body: formatStockLines("📊 **Market Indices:**", vals, len(vals))}}
+}
+
+// parseChartCommand parses /chart SYMBOL or /chart SYMBOL PERIOD
+func parseChartCommand(text string) (symbol string, period string, ok bool) {
+	parts := strings.Fields(text)
+	if len(parts) < 2 || parts[0] != "/chart" {
+		return "", "", false
+	}
+	symbol = strings.ToUpper(parts[1])
+	period = "1mo"
+	if len(parts) >= 3 {
+		period = strings.ToLower(parts[2])
+	}
+	return symbol, period, true
+}
+
+// HandleChartCommand fetches historical data and returns it as CHART_DATA: JSON
+func HandleChartCommand(in *hub.Message) []BotResponse {
+	sym, period, ok := parseChartCommand(in.Body)
+	if !ok {
+		return nil
+	}
+
+	url := fmt.Sprintf("%s/api/chart/%s?period=%s", stockAPI, sym, period)
+	var chartData json.RawMessage
+	if err := httpGetJSON(url, &chartData); err != nil {
+		return []BotResponse{{From: "bot", Body: friendlyError(sym, err)}}
+	}
+
+	return []BotResponse{{
+		From: "bot",
+		Body: "CHART_DATA:" + string(chartData),
+	}}
 }
 
 // parseTrendingCommand checks for /trending
@@ -321,7 +381,7 @@ func HandleTrendingCommand(in *hub.Message) []BotResponse {
 
 	var trending []map[string]interface{}
 	if err := httpGetJSON(stockAPI+"/api/trending", &trending); err != nil {
-		return []BotResponse{{From: "bot", Body: fmt.Sprintf("❌ Could not fetch trending data: %v", err)}}
+		return []BotResponse{{From: "bot", Body: friendlyError("trending", err)}}
 	}
 
 	return []BotResponse{{From: "bot", Body: formatStockLines("🔥 **Trending Stocks:**", trending, 5)}}

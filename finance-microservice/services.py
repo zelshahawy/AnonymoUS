@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import yfinance as yf
 from fastapi import HTTPException
-from models import CryptoCurrency, MarketIndices, MarketNews, StockResponse, TopMover
+from models import ChartPoint, ChartResponse, CryptoCurrency, MarketIndices, MarketNews, StockResponse, TopMover
 
 
 def _extract_datetime(article: dict, content: dict) -> datetime:
@@ -331,6 +331,29 @@ def get_sector_performance() -> dict:
 
     except Exception as e:
         raise HTTPException(500, f"Error fetching sector performance: {str(e)}")
+
+
+VALID_CHART_PERIODS = {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "max"}
+
+
+def get_chart_data(symbol: str, period: str = "1mo") -> ChartResponse:
+    """Get historical close prices for charting."""
+    if period not in VALID_CHART_PERIODS:
+        raise HTTPException(400, f"Invalid period. Use one of: {', '.join(sorted(VALID_CHART_PERIODS))}")
+
+    ticker = yf.Ticker(symbol.upper())
+    interval = "1h" if period in ("1d", "5d") else "1d"
+    data = ticker.history(period=period, interval=interval)
+
+    if data.empty:
+        raise HTTPException(404, "Symbol not found")
+
+    points = []
+    for idx, row in data.iterrows():
+        date_str = idx.strftime("%Y-%m-%d %H:%M") if period in ("1d", "5d") else idx.strftime("%Y-%m-%d")
+        points.append(ChartPoint(date=date_str, close=round(float(row["Close"]), 2)))
+
+    return ChartResponse(symbol=symbol.upper(), period=period, points=points)
 
 
 def get_trending_stocks() -> list[dict]:
