@@ -43,16 +43,14 @@ const NavItem: FC<{
 
 export default function Navbar() {
 	const navigation: { [key: string]: [string, string][] } = {
-		"About Me": [
-			["Github", "https://github.com/zelshahawy"],
-			["LinkedIn", "https://www.linkedin.com/in/ziad-elshahawy"],
-		],
+		"Home": [["Home", "/"]],
 		"Login / Logout": [
 			["Login", "/login"],
 			["Logout", "/logout"],
 		],
 		"Chat": [["Chat", "/chat"]],
 		"Inquiries": [["Email", "mailto:ziad.a.elshahawy@gmail.com"]],
+		"About Me": [["About Me", "https://ziadelshahawy.dev"]],
 	}
 	const [isMobileView, setIsMobileView] = useState(false);
 	const [show, setShow] = useState(true);
@@ -146,8 +144,8 @@ export default function Navbar() {
 	return (
 		<nav className={navVisibilityClass}>
 			<Link href="/" className="fullLogo">
-				<Image src="/chat-logo.png" alt="Home" width={17} height={17} />
-				Home
+				<Image src="/chat-logo.png" alt="AnonymoUS" width={17} height={17} />
+				AnonymoUS
 			</Link>
 
 			<ul>
@@ -156,7 +154,13 @@ export default function Navbar() {
 						options.length === 1 ? (
 							// single-item menus become a simple link
 							<li key={key}>
-								<Link href={options[0][1]} className="navOption">
+								<Link
+									href={options[0][1]}
+									className="navOption"
+									{...(options[0][1].startsWith("http")
+										? { target: "_blank", rel: "noopener noreferrer" }
+										: {})}
+								>
 									{options[0][0]}
 								</Link>
 							</li>

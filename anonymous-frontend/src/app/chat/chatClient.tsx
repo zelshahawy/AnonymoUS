@@ -360,40 +360,49 @@ export default function ChatClient({ user, token }: { user: string, token: strin
                 }
             `}</style>
 
-			<div className="flex h-screen overflow-hidden bg-[#282a36]">
+			<div className="flex h-screen overflow-hidden bg-[#1a1b23] text-[#f8f8f2]">
 				{/* Sidebar: Contacts */}
-				<div className={`${peer ? 'hidden' : 'flex'} md:flex w-full md:w-60 md:shrink-0 bg-[#44475a] border-r-0 md:border-r-4 border-[#bd93f9] flex-col shadow-lg`}>
-					<div className="sticky top-0 z-20 border-b-2 border-[#bd93f9] bg-[#282a36]">
-						<div className="flex items-center justify-between px-4 py-3">
-							<span className="font-bold text-lg text-[#f8f8f2]">Contacts</span>
+				<div className={`${peer ? 'hidden' : 'flex'} md:flex w-full md:w-72 md:shrink-0 bg-[#21222c] border-r border-[#33354a] flex-col`}>
+					<div className="sticky top-0 z-20 bg-[#21222c] border-b border-[#33354a]">
+						<div className="flex items-center justify-between px-5 pt-5 pb-3">
+							<span className="font-bold text-lg tracking-tight text-[#f8f8f2]">Messages</span>
 							<button
 								onClick={addContact}
-								className="text-[#282a36] bg-[#bd93f9] hover:bg-[#ff79c6] rounded-full w-8 h-8 flex items-center justify-center font-bold transition-colors"
+								className="text-[#bd93f9] bg-[#bd93f9]/10 hover:bg-[#bd93f9]/20 rounded-full w-8 h-8 flex items-center justify-center text-xl leading-none transition-colors"
 								title="Add contact"
 							>
 								+
 							</button>
 						</div>
-						<p className="px-4 pb-3 text-[#bd93f9] font-semibold">Your username: {currentUser}</p>
+						<div className="flex items-center gap-2 px-5 pb-4">
+							<span className="w-2 h-2 rounded-full bg-[#50fa7b] shadow-[0_0_6px_#50fa7b]" />
+							<p className="text-sm text-[#8b8fa3] truncate">
+								Signed in as <span className="text-[#f8f8f2] font-medium">{currentUser}</span>
+							</p>
+						</div>
 					</div>
-					<div className="flex-1 overflow-y-auto">
+					<div className="flex-1 overflow-y-auto px-2 py-2">
 						{contacts.map((c, idx) => {
 							const unreadCount = unreadMessages[normalizeUsername(c)] || 0;
+							const active = peer === c;
 							return (
 								<div
 									key={`${c}-${idx}`}
 									onClick={() => setPeer(c)}
-									className={`px-4 py-3 cursor-pointer hover:bg-[#bd93f9] hover:text-[#282a36] text-[#f8f8f2] transition-colors flex items-center justify-between border-b border-[#6272a4] ${peer === c ? 'bg-[#bd93f9] font-bold text-[#282a36]' : ''
+									className={`group px-3 py-2.5 mb-1 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${active ? 'bg-[#bd93f9]/15' : 'hover:bg-[#2a2c39]'
 										}`}
 								>
 									<div className="flex items-center gap-3 min-w-0">
-										<div className="w-10 h-10 rounded-full bg-[#282a36] border border-[#bd93f9] text-[#bd93f9] flex items-center justify-center font-bold text-xs shrink-0">
+										<div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${active
+											? 'bg-[#bd93f9] text-[#21222c]'
+											: 'bg-[#2f3142] text-[#bd93f9] group-hover:bg-[#363850]'
+											}`}>
 											{c.slice(0, 2).toUpperCase()}
 										</div>
-										<span className="truncate">{c}</span>
+										<span className={`truncate ${active ? 'text-[#f8f8f2] font-semibold' : 'text-[#c9ccd6]'}`}>{c}</span>
 									</div>
 									{unreadCount > 0 && (
-										<div className="bg-[#ff5555] text-white text-xs rounded-full min-w-5 h-5 px-1 flex items-center justify-center font-bold">
+										<div className="bg-[#ff5555] text-white text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center font-bold shrink-0">
 											{unreadCount > 9 ? '9+' : unreadCount}
 										</div>
 									)}
@@ -406,86 +415,110 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				{/* Main Chat Pane */}
 				<div className={`${peer ? 'flex' : 'hidden'} md:flex flex-1 min-w-0 flex-col`}>
 					{/* Header */}
-					<div className="sticky top-0 z-20 px-3 py-3 md:px-4 md:py-3 bg-[#44475a] text-[#f8f8f2] flex items-center gap-2 md:gap-0 justify-between border-b-2 border-[#bd93f9]">
-						<div className="flex items-center gap-2">
+					<div className="sticky top-0 z-20 px-3 py-3 md:px-5 bg-[#21222c]/95 backdrop-blur text-[#f8f8f2] flex items-center gap-2 justify-between border-b border-[#33354a]">
+						<div className="flex items-center gap-2 md:gap-3 min-w-0">
 							{peer && (
 								<button
 									onClick={() => setPeer('')}
-									className="md:hidden px-3 py-2 bg-[#282a36] text-[#f8f8f2] rounded font-bold hover:bg-[#bd93f9] hover:text-[#282a36] transition-colors"
+									className="md:hidden w-9 h-9 flex items-center justify-center bg-[#2a2c39] text-[#f8f8f2] rounded-full hover:bg-[#33354a] transition-colors"
 									title="Back to contacts"
 								>
-									Back
+									‹
 								</button>
 							)}
 							<Link href="/" className="hidden md:block">
-								<button className="px-4 py-2 bg-[#50fa7b] text-[#282a36] rounded font-bold hover:bg-[#ff79c6] transition-colors">
-									Home
+								<button className="px-3.5 py-1.5 text-sm text-[#c9ccd6] bg-[#2a2c39] rounded-lg hover:bg-[#33354a] hover:text-[#f8f8f2] transition-colors">
+									← Home
 								</button>
 							</Link>
-						</div>
-						<div className="flex-1 text-center">
-							{peer ? (
-								<span className="font-semibold">
-									Chatting with <strong className="text-[#50fa7b]">{peer}</strong>
-								</span>
-							) : (
-								<span className="text-[#f8f8f2]">Select a contact to start chatting</span>
+							{peer && (
+								<div className="flex items-center gap-3 min-w-0 md:ml-1">
+									<div className="w-9 h-9 rounded-full bg-[#2f3142] text-[#bd93f9] flex items-center justify-center font-bold text-xs shrink-0">
+										{peer.slice(0, 2).toUpperCase()}
+									</div>
+									<div className="min-w-0">
+										<div className="font-semibold leading-tight truncate">{peer}</div>
+										<div className="flex items-center gap-1.5 text-xs text-[#50fa7b] leading-tight">
+											<span className="w-1.5 h-1.5 rounded-full bg-[#50fa7b]" /> online
+										</div>
+									</div>
+								</div>
+							)}
+							{!peer && (
+								<span className="hidden md:inline text-[#8b8fa3]">Select a contact to start chatting</span>
 							)}
 						</div>
 						<UserProfile user={currentUser} />
 					</div>
 
 					{/* Messages area */}
-					<div className="flex-1 overflow-y-auto p-4 bg-[#282a36]">
+					<div className="flex-1 overflow-y-auto px-3 md:px-6 py-5 bg-[#1a1b23] bg-[radial-gradient(circle_at_top,_#22232f_0%,_#1a1b23_60%)]">
 						{!peer ? (
-							<p className="text-[#f8f8f2] text-center">No chat selected.</p>
+							<div className="h-full flex flex-col items-center justify-center text-center gap-3">
+								<div className="w-16 h-16 rounded-2xl bg-[#21222c] border border-[#33354a] flex items-center justify-center text-2xl">💬</div>
+								<p className="text-[#8b8fa3]">No conversation selected.</p>
+								<p className="text-[#5c6070] text-sm">Pick a contact on the left to begin.</p>
+							</div>
 						) : (
-							messages.map((m) => (
-								<div
-									key={m.messageid}
-									className={`mb-3 flex ${m.from === currentUser ? 'justify-end' : 'justify-start'}`}
-								>
+							messages.map((m) => {
+								const isMe = m.from === currentUser;
+								const isBot = m.type === 'bot';
+								const isChart = isBot && isChartData(m.body);
+								const base = 'max-w-[80%] md:max-w-md break-words leading-relaxed shadow-sm';
+								const bubbleClass = isChart
+									? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl p-3`
+									: isBot
+										? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl px-4 py-2.5 text-[#e4e6ee]`
+										: isMe
+											? `${base} bg-[#bd93f9] text-[#21222c] rounded-2xl rounded-br-md px-4 py-2.5 font-medium`
+											: `${base} bg-[#2f3142] text-[#f8f8f2] rounded-2xl rounded-bl-md px-4 py-2.5`;
+								return (
 									<div
-										className={`px-4 py-3 rounded-lg max-w-xs wrap-break-word font-medium ${m.from === currentUser
-											? 'bg-[#bd93f9] text-[#282a36] rounded-br-none'
-											: 'bg-[#44475a] text-[#f8f8f2] rounded-bl-none border-2 border-[#bd93f9]'
-											}`}
+										key={m.messageid}
+										className={`mb-2.5 flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}
 									>
-										{m.type === 'bot' && isChartData(m.body) ? (
-											(() => {
-												const chart = parseChartData(m.body);
-												return chart ? <StockChart data={chart} /> : <span>Failed to load chart</span>;
-											})()
-										) : m.type === 'bot' ? (
-											<div className="whitespace-pre-line">
-												{m.body.split('\n').map((line, index) => (
-													<div key={index}>
-														{parseMarkdown(line)}
-													</div>
-												))}
+										{!isMe && (
+											<div className="w-7 h-7 rounded-full bg-[#2f3142] text-[#bd93f9] flex items-center justify-center font-bold text-[10px] shrink-0 mb-0.5">
+												{m.from.slice(0, 2).toUpperCase()}
 											</div>
-										) : (
-											m.body
 										)}
+										<div className={bubbleClass}>
+											{isChart ? (
+												(() => {
+													const chart = parseChartData(m.body);
+													return chart ? <StockChart data={chart} /> : <span>Failed to load chart</span>;
+												})()
+											) : isBot ? (
+												<div className="whitespace-pre-line">
+													{m.body.split('\n').map((line, index) => (
+														<div key={index}>
+															{parseMarkdown(line)}
+														</div>
+													))}
+												</div>
+											) : (
+												m.body
+											)}
+										</div>
 									</div>
-								</div>
-							))
+								);
+							})
 						)}
 						<div ref={endRef} />
 					</div>
 
 					{/* Input area */}
-					<div className="sticky bottom-0 z-20 p-3 md:p-4 bg-[#44475a] border-t-2 border-[#bd93f9] flex items-center">
+					<div className="sticky bottom-0 z-20 px-3 md:px-6 py-3 md:py-4 bg-[#21222c] border-t border-[#33354a] flex items-center gap-3">
 						<div className="flex-1 relative">
 							<input
 								ref={inputRef}
 								type="text"
-								placeholder="Type a message... (/ for commands)"
+								placeholder="Type a message…  ( / for commands )"
 								value={input}
 								onChange={handleInputChange}
 								onKeyDown={handleKeyDown}
 								disabled={!peer}
-								className="w-full border-2 border-[#bd93f9] bg-[#282a36] text-[#f8f8f2] placeholder-[#f8f8f2] rounded px-4 py-3 mr-3 focus:outline-none focus:border-[#ff79c6] transition-colors font-medium"
+								className="w-full bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-full px-5 py-3 border border-transparent focus:outline-none focus:border-[#bd93f9] focus:bg-[#2f3142] transition-colors disabled:opacity-50"
 							/>
 							<CommandDropdown
 								isOpen={showCommandDropdown}
@@ -499,10 +532,14 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						</div>
 						<button
 							onClick={sendMessage}
-							disabled={!peer}
-							className="bg-[#50fa7b] text-[#282a36] px-4 md:px-6 py-3 rounded font-bold hover:bg-[#ff79c6] disabled:opacity-50 disabled:hover:bg-[#50fa7b] transition-colors ml-3"
+							disabled={!peer || !input.trim()}
+							className="bg-[#bd93f9] text-[#21222c] w-12 h-12 shrink-0 rounded-full font-bold flex items-center justify-center hover:bg-[#caa5fb] disabled:opacity-40 disabled:hover:bg-[#bd93f9] transition-colors"
+							title="Send"
 						>
-							Send
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+								<path d="M22 2 11 13" />
+								<path d="M22 2 15 22 11 13 2 9 22 2Z" />
+							</svg>
 						</button>
 					</div>
 				</div>
