@@ -33,7 +33,7 @@ class CryptoCurrency(BaseModel):
 
 
 class MarketIndices(BaseModel):
-    s_p_500: Optional[dict] = None
+    sp500: Optional[dict] = None
     dow_jones: Optional[dict] = None
     nasdaq: Optional[dict] = None
 

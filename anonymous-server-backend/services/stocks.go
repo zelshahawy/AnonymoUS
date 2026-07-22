@@ -308,10 +308,10 @@ func HandleCryptoCommand(in *hub.Message) []BotResponse {
 	return []BotResponse{{From: "bot", Body: formatStockLines("₿ **Crypto Prices:**", cryptoData, len(cryptoData))}}
 }
 
-// parseIndicesCommand checks for /indices
+// parseIndicesCommand checks for /indices (extra arguments are ignored)
 func parseIndicesCommand(text string) bool {
 	parts := strings.Fields(text)
-	return len(parts) == 1 && parts[0] == "/indices"
+	return len(parts) >= 1 && parts[0] == "/indices"
 }
 
 // HandleIndicesCommand returns market indices
@@ -325,14 +325,43 @@ func HandleIndicesCommand(in *hub.Message) []BotResponse {
 		return []BotResponse{{From: "bot", Body: friendlyError("indices", err)}}
 	}
 
-	// convert to slice of maps for formatting
+	// The indices payload uses name/value/change keys; remap them to the
+	// symbol/price/change shape formatStockLines expects, in a stable order.
+	order := []string{"sp500", "dow_jones", "nasdaq"}
 	vals := []map[string]any{}
-	for _, v := range idx {
-		vals = append(vals, v)
+	for _, key := range order {
+		v, exists := idx[key]
+		if !exists {
+			continue
+		}
+		vals = append(vals, map[string]any{
+			"symbol": v["name"],
+			"price":  v["value"],
+			"change": v["change"],
+		})
 	}
 
 	return []BotResponse{{From: "bot", Body: formatStockLines("📊 **Market Indices:**", vals, len(vals))}}
 }
+
+// chartPeriodAliases maps user-friendly period inputs to the canonical periods
+// the market-data service understands.
+var chartPeriodAliases = map[string]string{
+	"1d": "1d", "1day": "1d", "today": "1d",
+	"5d": "5d", "1w": "5d", "1week": "5d",
+	"1mo": "1mo", "1m": "1mo", "1month": "1mo", "30d": "1mo",
+	"3mo": "3mo", "3m": "3mo", "3month": "3mo",
+	"6mo": "6mo", "6m": "6mo", "6month": "6mo",
+	"ytd": "ytd",
+	"1y":  "1y", "1yr": "1y", "1year": "1y", "12mo": "1y", "12m": "1y",
+	"2y": "2y", "2yr": "2y", "2year": "2y",
+	"5y": "5y", "5yr": "5y", "5year": "5y",
+	"10y": "10y", "10yr": "10y", "10year": "10y",
+	"max": "max", "all": "max",
+}
+
+// chartPeriodOptions lists the supported periods for user-facing messages.
+const chartPeriodOptions = "1d, 5d, 1mo, 3mo, 6mo, ytd, 1y, 2y, 5y, 10y, max"
 
 // parseChartCommand parses /chart SYMBOL or /chart SYMBOL PERIOD
 func parseChartCommand(text string) (symbol string, period string, ok bool) {
@@ -343,7 +372,8 @@ func parseChartCommand(text string) (symbol string, period string, ok bool) {
 	symbol = strings.ToUpper(parts[1])
 	period = "1mo"
 	if len(parts) >= 3 {
-		period = strings.ToLower(parts[2])
+		// Join the remaining tokens so "12 mo" collapses to "12mo".
+		period = strings.ToLower(strings.Join(parts[2:], ""))
 	}
 	return symbol, period, true
 }
@@ -355,7 +385,15 @@ func HandleChartCommand(in *hub.Message) []BotResponse {
 		return nil
 	}
 
-	url := fmt.Sprintf("%s/api/chart/%s?period=%s", stockAPI, sym, period)
+	canonical, valid := chartPeriodAliases[period]
+	if !valid {
+		return []BotResponse{{
+			From: "bot",
+			Body: fmt.Sprintf("**%s** isn't a period I recognize. Try one of: %s\n\nFor example: **/chart %s 6mo**", period, chartPeriodOptions, sym),
+		}}
+	}
+
+	url := fmt.Sprintf("%s/api/chart/%s?period=%s", stockAPI, sym, canonical)
 	var chartData json.RawMessage
 	if err := httpGetJSON(url, &chartData); err != nil {
 		return []BotResponse{{From: "bot", Body: friendlyError(sym, err)}}

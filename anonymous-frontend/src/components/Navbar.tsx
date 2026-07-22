@@ -14,8 +14,8 @@ const NavItem: FC<{
 	pos: number;
 }> = ({ name, pulledOut, options, handler, closer, pos }) => {
 	return (
-		<h4
-			className={"navOption"}
+		<li
+			className={"navOption navTrigger" + (pulledOut ? " open" : "")}
 			onMouseLeave={pulledOut ? closer : undefined}
 			onMouseOver={
 				pulledOut
@@ -25,19 +25,18 @@ const NavItem: FC<{
 					}
 			}
 		>
-			<div className={"circle" + (pulledOut ? " on" : "")}> </div>
-			{name}
+			<span>{name}</span>
+			<span className="caret">▾</span>
 			{pulledOut ? (
-				<div className={"dropDown"}>
-					{" "}
+				<ul className="dropDown">
 					{options.map((option: [string, string]) => (
 						<li key={option[0]}>
 							<Link href={option[1]}>{option[0]}</Link>
 						</li>
 					))}
-				</div>
+				</ul>
 			) : null}
-		</h4>
+		</li>
 	);
 };
 

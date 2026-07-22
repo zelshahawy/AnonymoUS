@@ -333,7 +333,7 @@ def get_sector_performance() -> dict:
         raise HTTPException(500, f"Error fetching sector performance: {str(e)}")
 
 
-VALID_CHART_PERIODS = {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "max"}
+VALID_CHART_PERIODS = {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"}
 
 
 def get_chart_data(symbol: str, period: str = "1mo") -> ChartResponse:

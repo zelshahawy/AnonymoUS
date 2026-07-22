@@ -72,32 +72,32 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 			<div className="relative" ref={dropdownRef}>
 				<button
 					onClick={() => setIsOpen(!isOpen)}
-					className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#44475a] hover:bg-[#bd93f9] text-[#f8f8f2] hover:text-[#282a36] font-bold transition-colors border-2 border-[#bd93f9]"
+					className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-[#2a2c39] hover:bg-[#33354a] text-[#f8f8f2] font-medium transition-colors border border-[#33354a]"
 					title="User menu"
 				>
-					<div className="w-6 h-6 rounded-full bg-[#282a36] flex items-center justify-center">
-						<Icon path={mdiAccount} size={0.5} color="#bd93f9" />
+					<div className="w-6 h-6 rounded-full bg-[#21222c] flex items-center justify-center">
+						<Icon path={mdiAccount} size={0.55} color="#bd93f9" />
 					</div>
 					<span className="text-sm">Profile</span>
 				</button>
 
 				{isOpen && (
-					<div className="absolute top-full right-0 mt-2 w-48 bg-[#44475a] border-2 border-[#bd93f9] rounded-lg shadow-lg z-50">
+					<div className="absolute top-full right-0 mt-2 w-48 bg-[#21222c] border border-[#33354a] rounded-xl shadow-xl overflow-hidden z-50 p-1">
 						<Link href="/login">
 							<button
 								onClick={() => setIsOpen(false)}
-								className="w-full text-left px-4 py-3 text-[#f8f8f2] hover:bg-[#bd93f9] hover:text-[#282a36] transition-colors font-medium rounded-t-md flex items-center gap-2"
+								className="w-full text-left px-3 py-2.5 rounded-lg text-[#f8f8f2] hover:bg-[#2a2c39] transition-colors font-medium flex items-center gap-2.5"
 							>
-								<Icon path={mdiLock} size={0.5} color="currentColor" />
+								<Icon path={mdiLock} size={0.55} color="#bd93f9" />
 								Sign In
 							</button>
 						</Link>
 						<Link href="/register">
 							<button
 								onClick={() => setIsOpen(false)}
-								className="w-full text-left px-4 py-3 text-[#f8f8f2] hover:bg-[#bd93f9] hover:text-[#282a36] transition-colors font-medium rounded-b-md flex items-center gap-2"
+								className="w-full text-left px-3 py-2.5 rounded-lg text-[#f8f8f2] hover:bg-[#2a2c39] transition-colors font-medium flex items-center gap-2.5"
 							>
-								<Icon path={mdiPencil} size={0.5} color="currentColor" />
+								<Icon path={mdiPencil} size={0.55} color="#bd93f9" />
 								Register
 							</button>
 						</Link>
@@ -111,41 +111,43 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 		<div className="relative" ref={dropdownRef}>
 			<button
 				onClick={() => setIsOpen(!isOpen)}
-				className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#44475a] hover:bg-[#bd93f9] text-[#f8f8f2] hover:text-[#282a36] font-bold transition-colors border-2 border-[#bd93f9]"
+				className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full bg-[#2a2c39] hover:bg-[#33354a] text-[#f8f8f2] font-medium transition-colors border border-[#33354a]"
 				title="User menu"
 			>
-				<div className="w-6 h-6 rounded-full bg-[#282a36] flex items-center justify-center text-[#bd93f9] font-bold text-xs">
+				<div className="w-6 h-6 rounded-full bg-[#bd93f9] flex items-center justify-center text-[#21222c] font-bold text-[10px]">
 					{getInitials(user)}
 				</div>
 				<span className="text-sm">{user}</span>
 			</button>
 
 			{isOpen && (
-				<div className="absolute top-full right-0 mt-2 w-48 bg-[#44475a] border-2 border-[#bd93f9] rounded-lg shadow-lg z-50">
-					<div className="px-4 py-3 border-b border-[#bd93f9]">
-						<p className="text-[#f8f8f2] font-semibold text-sm">Logged in as</p>
-						<p className="text-[#50fa7b] font-bold">{user}</p>
+				<div className="absolute top-full right-0 mt-2 w-52 bg-[#21222c] border border-[#33354a] rounded-xl shadow-xl overflow-hidden z-50">
+					<div className="px-4 py-3 border-b border-[#33354a]">
+						<p className="text-[#8b8fa3] text-xs">Logged in as</p>
+						<p className="text-[#f8f8f2] font-semibold truncate">{user}</p>
 					</div>
 
-					<Link href="/settings">
-						<button
-							onClick={() => setIsOpen(false)}
-							className="w-full text-left px-4 py-2 text-[#f8f8f2] hover:bg-[#bd93f9] hover:text-[#282a36] transition-colors font-medium flex items-center gap-2"
-						>
-							<Icon path={mdiCog} size={0.5} color="currentColor" />
-							Settings & Profile
-						</button>
-					</Link>
+					<div className="p-1">
+						<Link href="/settings">
+							<button
+								onClick={() => setIsOpen(false)}
+								className="w-full text-left px-3 py-2.5 rounded-lg text-[#f8f8f2] hover:bg-[#2a2c39] transition-colors font-medium flex items-center gap-2.5"
+							>
+								<Icon path={mdiCog} size={0.55} color="#bd93f9" />
+								Settings & Profile
+							</button>
+						</Link>
 
-					<Link href="/logout">
-						<button
-							onClick={() => setIsOpen(false)}
-							className="w-full text-left px-4 py-2 text-[#ff5555] hover:bg-[#ff5555] hover:text-[#f8f8f2] transition-colors font-medium rounded-b-md flex items-center gap-2"
-						>
-							<Icon path={mdiLogout} size={0.5} color="currentColor" />
-							Logout
-						</button>
-					</Link>
+						<Link href="/logout">
+							<button
+								onClick={() => setIsOpen(false)}
+								className="w-full text-left px-3 py-2.5 rounded-lg text-[#ff5555] hover:bg-[#ff5555]/10 transition-colors font-medium flex items-center gap-2.5"
+							>
+								<Icon path={mdiLogout} size={0.55} color="currentColor" />
+								Logout
+							</button>
+						</Link>
+					</div>
 				</div>
 			)}
 		</div>

@@ -74,6 +74,13 @@ export default function LoginPage() {
 		}
 	}
 
+	const features = [
+		{ icon: mdiChat, title: 'Real-time messaging', text: 'Send and receive messages instantly with your contacts.' },
+		{ icon: mdiAccountMultiple, title: 'Manage contacts', text: 'Easily add and organize your chat contacts.' },
+		{ icon: mdiLightningBolt, title: 'Lightning fast', text: 'Optimized for speed and reliability.' },
+		{ icon: mdiShieldLock, title: 'OAuth 2.0 security', text: 'Sign in securely with Google using industry-standard OAuth 2.0.' },
+	];
+
 	return (
 		<>
 			<NavBar />
@@ -83,158 +90,124 @@ export default function LoginPage() {
 				strategy="afterInteractive"
 			/>
 
-			<div className="min-h-screen flex items-center justify-center px-4 py-8">
-				<div className="w-full max-w-6xl">
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+			<div className="min-h-screen flex items-center justify-center px-4 pt-24 pb-12 text-[#f8f8f2]">
+				<div className="w-full max-w-5xl">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center">
 						<div className="hidden lg:block">
-							<div className="mb-8">
-								<h1 className="text-6xl font-bold text-[#f8f8f2] mb-4 flex items-center">
-									<Icon path={mdiChat} size={2} color="#bd93f9" className="mr-3" />
-									Anonymous
-								</h1>
-							</div>
+							<h1 className="text-5xl font-bold tracking-tight mb-10 flex items-center">
+								<Icon path={mdiChat} size={1.6} color="#bd93f9" className="mr-4" />
+								Anonymous
+							</h1>
 
-							<div className="space-y-6">
-								<div className="flex gap-4 items-start">
-									<div className="w-12 h-12 rounded-lg bg-[#bd93f9] flex items-center justify-center flex-shrink-0">
-										<Icon path={mdiChat} size={1.2} color="#282a36" />
+							<div className="space-y-2">
+								{features.map(f => (
+									<div key={f.title} className="flex gap-4 items-start p-4 rounded-xl">
+										<div className="w-10 h-10 rounded-xl bg-[#bd93f9]/10 text-[#bd93f9] flex items-center justify-center shrink-0">
+											<Icon path={f.icon} size={0.8} color="currentColor" />
+										</div>
+										<div>
+											<h3 className="font-semibold mb-1">{f.title}</h3>
+											<p className="text-sm text-[#8b8fa3] leading-relaxed">{f.text}</p>
+										</div>
 									</div>
-									<div>
-										<h3 className="text-lg font-bold text-[#f8f8f2] mb-1">Real-time Messaging</h3>
-										<p className="text-[#50fa7b]">Send and receive messages instantly with your contacts</p>
-									</div>
-								</div>
-
-								<div className="flex gap-4 items-start">
-									<div className="w-12 h-12 rounded-lg bg-[#50fa7b] flex items-center justify-center flex-shrink-0">
-										<Icon path={mdiAccountMultiple} size={1.2} color="#282a36" />
-									</div>
-									<div>
-										<h3 className="text-lg font-bold text-[#f8f8f2] mb-1">Manage Contacts</h3>
-										<p className="text-[#50fa7b]">Easily add and organize your chat contacts</p>
-									</div>
-								</div>
-
-								<div className="flex gap-4 items-start">
-									<div className="w-12 h-12 rounded-lg bg-[#ffb86c] flex items-center justify-center flex-shrink-0">
-										<Icon path={mdiLightningBolt} size={1.2} color="#282a36" />
-									</div>
-									<div>
-										<h3 className="text-lg font-bold text-[#f8f8f2] mb-1">Lightning Fast</h3>
-										<p className="text-[#50fa7b]">Optimized for speed and reliability</p>
-									</div>
-								</div>
-
-								<div className="flex gap-4 items-start">
-									<div className="w-12 h-12 rounded-lg bg-[#8be9fd] flex items-center justify-center flex-shrink-0">
-										<Icon path={mdiShieldLock} size={1.2} color="#282a36" />
-									</div>
-									<div>
-										<h3 className="text-lg font-bold text-[#f8f8f2] mb-1">OAuth 2.0 Security</h3>
-										<p className="text-[#50fa7b]">Sign in securely with Google using industry-standard OAuth 2.0 authentication</p>
-									</div>
-								</div>
+								))}
 							</div>
 						</div>
 
-						<div>
-							<div className="p-8 lg:p-10">
-								<div className="mb-8">
-									<h2 className="text-4xl font-bold text-[#f8f8f2] mb-2">Welcome Back</h2>
-									<p className="text-[#76df5c]">Sign in to continue to your chats</p>
-								</div>
-
-								{error && (
-									<div className="mb-6 p-4 bg-[#ff5555] bg-opacity-20 border-l-4 border-[#ff5555] text-[#f8f8f2] rounded-lg text-sm font-medium">
-										<span className="font-bold">Error:</span> {error}
-									</div>
-								)}
-
-								<form onSubmit={handleLogin} className="space-y-5">
-									<div>
-										<label className="block text-[#f8f8f2] font-semibold mb-2 text-sm">Username</label>
-										<div className="relative">
-											<div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-												<Icon path={mdiAccount} size={1.2} color="#bd93f9" />
-											</div>
-											<input
-												value={username}
-												onChange={(e) => setUsername(e.target.value)}
-												className="w-full pl-12 pr-4 py-3 bg-[#282a36] border border-[#6272a4] text-[#f8f8f2] placeholder-[#6272a4] rounded-lg focus:outline-none focus:border-[#bd93f9] transition-colors"
-												placeholder="testuser1"
-												disabled={isLoading}
-											/>
-										</div>
-									</div>
-
-									<div>
-										<label className="block text-[#f8f8f2] font-semibold mb-2 text-sm">Password</label>
-										<div className="relative">
-											<div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-												<Icon path={mdiLock} size={1.2} color="#bd93f9" />
-											</div>
-											<input
-												type="password"
-												value={password}
-												onChange={(e) => setPassword(e.target.value)}
-												className="w-full pl-12 pr-4 py-3 bg-[#282a36] border border-[#6272a4] text-[#f8f8f2] placeholder-[#6272a4] rounded-lg focus:outline-none focus:border-[#bd93f9] transition-colors"
-												placeholder="testpassword1"
-												disabled={isLoading}
-											/>
-										</div>
-									</div>
-
-									<button
-										type="submit"
-										disabled={isLoading}
-										className="w-full bg-[#50fa7b] hover:bg-[#ff79c6] text-[#282a36] py-3 rounded-lg font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-									>
-										{isLoading ? (
-											<>
-												<span className="inline-block animate-spin">⌛</span>
-												Signing in...
-											</>
-										) : (
-											<>
-												Sign In with Username
-												<span>→</span>
-											</>
-										)}
-									</button>
-
-									<div className="relative my-6">
-										<div className="absolute inset-0 flex items-center">
-											<div className="w-full border-t border-[#6272a4]"></div>
-										</div>
-										<div className="relative flex justify-center text-sm">
-											<span className="px-2 bg-[#282a36] text-[#6272a4]">or</span>
-										</div>
-									</div>
-
-									<button
-										type='button'
-										onClick={() => window.location.href = REGISTERURL}
-										disabled={isLoading}
-										className="w-full bg-gradient-to-r from-[#bd93f9] to-[#ff79c6] hover:from-[#ff79c6] hover:to-[#bd93f9] text-[#282a36] py-4 rounded-lg font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg shadow-lg"
-									>
-										<span className="text-xl">G</span>
-										Sign up with Google
-									</button>
-
-									<p className="text-center text-[#50fa7b] text-xs mt-2">Fastest way to get started</p>
-
-								</form>
-
-								<div className="mt-8 p-4 bg-[#282a36] border border-[#6272a4] rounded-lg">
-									<p className="text-[#6272a4] text-xs leading-relaxed">
-										<span className="text-[#bd93f9] font-semibold">Demo Credentials:</span><br />
-										Username: <span className="text-[#50fa7b] font-mono">testuser1</span> or <span className="text-[#50fa7b] font-mono">testuser2</span><br />
-										Password: <span className="text-[#50fa7b] font-mono">testpassword1</span> or <span className="text-[#50fa7b] font-mono">testpassword2</span><br />
-										<span className="text-[#ff5555] mt-2 block">⚠ Data is shared and cleared on logout</span>
-									</p>
-								</div>
+						<div className="bg-[#21222c]/90 border border-[#33354a] rounded-2xl p-6 md:p-8 shadow-2xl shadow-black/40">
+							<div className="mb-7">
+								<h2 className="text-3xl font-bold tracking-tight mb-1.5">Welcome back</h2>
+								<p className="text-[#8b8fa3] text-sm">Sign in to continue to your chats</p>
 							</div>
 
+							{error && (
+								<div className="mb-5 px-4 py-3 bg-[#ff5555]/10 border border-[#ff5555]/30 text-[#ff9a9a] rounded-xl text-sm">
+									{error}
+								</div>
+							)}
+
+							<form onSubmit={handleLogin} className="space-y-4">
+								<div>
+									<label className="block text-[#c9ccd6] font-medium mb-1.5 text-sm">Username</label>
+									<div className="relative">
+										<div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b6f80]">
+											<Icon path={mdiAccount} size={0.75} color="currentColor" />
+										</div>
+										<input
+											value={username}
+											onChange={(e) => setUsername(e.target.value)}
+											className="w-full pl-11 pr-4 py-3 bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-xl border border-transparent focus:outline-none focus:border-[#bd93f9] transition-colors"
+											placeholder="testuser1"
+											disabled={isLoading}
+										/>
+									</div>
+								</div>
+
+								<div>
+									<label className="block text-[#c9ccd6] font-medium mb-1.5 text-sm">Password</label>
+									<div className="relative">
+										<div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b6f80]">
+											<Icon path={mdiLock} size={0.75} color="currentColor" />
+										</div>
+										<input
+											type="password"
+											value={password}
+											onChange={(e) => setPassword(e.target.value)}
+											className="w-full pl-11 pr-4 py-3 bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-xl border border-transparent focus:outline-none focus:border-[#bd93f9] transition-colors"
+											placeholder="testpassword1"
+											disabled={isLoading}
+										/>
+									</div>
+								</div>
+
+								<button
+									type="submit"
+									disabled={isLoading}
+									className="w-full bg-[#bd93f9] hover:bg-[#caa5fb] text-[#21222c] py-3 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+								>
+									{isLoading ? (
+										<>
+											<span className="w-4 h-4 border-2 border-[#21222c]/30 border-t-[#21222c] rounded-full animate-spin" />
+											Signing in…
+										</>
+									) : (
+										<>
+											Sign in
+											<span>→</span>
+										</>
+									)}
+								</button>
+
+								<div className="relative my-5">
+									<div className="absolute inset-0 flex items-center">
+										<div className="w-full border-t border-[#33354a]"></div>
+									</div>
+									<div className="relative flex justify-center text-xs">
+										<span className="px-3 bg-[#21222c] text-[#6b6f80]">or</span>
+									</div>
+								</div>
+
+								<button
+									type='button'
+									onClick={() => window.location.href = REGISTERURL}
+									disabled={isLoading}
+									className="w-full bg-[#2a2c39] hover:bg-[#33354a] text-[#f8f8f2] py-3 rounded-xl font-semibold border border-[#33354a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5"
+								>
+									<span className="font-bold text-[#bd93f9]">G</span>
+									Continue with Google
+								</button>
+
+								<p className="text-center text-[#6b6f80] text-xs">Fastest way to get started</p>
+							</form>
+
+							<div className="mt-7 p-4 bg-[#1a1b23] border border-[#33354a] rounded-xl">
+								<p className="text-[#8b8fa3] text-xs leading-relaxed">
+									<span className="text-[#bd93f9] font-semibold">Demo credentials</span><br />
+									Username: <span className="text-[#f8f8f2] font-mono">testuser1</span> or <span className="text-[#f8f8f2] font-mono">testuser2</span><br />
+									Password: <span className="text-[#f8f8f2] font-mono">testpassword1</span> or <span className="text-[#f8f8f2] font-mono">testpassword2</span><br />
+									<span className="text-[#ffb86c] mt-2 block">⚠ Data is shared and cleared on logout</span>
+								</p>
+							</div>
 						</div>
 					</div>
 				</div>

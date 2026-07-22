@@ -17,9 +17,10 @@ export default function LogoutPage() {
 	return (
 		<>
 			<HeroBg />
-			<p className="p-6 text-center">
-				Logging you out…
-			</p>
+			<div className="min-h-screen flex flex-col items-center justify-center gap-4 text-[#8b8fa3]">
+				<span className="w-8 h-8 border-2 border-[#33354a] border-t-[#bd93f9] rounded-full animate-spin" />
+				<p>Logging you out…</p>
+			</div>
 		</>
 	);
 }

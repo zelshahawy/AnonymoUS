@@ -72,45 +72,52 @@ export default function RegisterClient() {
 				src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`}
 				strategy="afterInteractive"
 			/>
-			<div className="min-h-screen flex flex-col items-center justify-center px-4">
-				<h1 className="text-4xl font-bold mb-6 text-white">Complete Registration</h1>
-				<p className="mb-4 text-white text-center max-w-md text-sm">
-					You are signing up with <strong>{email}</strong>. Choose a username and password to finish creating
-					your account.
-				</p>
-				<form
-					onSubmit={handleRegister}
-					className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg"
-				>
-					{error && <p className="text-red-500 mb-4">{error}</p>}
-					<div className="mb-4">
-						<label className="block text-gray-700 mb-2">Username</label>
-						<input
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-							className="w-full px-3 py-2 border rounded text-black"
-							placeholder="your username"
-							required
-						/>
-					</div>
+			<div className="min-h-screen flex flex-col items-center justify-center px-4 pt-24 pb-12 text-[#f8f8f2]">
+				<div className="w-full max-w-md bg-[#21222c]/90 border border-[#33354a] rounded-2xl p-6 md:p-8 shadow-2xl shadow-black/40">
 					<div className="mb-6">
-						<label className="block text-gray-700 mb-2">Password</label>
-						<input
-							type="password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							className="w-full px-3 py-2 border rounded text-black"
-							placeholder="••••••••"
-							required
-						/>
+						<h1 className="text-3xl font-bold tracking-tight mb-1.5">Almost there</h1>
+						<p className="text-[#8b8fa3] text-sm leading-relaxed">
+							You&apos;re signing up with{' '}
+							<span className="text-[#bd93f9] font-medium break-all">{email}</span>. Pick a username
+							and password to finish creating your account.
+						</p>
 					</div>
-					<button
-						type="submit"
-						className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-					>
-						Finish Sign Up
-					</button>
-				</form>
+
+					<form onSubmit={handleRegister} className="space-y-4">
+						{error && (
+							<div className="px-4 py-3 bg-[#ff5555]/10 border border-[#ff5555]/30 text-[#ff9a9a] rounded-xl text-sm">
+								{error}
+							</div>
+						)}
+						<div>
+							<label className="block text-[#c9ccd6] font-medium mb-1.5 text-sm">Username</label>
+							<input
+								value={username}
+								onChange={(e) => setUsername(e.target.value)}
+								className="w-full px-4 py-3 bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-xl border border-transparent focus:outline-none focus:border-[#bd93f9] transition-colors"
+								placeholder="your username"
+								required
+							/>
+						</div>
+						<div>
+							<label className="block text-[#c9ccd6] font-medium mb-1.5 text-sm">Password</label>
+							<input
+								type="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								className="w-full px-4 py-3 bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-xl border border-transparent focus:outline-none focus:border-[#bd93f9] transition-colors"
+								placeholder="••••••••"
+								required
+							/>
+						</div>
+						<button
+							type="submit"
+							className="w-full bg-[#bd93f9] hover:bg-[#caa5fb] text-[#21222c] py-3 rounded-xl font-bold transition-colors mt-2"
+						>
+							Create account
+						</button>
+					</form>
+				</div>
 			</div>
 		</>
 	);

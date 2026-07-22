@@ -2,12 +2,12 @@
 	width: 100vw;
 	height: 200vh;
 	min-height: 200vh;
-	background: #282a36;
+	background: #1a1b23;
 	position: fixed;
 	top: 0;
 	overflow: hidden;
 	z-index: -1;
-	background-image: radial-gradient(circle at .08rem .08rem, rgba(189, 147, 249, 0.4) .08rem, transparent 0);
+	background-image: radial-gradient(circle at .08rem .08rem, rgba(189, 147, 249, 0.22) .08rem, transparent 0);
 	background-size: 40px 40px;
 }
 
@@ -18,7 +18,7 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: radial-gradient(circle at 80% 20%, rgba(189, 147, 249, 0.15) 0%, transparent 70%);
+	background: radial-gradient(circle at 80% 20%, rgba(189, 147, 249, 0.1) 0%, transparent 70%);
 	opacity: 0.8;
 }
 
@@ -29,21 +29,21 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-image: radial-gradient(circle at .08rem .08rem, rgba(189, 147, 249, 0.6) .08rem, transparent 0);
+	background-image: radial-gradient(circle at .08rem .08rem, rgba(189, 147, 249, 0.45) .08rem, transparent 0);
 	background-size: 40px 40px;
-	animation: twinkle 2s ease-in-out infinite;
-	opacity: 0.8;
+	animation: twinkle 3s ease-in-out infinite;
+	opacity: 0.5;
 }
 
 @keyframes twinkle {
 
 	0%,
 	100% {
-		opacity: 0.1;
+		opacity: 0.08;
 	}
 
 	50% {
-		opacity: 1;
+		opacity: 0.55;
 	}
 }
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { useId } from 'react';
+
 interface ChartData {
 	symbol: string;
 	period: string;
@@ -18,7 +20,11 @@ export function parseChartData(body: string): ChartData | null {
 	}
 }
 
+const fmtPrice = (n: number) =>
+	n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 export default function StockChart({ data }: { data: ChartData }) {
+	const gradientId = useId();
 	const { symbol, period, points } = data;
 	if (!points || points.length === 0) return null;
 
@@ -27,82 +33,101 @@ export default function StockChart({ data }: { data: ChartData }) {
 	const max = Math.max(...closes);
 	const range = max - min || 1;
 
-	const w = 280;
+	const w = 300;
 	const h = 120;
 	const padTop = 8;
-	const padBot = 20;
-	const padLeft = 0;
-	const padRight = 0;
+	const padBot = 8;
+	const padX = 6;
 	const chartH = h - padTop - padBot;
-	const chartW = w - padLeft - padRight;
+	const chartW = w - padX * 2;
 
-	const polyPoints = points
-		.map((p, i) => {
-			const x = padLeft + (i / (points.length - 1)) * chartW;
-			const y = padTop + chartH - ((p.close - min) / range) * chartH;
-			return `${x},${y}`;
-		})
-		.join(' ');
+	const coords = points.map((p, i) => {
+		const x = padX + (i / (points.length - 1 || 1)) * chartW;
+		const y = padTop + chartH - ((p.close - min) / range) * chartH;
+		return { x, y };
+	});
+	const polyPoints = coords.map(c => `${c.x},${c.y}`).join(' ');
 
 	const first = closes[0];
 	const last = closes[closes.length - 1];
-	const change = ((last - first) / first) * 100;
+	const change = first ? ((last - first) / first) * 100 : 0;
 	const isUp = change >= 0;
 	const color = isUp ? '#50fa7b' : '#ff5555';
 
-	// Fill area under the line
-	const firstX = padLeft;
-	const lastX = padLeft + chartW;
 	const bottomY = padTop + chartH;
-	const areaPoints = `${firstX},${bottomY} ${polyPoints} ${lastX},${bottomY}`;
+	const areaPoints = `${padX},${bottomY} ${polyPoints} ${padX + chartW},${bottomY}`;
+	const lastPt = coords[coords.length - 1];
 
 	return (
-		<div>
-			<div className="flex items-baseline gap-2 mb-1">
-				<span className="font-bold text-[#f8f8f2] text-sm">{symbol}</span>
-				<span className="text-xs text-[#6272a4]">{period}</span>
-				<span className="text-xs font-mono" style={{ color }}>
-					{isUp ? '+' : ''}{change.toFixed(2)}%
-				</span>
+		<div className="w-[300px] max-w-full">
+			{/* Header: symbol + range on the left, live price + change on the right */}
+			<div className="flex items-start justify-between mb-2 gap-3">
+				<div className="min-w-0">
+					<div className="flex items-center gap-2">
+						<span className="font-bold text-[#f8f8f2] text-sm tracking-tight">{symbol}</span>
+						<span className="text-[10px] uppercase tracking-wide text-[#8b8fa3] bg-[#2a2c39] rounded px-1.5 py-0.5">
+							{period}
+						</span>
+					</div>
+					<div className="text-[10px] text-[#6b6f80] font-mono mt-0.5">
+						H ${fmtPrice(max)} · L ${fmtPrice(min)}
+					</div>
+				</div>
+				<div className="text-right leading-tight shrink-0">
+					<div className="font-bold text-[#f8f8f2] text-sm">${fmtPrice(last)}</div>
+					<div className="text-xs font-mono" style={{ color }}>
+						{isUp ? '▲' : '▼'} {isUp ? '+' : ''}{change.toFixed(2)}%
+					</div>
+				</div>
 			</div>
-			<svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} className="block">
-				{/* Grid lines */}
-				{[0, 0.25, 0.5, 0.75, 1].map(frac => {
-					const y = padTop + chartH * (1 - frac);
+
+			<svg viewBox={`0 0 ${w} ${h}`} width="100%" className="block">
+				<defs>
+					<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+						<stop offset="0%" stopColor={color} stopOpacity="0.3" />
+						<stop offset="100%" stopColor={color} stopOpacity="0" />
+					</linearGradient>
+				</defs>
+
+				{/* Baseline gridlines */}
+				{[0, 0.5, 1].map(frac => {
+					const y = padTop + chartH * frac;
 					return (
-						<line key={frac} x1={padLeft} x2={padLeft + chartW} y1={y} y2={y}
-							stroke="#6272a4" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.3" />
+						<line
+							key={frac}
+							x1={padX}
+							x2={padX + chartW}
+							y1={y}
+							y2={y}
+							stroke="#33354a"
+							strokeWidth="1"
+							strokeDasharray="2,4"
+						/>
 					);
 				})}
 
-				{/* Fill */}
-				<polygon points={areaPoints} fill={color} opacity="0.1" />
+				{/* Area fill */}
+				<polygon points={areaPoints} fill={`url(#${gradientId})`} />
 
-				{/* Line */}
+				{/* Price line */}
 				<polyline
 					points={polyPoints}
 					fill="none"
 					stroke={color}
-					strokeWidth="1.5"
+					strokeWidth="2"
 					strokeLinejoin="round"
+					strokeLinecap="round"
 				/>
 
-				{/* Price labels */}
-				<text x={padLeft + 2} y={padTop + 4} fill="#6272a4" fontSize="8" fontFamily="monospace">
-					${max.toFixed(2)}
-				</text>
-				<text x={padLeft + 2} y={padTop + chartH - 2} fill="#6272a4" fontSize="8" fontFamily="monospace">
-					${min.toFixed(2)}
-				</text>
-
-				{/* Date labels */}
-				<text x={padLeft} y={h - 4} fill="#6272a4" fontSize="7" fontFamily="monospace">
-					{points[0].date}
-				</text>
-				<text x={padLeft + chartW} y={h - 4} fill="#6272a4" fontSize="7" fontFamily="monospace" textAnchor="end">
-					{points[points.length - 1].date}
-				</text>
+				{/* Latest-price marker */}
+				<circle cx={lastPt.x} cy={lastPt.y} r="3.5" fill={color} stroke="#21222c" strokeWidth="2" />
 			</svg>
+
+			{/* Date range */}
+			<div className="flex justify-between text-[10px] text-[#6b6f80] font-mono mt-1">
+				<span>{points[0].date}</span>
+				<span>{points[points.length - 1].date}</span>
+			</div>
 		</div>
 	);
 }

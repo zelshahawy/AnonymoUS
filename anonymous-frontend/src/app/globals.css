@@ -21,8 +21,18 @@ body {
 
 .grecaptcha-badge {
   position: fixed !important;
-  bottom: 26px !important;
-  left: 16px !important;
+  bottom: 14px !important;
+  left: 14px !important;
   right: auto !important;
   top: auto !important;
+  transform: scale(0.7);
+  transform-origin: bottom left;
+  opacity: 0.5;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Expand to full size and opacity only when the user wants to read it. */
+.grecaptcha-badge:hover {
+  transform: scale(1);
+  opacity: 1;
 }

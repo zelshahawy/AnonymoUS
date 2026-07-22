@@ -448,7 +448,20 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				<div className={`${peer ? 'hidden' : 'flex'} md:flex w-full md:w-72 md:shrink-0 bg-[#21222c] border-r border-[#33354a] flex-col`}>
 					<div className="sticky top-0 z-20 bg-[#21222c] border-b border-[#33354a]">
 						<div className="flex items-center justify-between px-5 pt-5 pb-3">
-							<span className="font-bold text-lg tracking-tight text-[#f8f8f2]">Messages</span>
+							<div className="flex items-center gap-2.5 min-w-0">
+								<Link
+									href="/"
+									className="md:hidden text-[#c9ccd6] hover:text-[#f8f8f2] transition-colors shrink-0"
+									title="Home"
+									aria-label="Home"
+								>
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+										<path d="M3 10.5 12 3l9 7.5" />
+										<path d="M5 9.5V21h14V9.5" />
+									</svg>
+								</Link>
+								<span className="font-bold text-lg tracking-tight text-[#f8f8f2]">Messages</span>
+							</div>
 							<button
 								onClick={addContact}
 								className="text-[#bd93f9] bg-[#bd93f9]/10 hover:bg-[#bd93f9]/20 rounded-full w-8 h-8 flex items-center justify-center text-xl leading-none transition-colors"
@@ -457,8 +470,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								+
 							</button>
 						</div>
-						<div className="flex items-center gap-2 px-5 pb-3">
-							<span className="w-2 h-2 rounded-full bg-[#50fa7b] shadow-[0_0_6px_#50fa7b]" />
+						<div className="px-5 pb-3">
 							<p className="text-sm text-[#8b8fa3] truncate">
 								Signed in as <span className="text-[#f8f8f2] font-medium">{currentUser}</span>
 							</p>
