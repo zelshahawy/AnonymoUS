@@ -9,6 +9,7 @@ interface Command {
 
 interface CommandDropdownProps {
 	isOpen: boolean;
+	commands: Command[];
 	onSelect: (command: string) => void;
 	onClose: () => void;
 	selectedIndex: number;
@@ -45,7 +46,7 @@ export const COMMANDS: Command[] = [
 	}
 ];
 
-export default function CommandDropdown({ isOpen, onSelect, onClose, selectedIndex }: CommandDropdownProps) {
+export default function CommandDropdown({ isOpen, commands, onSelect, onClose, selectedIndex }: CommandDropdownProps) {
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -64,30 +65,28 @@ export default function CommandDropdown({ isOpen, onSelect, onClose, selectedInd
 		};
 	}, [isOpen, onClose]);
 
-	if (!isOpen) return null;
+	if (!isOpen || commands.length === 0) return null;
 
 	return (
 		<div
 			ref={dropdownRef}
-			className="absolute bottom-full left-0 right-0 mb-2 bg-[#44475a] border-2 border-[#bd93f9] rounded-lg shadow-lg overflow-hidden z-50"
+			className="absolute bottom-full left-0 right-0 mb-2 bg-[#21222c] border border-[#33354a] rounded-xl shadow-xl overflow-hidden z-50"
 		>
-			<div className="px-3 py-2 text-xs text-[#6272a4] bg-[#282a36] border-b border-[#6272a4]">
-				Bot Commands
+			<div className="px-4 py-2 text-[11px] uppercase tracking-wide text-[#6b6f80] border-b border-[#33354a]">
+				Commands
 			</div>
-			{COMMANDS.map((cmd, index) => {
+			{commands.map((cmd, index) => {
 				const isSelected = index === selectedIndex;
 				return (
 					<div
-						key={index}
+						key={cmd.command}
 						onClick={() => onSelect(cmd.command)}
-						className={`px-4 py-3 text-[#f8f8f2] cursor-pointer transition-colors flex items-center gap-3 ${isSelected
-							? 'bg-[#bd93f9] text-[#282a36]'
-							: 'hover:bg-[#bd93f9] hover:text-[#282a36]'
+						className={`px-4 py-2.5 cursor-pointer transition-colors flex items-center gap-3 ${isSelected ? 'bg-[#bd93f9]/15' : 'hover:bg-[#2a2c39]'
 							}`}
 					>
-						<div className="flex-1">
-							<div className="font-medium text-sm">{cmd.command}</div>
-							<div className="text-xs opacity-75">{cmd.description}</div>
+						<div className="flex-1 min-w-0">
+							<div className="font-mono text-sm text-[#bd93f9]">{cmd.command.trim()}</div>
+							<div className="text-xs text-[#6b6f80] truncate">{cmd.description}</div>
 						</div>
 					</div>
 				);

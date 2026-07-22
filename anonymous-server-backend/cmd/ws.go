@@ -121,6 +121,7 @@ func processBotCommands(ctx context.Context, msg *hub.Message) {
 			From:      msg.From,
 			To:        msg.To,
 			Body:      bot.Body,
+			Ts:        time.Now().UnixMilli(),
 		}
 
 		if err := services.SaveMessage(ctx, &services.MessageDoc{
@@ -171,18 +172,38 @@ func readPump(ctx context.Context, c *hub.Client) {
 				if msgType == "" {
 					msgType = "chat" // Default for old messages
 				}
+				var ts int64
+				if !m.Timestamp.IsZero() {
+					ts = m.Timestamp.UnixMilli()
+				}
 				_ = c.Conn.WriteJSON(hub.Message{
 					Type:      msgType, // Use the stored type
 					Messageid: m.MsgID,
 					From:      m.From,
 					To:        m.To,
 					Body:      m.Body,
+					Ts:        ts,
 				})
 			}
+
+		case "presence":
+			online := hub.GlobalHub.Subscribe(c.UserID, msg.To)
+			status := "offline"
+			if online {
+				status = "online"
+			}
+			hub.GlobalHub.Send(c.UserID, &hub.Message{
+				Type:      "presence",
+				Messageid: hub.GenerateMessageID(),
+				From:      msg.To,
+				To:        c.UserID,
+				Body:      status,
+			})
 
 		case "chat":
 			msg.From = c.UserID
 			msg.Messageid = hub.GenerateMessageID()
+			msg.Ts = time.Now().UnixMilli()
 
 			if err := services.SaveMessage(ctx, &services.MessageDoc{
 				MsgID:    msg.Messageid,

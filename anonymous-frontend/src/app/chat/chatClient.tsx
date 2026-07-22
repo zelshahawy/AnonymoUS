@@ -6,16 +6,33 @@ import CommandDropdown, { COMMANDS } from '@/components/CommandDropdown';
 import StockChart, { isChartData, parseChartData } from '@/components/StockChart';
 import UserProfile from '@/components/UserProfile';
 import Link from 'next/link';
-import { KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
+import { Fragment, KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
 interface Message {
-	type: 'chat' | 'history' | 'bot' | 'notification';
+	type: 'chat' | 'history' | 'bot' | 'notification' | 'presence';
 	from: string;
 	to: string;
 	body: string;
 	messageid: string;
 	count?: number;
+	ts?: number;
 }
+
+type ConnectionStatus = 'connecting' | 'open' | 'reconnecting';
+
+const formatTime = (ts?: number) =>
+	ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+const dayLabel = (ts: number) => {
+	const date = new Date(ts);
+	const today = new Date();
+	const yesterday = new Date();
+	yesterday.setDate(today.getDate() - 1);
+
+	if (date.toDateString() === today.toDateString()) return 'Today';
+	if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+	return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
 type Action =
 	| { type: 'history'; payload: Message }
@@ -95,9 +112,24 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
 	const [showCommandDropdown, setShowCommandDropdown] = useState(false);
 	const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
+	const [presence, setPresence] = useState<Record<string, 'online' | 'offline'>>({});
+	const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+	const [contactSearch, setContactSearch] = useState('');
 	const endRef = useRef<HTMLDivElement>(null);
+	const listRef = useRef<HTMLDivElement>(null);
+	const stickToBottomRef = useRef<boolean>(true);
 	const peerRef = useRef<string>('');
 	const inputRef = useRef<HTMLInputElement>(null);
+
+	const commandQuery = input.startsWith('/') ? input.toLowerCase() : '';
+	const filteredCommands = commandQuery
+		? COMMANDS.filter(cmd => cmd.command.toLowerCase().startsWith(commandQuery))
+		: [];
+	const commandMenuOpen = showCommandDropdown && filteredCommands.length > 0;
+
+	const visibleContacts = contacts.filter(contact =>
+		contact.toLowerCase().includes(contactSearch.trim().toLowerCase())
+	);
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
 
@@ -178,6 +210,22 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		});
 	};
 
+	const removeContact = (name: string) => {
+		setContacts(prev => prev.filter(contact => !isSameUser(contact, name)));
+		setUnreadMessages(prev => {
+			const next = { ...prev };
+			delete next[normalizeUsername(name)];
+			return next;
+		});
+		if (isSameUser(peer, name)) setPeer('');
+	};
+
+	const handleListScroll = () => {
+		const el = listRef.current;
+		if (!el) return;
+		stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+	};
+
 	useEffect(() => {
 		peerRef.current = peer;
 	}, [peer]);
@@ -185,18 +233,41 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	useEffect(() => {
 		if (!currentUser || !token) return;
 
-		const ws = new WebSocket(`${WEBSOCKETURL}?token=${encodeURIComponent(token)}`);
+		let stopped = false;
+		let ws: WebSocket | null = null;
+		let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+		let attempts = 0;
 
-		ws.onopen = () => {
-			console.log('WebSocket connected');
-		};
+		const connect = () => {
+			if (stopped) return;
+			setConnectionStatus(attempts === 0 ? 'connecting' : 'reconnecting');
+			ws = new WebSocket(`${WEBSOCKETURL}?token=${encodeURIComponent(token)}`);
 
-		ws.onmessage = (e: MessageEvent) => {
-			const msg: Message = JSON.parse(e.data);
-			const currentPeer = peerRef.current;
-			console.log('Received message:', msg, 'Current peer:', currentPeer);
+			ws.onopen = () => {
+				attempts = 0;
+				setConnectionStatus('open');
+				// Re-sync the open conversation after an initial or restored connection.
+				const activePeer = peerRef.current;
+				if (activePeer && ws) {
+					dispatch({ type: 'clear' });
+					ws.send(JSON.stringify({ type: 'history', to: activePeer, from: currentUser }));
+					ws.send(JSON.stringify({ type: 'presence', to: activePeer, from: currentUser }));
+				}
+			};
 
-			if (msg.type === 'notification') {
+			ws.onmessage = (e: MessageEvent) => {
+				const msg: Message = JSON.parse(e.data);
+				const currentPeer = peerRef.current;
+
+				if (msg.type === 'presence') {
+					setPresence(prev => ({
+						...prev,
+						[normalizeUsername(msg.from)]: msg.body === 'online' ? 'online' : 'offline',
+					}));
+					return;
+				}
+
+				if (msg.type === 'notification') {
 				const senderKey = normalizeUsername(msg.from);
 				const unreadIncrement =
 					typeof msg.count === 'number' && Number.isFinite(msg.count) && msg.count > 0
@@ -248,32 +319,49 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			}
 		};
 
-		ws.onclose = () => {
-			console.log('WebSocket closed');
+			ws.onerror = () => {
+				ws?.close();
+			};
+
+			ws.onclose = () => {
+				if (stopped) return;
+				setSocket(null);
+				setConnectionStatus('reconnecting');
+				const delay = Math.min(15000, 1000 * 2 ** attempts);
+				attempts += 1;
+				reconnectTimer = setTimeout(connect, delay);
+			};
+
+			setSocket(ws);
 		};
 
-		ws.onerror = (error) => {
-			console.error('WebSocket error:', error);
-		};
-
-		setSocket(ws);
+		connect();
 
 		return () => {
-			ws.close();
+			stopped = true;
+			if (reconnectTimer) clearTimeout(reconnectTimer);
+			ws?.close();
 		};
 	}, [currentUser, token, WEBSOCKETURL]);
 
-	// Load history when peer changes
+	// Load history + subscribe to presence when the open conversation changes.
 	useEffect(() => {
 		if (peer && socket && socket.readyState === WebSocket.OPEN) {
 			dispatch({ type: 'clear' });
-			console.log('Loading history for peer:', peer);
 			socket.send(JSON.stringify({ type: 'history', to: peer, from: currentUser }));
+			socket.send(JSON.stringify({ type: 'presence', to: peer, from: currentUser }));
 		}
 	}, [peer, socket, currentUser]);
 
+	// Keep the view pinned to the newest message only when already at the bottom.
 	useEffect(() => {
-		endRef.current?.scrollIntoView({ behavior: 'smooth' });
+		stickToBottomRef.current = true;
+	}, [peer]);
+
+	useEffect(() => {
+		if (stickToBottomRef.current) {
+			endRef.current?.scrollIntoView({ behavior: 'auto' });
+		}
 	}, [messages]);
 
 	const sendMessage = () => {
@@ -292,13 +380,8 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
 		setInput(value);
-
-		if (value === '/') {
-			setShowCommandDropdown(true);
-			setSelectedCommandIndex(0);
-		} else {
-			setShowCommandDropdown(false);
-		}
+		setShowCommandDropdown(value.startsWith('/'));
+		setSelectedCommandIndex(0);
 	};
 
 	const handleCommandSelect = (command: string) => {
@@ -309,22 +392,22 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-		if (showCommandDropdown && COMMANDS.length > 0) {
+		if (commandMenuOpen) {
 			if (e.key === 'ArrowDown') {
 				e.preventDefault();
-				setSelectedCommandIndex((prev) => (prev + 1) % COMMANDS.length);
+				setSelectedCommandIndex((prev) => (prev + 1) % filteredCommands.length);
 				return;
 			}
 
 			if (e.key === 'ArrowUp') {
 				e.preventDefault();
-				setSelectedCommandIndex((prev) => (prev - 1 + COMMANDS.length) % COMMANDS.length);
+				setSelectedCommandIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
 				return;
 			}
 
 			if (e.key === 'Enter') {
 				e.preventDefault();
-				handleCommandSelect(COMMANDS[selectedCommandIndex].command);
+				handleCommandSelect(filteredCommands[selectedCommandIndex].command);
 				return;
 			}
 		}
@@ -374,41 +457,72 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								+
 							</button>
 						</div>
-						<div className="flex items-center gap-2 px-5 pb-4">
+						<div className="flex items-center gap-2 px-5 pb-3">
 							<span className="w-2 h-2 rounded-full bg-[#50fa7b] shadow-[0_0_6px_#50fa7b]" />
 							<p className="text-sm text-[#8b8fa3] truncate">
 								Signed in as <span className="text-[#f8f8f2] font-medium">{currentUser}</span>
 							</p>
 						</div>
+						<div className="px-4 pb-3">
+							<input
+								value={contactSearch}
+								onChange={(e) => setContactSearch(e.target.value)}
+								placeholder="Search contacts"
+								className="w-full bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-lg px-3 py-2 text-sm border border-transparent focus:outline-none focus:border-[#bd93f9] transition-colors"
+							/>
+						</div>
 					</div>
 					<div className="flex-1 overflow-y-auto px-2 py-2">
-						{contacts.map((c, idx) => {
-							const unreadCount = unreadMessages[normalizeUsername(c)] || 0;
-							const active = peer === c;
-							return (
-								<div
-									key={`${c}-${idx}`}
-									onClick={() => setPeer(c)}
-									className={`group px-3 py-2.5 mb-1 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${active ? 'bg-[#bd93f9]/15' : 'hover:bg-[#2a2c39]'
-										}`}
-								>
-									<div className="flex items-center gap-3 min-w-0">
-										<div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${active
-											? 'bg-[#bd93f9] text-[#21222c]'
-											: 'bg-[#2f3142] text-[#bd93f9] group-hover:bg-[#363850]'
-											}`}>
-											{c.slice(0, 2).toUpperCase()}
+						{visibleContacts.length === 0 ? (
+							<p className="text-center text-sm text-[#6b6f80] mt-6 px-4">
+								{contactSearch ? 'No contacts match your search.' : 'No contacts yet — add one with +.'}
+							</p>
+						) : (
+							visibleContacts.map((c, idx) => {
+								const unreadCount = unreadMessages[normalizeUsername(c)] || 0;
+								const active = peer === c;
+								const online = presence[normalizeUsername(c)] === 'online';
+								return (
+									<div
+										key={`${c}-${idx}`}
+										onClick={() => setPeer(c)}
+										className={`group px-3 py-2.5 mb-1 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${active ? 'bg-[#bd93f9]/15' : 'hover:bg-[#2a2c39]'
+											}`}
+									>
+										<div className="flex items-center gap-3 min-w-0">
+											<div className={`relative w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${active
+												? 'bg-[#bd93f9] text-[#21222c]'
+												: 'bg-[#2f3142] text-[#bd93f9] group-hover:bg-[#363850]'
+												}`}>
+												{c.slice(0, 2).toUpperCase()}
+												{online && (
+													<span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#50fa7b] border-2 border-[#21222c]" />
+												)}
+											</div>
+											<span className={`truncate ${active ? 'text-[#f8f8f2] font-semibold' : 'text-[#c9ccd6]'}`}>{c}</span>
 										</div>
-										<span className={`truncate ${active ? 'text-[#f8f8f2] font-semibold' : 'text-[#c9ccd6]'}`}>{c}</span>
+										<div className="flex items-center gap-2 shrink-0">
+											{unreadCount > 0 && (
+												<div className="bg-[#ff5555] text-white text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center font-bold">
+													{unreadCount > 9 ? '9+' : unreadCount}
+												</div>
+											)}
+											<button
+												onClick={(e) => {
+													e.stopPropagation();
+													removeContact(c);
+												}}
+												className="opacity-0 group-hover:opacity-100 text-[#6b6f80] hover:text-[#ff5555] text-lg leading-none transition-opacity"
+												title={`Remove ${c}`}
+												aria-label={`Remove ${c}`}
+											>
+												×
+											</button>
+										</div>
 									</div>
-									{unreadCount > 0 && (
-										<div className="bg-[#ff5555] text-white text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center font-bold shrink-0">
-											{unreadCount > 9 ? '9+' : unreadCount}
-										</div>
-									)}
-								</div>
-							);
-						})}
+								);
+							})
+						)}
 					</div>
 				</div>
 
@@ -438,9 +552,15 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 									</div>
 									<div className="min-w-0">
 										<div className="font-semibold leading-tight truncate">{peer}</div>
-										<div className="flex items-center gap-1.5 text-xs text-[#50fa7b] leading-tight">
-											<span className="w-1.5 h-1.5 rounded-full bg-[#50fa7b]" /> online
-										</div>
+										{(() => {
+											const online = presence[normalizeUsername(peer)] === 'online';
+											return (
+												<div className={`flex items-center gap-1.5 text-xs leading-tight ${online ? 'text-[#50fa7b]' : 'text-[#8b8fa3]'}`}>
+													<span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-[#50fa7b]' : 'bg-[#6b6f80]'}`} />
+													{online ? 'online' : 'offline'}
+												</div>
+											);
+										})()}
 									</div>
 								</div>
 							)}
@@ -451,8 +571,18 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						<UserProfile user={currentUser} />
 					</div>
 
+					{/* Connection status banner */}
+					{connectionStatus !== 'open' && (
+						<div className="text-center text-xs text-[#ffb86c] bg-[#ffb86c]/10 border-b border-[#ffb86c]/20 py-1.5">
+							{connectionStatus === 'connecting' ? 'Connecting…' : 'Connection lost — reconnecting…'}
+						</div>
+					)}
+
 					{/* Messages area */}
-					<div className="flex-1 overflow-y-auto px-3 md:px-6 py-5 bg-[#1a1b23] bg-[radial-gradient(circle_at_top,_#22232f_0%,_#1a1b23_60%)]">
+					<div
+						ref={listRef}
+						onScroll={handleListScroll}
+						className="flex-1 overflow-y-auto px-3 md:px-6 py-5 bg-[#1a1b23] bg-[radial-gradient(circle_at_top,_#22232f_0%,_#1a1b23_60%)]">
 						{!peer ? (
 							<div className="h-full flex flex-col items-center justify-center text-center gap-3">
 								<div className="w-16 h-16 rounded-2xl bg-[#21222c] border border-[#33354a] flex items-center justify-center text-2xl">💬</div>
@@ -460,11 +590,16 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								<p className="text-[#5c6070] text-sm">Pick a contact on the left to begin.</p>
 							</div>
 						) : (
-							messages.map((m) => {
+							messages.map((m, i) => {
 								const isMe = m.from === currentUser;
 								const isBot = m.type === 'bot';
 								const isChart = isBot && isChartData(m.body);
-								const base = 'max-w-[80%] md:max-w-md break-words leading-relaxed shadow-sm';
+								const prev = messages[i - 1];
+								const dividerLabel =
+									m.ts && (!prev?.ts || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString())
+										? dayLabel(m.ts)
+										: null;
+								const base = 'w-fit max-w-full break-words leading-relaxed shadow-sm';
 								const bubbleClass = isChart
 									? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl p-3`
 									: isBot
@@ -473,34 +608,45 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 											? `${base} bg-[#bd93f9] text-[#21222c] rounded-2xl rounded-br-md px-4 py-2.5 font-medium`
 											: `${base} bg-[#2f3142] text-[#f8f8f2] rounded-2xl rounded-bl-md px-4 py-2.5`;
 								return (
-									<div
-										key={m.messageid}
-										className={`mb-2.5 flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}
-									>
-										{!isMe && (
-											<div className="w-7 h-7 rounded-full bg-[#2f3142] text-[#bd93f9] flex items-center justify-center font-bold text-[10px] shrink-0 mb-0.5">
-												{m.from.slice(0, 2).toUpperCase()}
+									<Fragment key={m.messageid}>
+										{dividerLabel && (
+											<div className="flex items-center justify-center my-4">
+												<span className="text-[11px] uppercase tracking-wide text-[#6b6f80] bg-[#21222c] px-3 py-1 rounded-full border border-[#33354a]">
+													{dividerLabel}
+												</span>
 											</div>
 										)}
-										<div className={bubbleClass}>
-											{isChart ? (
-												(() => {
-													const chart = parseChartData(m.body);
-													return chart ? <StockChart data={chart} /> : <span>Failed to load chart</span>;
-												})()
-											) : isBot ? (
-												<div className="whitespace-pre-line">
-													{m.body.split('\n').map((line, index) => (
-														<div key={index}>
-															{parseMarkdown(line)}
-														</div>
-													))}
+										<div className={`mb-2.5 flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
+											{!isMe && (
+												<div className="w-7 h-7 rounded-full bg-[#2f3142] text-[#bd93f9] flex items-center justify-center font-bold text-[10px] shrink-0 mb-0.5">
+													{m.from.slice(0, 2).toUpperCase()}
 												</div>
-											) : (
-												m.body
 											)}
+											<div className={`flex flex-col max-w-[80%] md:max-w-md ${isMe ? 'items-end' : 'items-start'}`}>
+												<div className={bubbleClass}>
+													{isChart ? (
+														(() => {
+															const chart = parseChartData(m.body);
+															return chart ? <StockChart data={chart} /> : <span>Failed to load chart</span>;
+														})()
+													) : isBot ? (
+														<div className="whitespace-pre-line">
+															{m.body.split('\n').map((line, index) => (
+																<div key={index}>
+																	{parseMarkdown(line)}
+																</div>
+															))}
+														</div>
+													) : (
+														m.body
+													)}
+												</div>
+												{m.ts && (
+													<span className="text-[10px] text-[#6b6f80] mt-1 px-1">{formatTime(m.ts)}</span>
+												)}
+											</div>
 										</div>
-									</div>
+									</Fragment>
 								);
 							})
 						)}
@@ -521,7 +667,8 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								className="w-full bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-full px-5 py-3 border border-transparent focus:outline-none focus:border-[#bd93f9] focus:bg-[#2f3142] transition-colors disabled:opacity-50"
 							/>
 							<CommandDropdown
-								isOpen={showCommandDropdown}
+								isOpen={commandMenuOpen}
+								commands={filteredCommands}
 								onSelect={handleCommandSelect}
 								onClose={() => {
 									setShowCommandDropdown(false);
