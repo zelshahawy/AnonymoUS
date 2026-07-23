@@ -9,25 +9,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// MessageDoc represents a chat message stored in MongoDB.
 type MessageDoc struct {
 	MsgID     string    `bson:"msgId"`
 	From      string    `bson:"from"`
 	To        string    `bson:"to"`
 	Body      string    `bson:"body"`
-	Type      string    `bson:"type, omitempty"` // Add this field
+	Type      string    `bson:"type, omitempty"`
 	Notified  bool      `bson:"notified"`
 	Timestamp time.Time `bson:"timestamp"`
 }
 
-// SaveMessage persists a MessageDoc to the messages collection.
 func SaveMessage(ctx context.Context, doc *MessageDoc) error {
 	doc.Timestamp = time.Now()
 	_, err := config.DBClients.MessagesCollection.InsertOne(ctx, doc)
 	return err
 }
 
-// DeleteConversation removes every message exchanged between two users.
 func DeleteConversation(ctx context.Context, userA, userB string) error {
 	filter := bson.M{"$or": []bson.M{
 		{"from": userA, "to": userB},
@@ -44,7 +41,6 @@ func DeleteConversation(ctx context.Context, userA, userB string) error {
 }
 
 func DeleteUserData(username string) error {
-	// remove all messages sent or received by this user
 	filter := bson.M{"$or": []bson.M{
 		{"from": username},
 		{"to": username},

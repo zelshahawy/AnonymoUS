@@ -1,4 +1,3 @@
-// src/app/chat/chatClient.tsx
 'use client';
 
 import CommandDropdown, { COMMANDS } from '@/components/CommandDropdown';
@@ -135,7 +134,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
 
-	// Load contacts from localStorage
 	useEffect(() => {
 		if (!currentUser) return;
 		const stored = window.localStorage.getItem(`contacts_${currentUser}`);
@@ -174,7 +172,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					return;
 				}
 			} catch {
-				// Keep fallback below.
+				// falls through to the default below
 			}
 		}
 		setUnreadMessages({});
@@ -237,7 +235,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			return;
 		}
 
-		// Keep the existing casing if they're already a contact, then open the chat.
+		// Preserve existing casing if already a contact.
 		const existing = contacts.find(contact => isSameUser(contact, trimmed));
 		if (!existing) {
 			setContacts(prev => [...prev, trimmed]);
@@ -282,7 +280,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			ws.onopen = () => {
 				attempts = 0;
 				setConnectionStatus('open');
-				// Re-sync the open conversation after an initial or restored connection.
+				// Fires on reconnect too, so resync whatever conversation is open.
 				const activePeer = peerRef.current;
 				if (activePeer && ws) {
 					dispatch({ type: 'clear' });
@@ -304,7 +302,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				}
 
 				if (msg.type === 'clear') {
-					// The conversation between msg.from and msg.to was wiped.
 					const otherParty = isSameUser(msg.from, currentUser) ? msg.to : msg.from;
 					if (currentPeer && isSameUser(otherParty, currentPeer)) {
 						dispatch({ type: 'clear' });
@@ -358,7 +355,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					[senderKey]: (prev[senderKey] || 0) + 1,
 				}));
 
-				// Add sender to contacts if not already there
 				setContacts(prev => {
 					if (!hasContact(prev, msg.from)) {
 						return [...prev, msg.from.trim()];
@@ -393,7 +389,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 		};
 	}, [currentUser, token, WEBSOCKETURL]);
 
-	// Load history + subscribe to presence when the open conversation changes.
 	useEffect(() => {
 		if (peer && socket && socket.readyState === WebSocket.OPEN) {
 			dispatch({ type: 'clear' });
@@ -668,7 +663,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 				{/* Main Chat Pane */}
 				<div className={`${peer ? 'flex' : 'hidden'} md:flex flex-1 min-w-0 flex-col`}>
-					{/* Header */}
 					<div className="sticky top-0 z-20 px-3 py-3 md:px-5 bg-[#21222c]/95 backdrop-blur text-[#f8f8f2] flex items-center gap-2 justify-between border-b border-[#33354a]">
 						<div className="flex items-center gap-2 md:gap-3 min-w-0">
 							{peer && (
@@ -711,14 +705,12 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						<UserProfile user={currentUser} />
 					</div>
 
-					{/* Connection status banner */}
 					{connectionStatus !== 'open' && (
 						<div className="text-center text-xs text-[#ffb86c] bg-[#ffb86c]/10 border-b border-[#ffb86c]/20 py-1.5">
 							{connectionStatus === 'connecting' ? 'Connecting…' : 'Connection lost — reconnecting…'}
 						</div>
 					)}
 
-					{/* Messages area */}
 					<div
 						ref={listRef}
 						onScroll={handleListScroll}
@@ -793,7 +785,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						<div ref={endRef} />
 					</div>
 
-					{/* Input area */}
 					<div className="sticky bottom-0 z-20 px-3 md:px-6 py-3 md:py-4 bg-[#21222c] border-t border-[#33354a] flex items-center gap-3">
 						<div className="flex-1 relative">
 							<input

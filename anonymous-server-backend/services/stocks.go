@@ -13,7 +13,6 @@ import (
 	"github.com/zelshahawy/Anonymous_backend/internal/hub"
 )
 
-// friendlyError turns raw Go/HTTP errors into short, human-readable messages.
 func friendlyError(context string, err error) string {
 	msg := err.Error()
 	switch {
@@ -50,7 +49,6 @@ type StockResponse struct {
 
 var stockAPI = config.Config().GetString("stock_api")
 
-// parseStockCommand returns the ticker symbol if text starts with /stocks
 func parseStockCommand(text string) (symbol string, ok bool) {
 	parts := strings.Fields(text)
 	if len(parts) == 2 && parts[0] == "/stocks" {
@@ -67,7 +65,6 @@ func stockMovers(text string) (ok bool) {
 	return false
 }
 
-// fetchStock hits your FastAPI service and decodes the JSON
 func fetchStock(symbol string) (*StockResponse, error) {
 	client := http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Get(stockAPI + "/api/stocks/" + symbol)
@@ -104,7 +101,6 @@ func fetchTopMovers() ([]StockResponse, error) {
 	return out, nil
 }
 
-// httpGetJSON performs a GET and decodes JSON into out
 func httpGetJSON(url string, out interface{}) error {
 	client := http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Get(url)
@@ -127,7 +123,6 @@ func httpGetJSON(url string, out interface{}) error {
 	return nil
 }
 
-// formatStockLines formats an array of simple stock maps into lines
 func formatStockLines(title string, stocks []map[string]any, limit int) string {
 	lines := []string{title, ""}
 	for i, s := range stocks {
@@ -146,7 +141,6 @@ func formatStockLines(title string, stocks []map[string]any, limit int) string {
 	return strings.Join(lines, "\n")
 }
 
-// formatNewsLines formats news items into a compact list
 func formatNewsLines(sym string, news []map[string]any, limit int) string {
 	lines := []string{}
 	if sym != "" {
@@ -173,7 +167,6 @@ type BotResponse struct {
 	Body string
 }
 
-// HandleStockCommand returns zero or one "bot" message in response to a stock command
 func HandleStockCommand(in *hub.Message) []BotResponse {
 	sym, ok := parseStockCommand(in.Body)
 	if !ok {
@@ -210,7 +203,6 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 		lines = append(lines, "📊 **Top Movers Today**")
 		lines = append(lines, "")
 
-		// Separate gainers and losers
 		var gainers []StockResponse
 		var losers []StockResponse
 
@@ -222,7 +214,6 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 			}
 		}
 
-		// Add top 3 gainers
 		lines = append(lines, "🟢 **Top Gainers:**")
 		maxGainers := 5
 		if len(gainers) > maxGainers {
@@ -236,7 +227,6 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 
 		lines = append(lines, "")
 
-		// Add top 3 losers
 		lines = append(lines, "🔴 **Top Losers:**")
 		maxLosers := 5
 		if len(losers) > maxLosers {
@@ -257,7 +247,6 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 	}}
 }
 
-// parseNewsCommand returns the symbol if text starts with /news
 func parseNewsCommand(text string) (symbol string, ok bool) {
 	parts := strings.Fields(text)
 	if len(parts) >= 1 && parts[0] == "/news" {
@@ -269,7 +258,6 @@ func parseNewsCommand(text string) (symbol string, ok bool) {
 	return "", false
 }
 
-// HandleNewsCommand returns bot messages for news commands
 func HandleNewsCommand(in *hub.Message) []BotResponse {
 	sym, ok := parseNewsCommand(in.Body)
 	if !ok {
@@ -288,13 +276,11 @@ func HandleNewsCommand(in *hub.Message) []BotResponse {
 	return []BotResponse{{From: "bot", Body: formatNewsLines(sym, newsData, 3)}}
 }
 
-// parseCryptoCommand checks for /crypto
 func parseCryptoCommand(text string) bool {
 	parts := strings.Fields(text)
 	return len(parts) == 1 && parts[0] == "/crypto"
 }
 
-// HandleCryptoCommand returns crypto prices
 func HandleCryptoCommand(in *hub.Message) []BotResponse {
 	if !parseCryptoCommand(in.Body) {
 		return nil
@@ -308,13 +294,12 @@ func HandleCryptoCommand(in *hub.Message) []BotResponse {
 	return []BotResponse{{From: "bot", Body: formatStockLines("₿ **Crypto Prices:**", cryptoData, len(cryptoData))}}
 }
 
-// parseIndicesCommand checks for /indices (extra arguments are ignored)
+// Extra arguments (e.g. "/indices NASDAQ") are accepted but ignored.
 func parseIndicesCommand(text string) bool {
 	parts := strings.Fields(text)
 	return len(parts) >= 1 && parts[0] == "/indices"
 }
 
-// HandleIndicesCommand returns market indices
 func HandleIndicesCommand(in *hub.Message) []BotResponse {
 	if !parseIndicesCommand(in.Body) {
 		return nil
@@ -325,8 +310,7 @@ func HandleIndicesCommand(in *hub.Message) []BotResponse {
 		return []BotResponse{{From: "bot", Body: friendlyError("indices", err)}}
 	}
 
-	// The indices payload uses name/value/change keys; remap them to the
-	// symbol/price/change shape formatStockLines expects, in a stable order.
+	// Remap name/value/change keys to the symbol/price/change shape formatStockLines expects.
 	order := []string{"sp500", "dow_jones", "nasdaq"}
 	vals := []map[string]any{}
 	for _, key := range order {
@@ -344,8 +328,7 @@ func HandleIndicesCommand(in *hub.Message) []BotResponse {
 	return []BotResponse{{From: "bot", Body: formatStockLines("📊 **Market Indices:**", vals, len(vals))}}
 }
 
-// chartPeriodAliases maps user-friendly period inputs to the canonical periods
-// the market-data service understands.
+// Maps user-friendly period inputs to the canonical periods the market-data service understands.
 var chartPeriodAliases = map[string]string{
 	"1d": "1d", "1day": "1d", "today": "1d",
 	"5d": "5d", "1w": "5d", "1week": "5d",
@@ -360,10 +343,8 @@ var chartPeriodAliases = map[string]string{
 	"max": "max", "all": "max",
 }
 
-// chartPeriodOptions lists the supported periods for user-facing messages.
 const chartPeriodOptions = "1d, 5d, 1mo, 3mo, 6mo, ytd, 1y, 2y, 5y, 10y, max"
 
-// parseChartCommand parses /chart SYMBOL or /chart SYMBOL PERIOD
 func parseChartCommand(text string) (symbol string, period string, ok bool) {
 	parts := strings.Fields(text)
 	if len(parts) < 2 || parts[0] != "/chart" {
@@ -378,7 +359,6 @@ func parseChartCommand(text string) (symbol string, period string, ok bool) {
 	return symbol, period, true
 }
 
-// HandleChartCommand fetches historical data and returns it as CHART_DATA: JSON
 func HandleChartCommand(in *hub.Message) []BotResponse {
 	sym, period, ok := parseChartCommand(in.Body)
 	if !ok {
@@ -405,13 +385,11 @@ func HandleChartCommand(in *hub.Message) []BotResponse {
 	}}
 }
 
-// parseTrendingCommand checks for /trending
 func parseTrendingCommand(text string) bool {
 	parts := strings.Fields(text)
 	return len(parts) == 1 && parts[0] == "/trending"
 }
 
-// HandleTrendingCommand returns trending stocks
 func HandleTrendingCommand(in *hub.Message) []BotResponse {
 	if !parseTrendingCommand(in.Body) {
 		return nil

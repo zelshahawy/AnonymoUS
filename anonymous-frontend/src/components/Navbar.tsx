@@ -42,32 +42,39 @@ const NavItem: FC<{
 
 export default function Navbar() {
 	const [user, setUser] = useState<string | undefined>(undefined);
+	const [authChecked, setAuthChecked] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
 		fetch('/api/me', { credentials: 'include' })
 			.then(res => (res.ok ? res.json() : null))
 			.then(data => {
-				if (!cancelled) setUser(data?.username || undefined);
+				if (!cancelled) {
+					setUser(data?.username || undefined);
+					setAuthChecked(true);
+				}
 			})
 			.catch(() => {
-				if (!cancelled) setUser(undefined);
+				if (!cancelled) {
+					setUser(undefined);
+					setAuthChecked(true);
+				}
 			});
 		return () => {
 			cancelled = true;
 		};
 	}, []);
 
+	// Appended last so its presence never shifts the other items.
 	const navigation: { [key: string]: [string, string][] } = {
 		"Home": [["Home", "/"]],
 		"Login / Logout": [
 			["Login", "/login"],
 			["Logout", "/logout"],
 		],
-		// Only surface Chat once we know the visitor is signed in.
-		...(user ? { "Chat": [["Chat", "/chat"]] } : {}),
 		"Inquiries": [["Email", "mailto:ziad.a.elshahawy@gmail.com"]],
 		"About Me": [["About Me", "https://ziadelshahawy.dev"]],
+		...(user ? { "Chat": [["Chat", "/chat"]] } : {}),
 	}
 	const [isMobileView, setIsMobileView] = useState(false);
 	const [show, setShow] = useState(true);
@@ -95,17 +102,14 @@ export default function Navbar() {
 		}
 
 		if (window.scrollY > lastScrollY) {
-			// if scroll down hide the navbar
 			if (firstDrop) {
 				setDrop(false);
 			}
 			setShow(false);
 		} else {
-			// if scroll up show the navbar
 			setShow(true);
 		}
 
-		// remember current page location to use in the next move
 		setLastScrollY(window.scrollY);
 	}, [firstDrop, isMobileView, lastScrollY, show]);
 
@@ -113,7 +117,6 @@ export default function Navbar() {
 		if (isMobileView) return;
 		window.addEventListener("scroll", controlNavbar);
 
-		// cleanup function
 		return () => {
 			window.removeEventListener("scroll", controlNavbar);
 		};
@@ -169,9 +172,9 @@ export default function Navbar() {
 
 			<ul>
 				{
-					Object.entries(navigation).map(([key, options], i) =>
+					// Gated on authChecked so links (Chat included) render together instead of popping in.
+					authChecked && Object.entries(navigation).map(([key, options], i) =>
 						options.length === 1 ? (
-							// single-item menus become a simple link
 							<li key={key}>
 								<Link
 									href={options[0][1]}
@@ -184,7 +187,6 @@ export default function Navbar() {
 								</Link>
 							</li>
 						) : (
-							// multi-item menus keep the dropdown behavior
 							<NavItem
 								name={key}
 								key={key}

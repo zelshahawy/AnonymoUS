@@ -101,7 +101,6 @@ func processBotCommands(ctx context.Context, msg *hub.Message) {
 
 	var allResponses []services.BotResponse
 
-	// Collect responses from all command handlers
 	allResponses = append(allResponses, services.HandleStockCommand(msg)...)
 	allResponses = append(allResponses, services.HandleTopMoversCommand(msg)...)
 	allResponses = append(allResponses, services.HandleNewsCommand(msg)...)
@@ -234,11 +233,9 @@ func readPump(ctx context.Context, c *hub.Client) {
 				log.Printf("failed to save message %s: %v", msg.Messageid, err)
 			}
 
-			// Send to both users (online or offline)
 			hub.GlobalHub.Send(msg.From, &msg)
 			hub.GlobalHub.Send(msg.To, &msg)
 
-			// Process bot commands
 			processBotCommands(ctx, &msg)
 
 		default:
@@ -247,7 +244,6 @@ func readPump(ctx context.Context, c *hub.Client) {
 	}
 }
 
-// writePump pumps messages from the hub to the WebSocket.
 func writePump(c *hub.Client) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {

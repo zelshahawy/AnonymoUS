@@ -60,7 +60,6 @@ export default function StockChart({ data }: { data: ChartData }) {
 
 	return (
 		<div className="w-[300px] max-w-full">
-			{/* Header: symbol + range on the left, live price + change on the right */}
 			<div className="flex items-start justify-between mb-2 gap-3">
 				<div className="min-w-0">
 					<div className="flex items-center gap-2">
@@ -106,10 +105,8 @@ export default function StockChart({ data }: { data: ChartData }) {
 					);
 				})}
 
-				{/* Area fill */}
 				<polygon points={areaPoints} fill={`url(#${gradientId})`} />
 
-				{/* Price line */}
 				<polyline
 					points={polyPoints}
 					fill="none"
@@ -123,7 +120,6 @@ export default function StockChart({ data }: { data: ChartData }) {
 				<circle cx={lastPt.x} cy={lastPt.y} r="3.5" fill={color} stroke="#21222c" strokeWidth="2" />
 			</svg>
 
-			{/* Date range */}
 			<div className="flex justify-between text-[10px] text-[#6b6f80] font-mono mt-1">
 				<span>{points[0].date}</span>
 				<span>{points[points.length - 1].date}</span>

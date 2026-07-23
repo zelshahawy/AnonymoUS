@@ -23,9 +23,8 @@ type Client struct {
 }
 
 type Hub struct {
-	// map of userID -> client
 	clients map[string][]*Client
-	// watchers maps a target userID -> set of userIDs subscribed to its presence
+	// watchers: target userID -> set of userIDs subscribed to its presence
 	watchers map[string]map[string]bool
 	mu       sync.RWMutex
 }
@@ -54,7 +53,6 @@ func (h *Hub) Register(c *Client) {
 func (h *Hub) Unregister(c *Client) {
 	h.mu.Lock()
 	conns := h.clients[c.UserID]
-	// filter out this client
 	for i, cli := range conns {
 		if cli == c {
 			conns = append(conns[:i], conns[i+1:]...)
