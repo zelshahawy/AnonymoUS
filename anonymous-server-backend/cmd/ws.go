@@ -200,6 +200,24 @@ func readPump(ctx context.Context, c *hub.Client) {
 				Body:      status,
 			})
 
+		case "clear":
+			if msg.To == "" {
+				continue
+			}
+			if err := services.DeleteConversation(ctx, c.UserID, msg.To); err != nil {
+				log.Printf("failed clearing conversation between %s and %s: %v", c.UserID, msg.To, err)
+				continue
+			}
+			// Tell both parties so any open views reset immediately.
+			note := &hub.Message{
+				Type:      "clear",
+				Messageid: hub.GenerateMessageID(),
+				From:      c.UserID,
+				To:        msg.To,
+			}
+			hub.GlobalHub.Send(c.UserID, note)
+			hub.GlobalHub.Send(msg.To, note)
+
 		case "chat":
 			msg.From = c.UserID
 			msg.Messageid = hub.GenerateMessageID()

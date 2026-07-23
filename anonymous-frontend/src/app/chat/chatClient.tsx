@@ -1,7 +1,6 @@
 // src/app/chat/chatClient.tsx
 'use client';
 
-import AddContactModal from '@/components/AddContactModal';
 import CommandDropdown, { COMMANDS } from '@/components/CommandDropdown';
 import StockChart, { isChartData, parseChartData } from '@/components/StockChart';
 import UserProfile from '@/components/UserProfile';
@@ -9,7 +8,7 @@ import Link from 'next/link';
 import { Fragment, KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
 interface Message {
-	type: 'chat' | 'history' | 'bot' | 'notification' | 'presence';
+	type: 'chat' | 'history' | 'bot' | 'notification' | 'presence' | 'clear';
 	from: string;
 	to: string;
 	body: string;
@@ -108,13 +107,16 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [socket, setSocket] = useState<WebSocket | null>(null);
 	const [messages, dispatch] = useReducer(messagesReducer, [] as Message[]);
 	const [input, setInput] = useState<string>('');
-	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [showAddContact, setShowAddContact] = useState(false);
+	const [newContactName, setNewContactName] = useState('');
+	const [addContactError, setAddContactError] = useState('');
 	const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
 	const [showCommandDropdown, setShowCommandDropdown] = useState(false);
 	const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 	const [presence, setPresence] = useState<Record<string, 'online' | 'offline'>>({});
 	const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
 	const [contactSearch, setContactSearch] = useState('');
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 	const endRef = useRef<HTMLDivElement>(null);
 	const listRef = useRef<HTMLDivElement>(null);
 	const stickToBottomRef = useRef<boolean>(true);
@@ -184,6 +186,18 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	}, [unreadMessages, currentUser]);
 
 	useEffect(() => {
+		setSidebarCollapsed(window.localStorage.getItem('sidebar_collapsed') === '1');
+	}, []);
+
+	const toggleSidebar = () => {
+		setSidebarCollapsed(prev => {
+			window.localStorage.setItem('sidebar_collapsed', prev ? '0' : '1');
+			return !prev;
+		});
+		setContactSearch('');
+	};
+
+	useEffect(() => {
 		if (!peer) return;
 		const peerKey = normalizeUsername(peer);
 		if (!peerKey || unreadMessages[peerKey] === 0) return;
@@ -195,19 +209,41 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	}, [peer, unreadMessages]);
 
 	const addContact = () => {
-		setIsModalOpen(true);
+		if (sidebarCollapsed) {
+			toggleSidebar();
+			setShowAddContact(true);
+		} else {
+			setShowAddContact(prev => !prev);
+		}
+		setNewContactName('');
+		setAddContactError('');
 	};
 
-	const handleAddContact = (newUsername: string) => {
-		const trimmedUsername = newUsername.trim();
-		if (!trimmedUsername) return;
+	const closeAddContact = () => {
+		setShowAddContact(false);
+		setNewContactName('');
+		setAddContactError('');
+	};
 
-		setContacts(prev => {
-			if (hasContact(prev, trimmedUsername)) {
-				return prev;
-			}
-			return [...prev, trimmedUsername];
-		});
+	const submitNewContact = (e: React.FormEvent) => {
+		e.preventDefault();
+		const trimmed = newContactName.trim();
+		if (!trimmed) {
+			setAddContactError('Enter a username');
+			return;
+		}
+		if (isSameUser(trimmed, currentUser)) {
+			setAddContactError("You can't add yourself");
+			return;
+		}
+
+		// Keep the existing casing if they're already a contact, then open the chat.
+		const existing = contacts.find(contact => isSameUser(contact, trimmed));
+		if (!existing) {
+			setContacts(prev => [...prev, trimmed]);
+		}
+		setPeer(existing ?? trimmed);
+		closeAddContact();
 	};
 
 	const removeContact = (name: string) => {
@@ -264,6 +300,19 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						...prev,
 						[normalizeUsername(msg.from)]: msg.body === 'online' ? 'online' : 'offline',
 					}));
+					return;
+				}
+
+				if (msg.type === 'clear') {
+					// The conversation between msg.from and msg.to was wiped.
+					const otherParty = isSameUser(msg.from, currentUser) ? msg.to : msg.from;
+					if (currentPeer && isSameUser(otherParty, currentPeer)) {
+						dispatch({ type: 'clear' });
+					}
+					const clearedKey = normalizeUsername(otherParty);
+					setUnreadMessages(prev =>
+						clearedKey in prev ? { ...prev, [clearedKey]: 0 } : prev
+					);
 					return;
 				}
 
@@ -365,16 +414,26 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	}, [messages]);
 
 	const sendMessage = () => {
-		if (socket && input.trim() && peer) {
-			const outgoing = {
-				type: 'chat' as const,
-				from: currentUser,
-				to: peer,
-				body: input.trim(),
-			};
-			socket.send(JSON.stringify(outgoing));
+		if (!socket || !peer) return;
+		const text = input.trim();
+		if (!text) return;
+
+		// /clear is a local command, not a chat message.
+		if (text.toLowerCase() === '/clear') {
+			dispatch({ type: 'clear' });
+			socket.send(JSON.stringify({ type: 'clear', to: peer, from: currentUser }));
 			setInput('');
+			return;
 		}
+
+		const outgoing = {
+			type: 'chat' as const,
+			from: currentUser,
+			to: peer,
+			body: text,
+		};
+		socket.send(JSON.stringify(outgoing));
+		setInput('');
 	};
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -445,10 +504,10 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 
 			<div className="flex h-screen overflow-hidden bg-[#1a1b23] text-[#f8f8f2]">
 				{/* Sidebar: Contacts */}
-				<div className={`${peer ? 'hidden' : 'flex'} md:flex w-full md:w-72 md:shrink-0 bg-[#21222c] border-r border-[#33354a] flex-col`}>
+				<div className={`${peer ? 'hidden' : 'flex'} md:flex w-full ${sidebarCollapsed ? 'md:w-[4.5rem]' : 'md:w-72'} md:shrink-0 md:transition-[width] md:duration-200 bg-[#21222c] border-r border-[#33354a] flex-col`}>
 					<div className="sticky top-0 z-20 bg-[#21222c] border-b border-[#33354a]">
-						<div className="flex items-center justify-between px-5 pt-5 pb-3">
-							<div className="flex items-center gap-2.5 min-w-0">
+						<div className={`flex items-center justify-between px-5 pt-5 pb-3 ${sidebarCollapsed ? 'md:flex-col md:justify-start md:gap-2.5 md:px-0' : ''}`}>
+							<div className={`flex items-center gap-2.5 min-w-0 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
 								<Link
 									href="/"
 									className="md:hidden text-[#c9ccd6] hover:text-[#f8f8f2] transition-colors shrink-0"
@@ -462,20 +521,83 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								</Link>
 								<span className="font-bold text-lg tracking-tight text-[#f8f8f2]">Messages</span>
 							</div>
-							<button
-								onClick={addContact}
-								className="text-[#bd93f9] bg-[#bd93f9]/10 hover:bg-[#bd93f9]/20 rounded-full w-8 h-8 flex items-center justify-center text-xl leading-none transition-colors"
-								title="Add contact"
-							>
-								+
-							</button>
+							<div className={`flex items-center gap-1.5 ${sidebarCollapsed ? 'md:flex-col md:gap-2.5' : ''}`}>
+								<button
+									onClick={addContact}
+									className="text-[#bd93f9] bg-[#bd93f9]/10 hover:bg-[#bd93f9]/20 rounded-full w-8 h-8 flex items-center justify-center text-xl leading-none transition-colors"
+									title="Add contact"
+								>
+									+
+								</button>
+								<button
+									onClick={toggleSidebar}
+									className="hidden md:flex text-[#6b6f80] hover:text-[#f8f8f2] hover:bg-[#2a2c39] rounded-full w-8 h-8 items-center justify-center transition-colors"
+									title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+									aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+								>
+									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+										{sidebarCollapsed ? (
+											<>
+												<path d="m6 17 5-5-5-5" />
+												<path d="m13 17 5-5-5-5" />
+											</>
+										) : (
+											<>
+												<path d="m11 17-5-5 5-5" />
+												<path d="m18 17-5-5 5-5" />
+											</>
+										)}
+									</svg>
+								</button>
+							</div>
 						</div>
-						<div className="px-5 pb-3">
+						{showAddContact && (
+							<div className={`px-4 pb-3 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+								<form onSubmit={submitNewContact} className="flex items-center gap-1.5">
+									<input
+										autoFocus
+										value={newContactName}
+										onChange={(e) => {
+											setNewContactName(e.target.value);
+											setAddContactError('');
+										}}
+										onKeyDown={(e) => {
+											if (e.key === 'Escape') closeAddContact();
+										}}
+										placeholder="Start a chat by username…"
+										className="flex-1 min-w-0 bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-lg px-3 py-2 text-sm border border-[#bd93f9]/50 focus:outline-none focus:border-[#bd93f9] transition-colors"
+									/>
+									<button
+										type="submit"
+										className="w-8 h-8 shrink-0 rounded-lg bg-[#bd93f9] text-[#21222c] hover:bg-[#caa5fb] flex items-center justify-center transition-colors"
+										title="Start chat"
+										aria-label="Start chat"
+									>
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+											<path d="M20 6 9 17l-5-5" />
+										</svg>
+									</button>
+									<button
+										type="button"
+										onClick={closeAddContact}
+										className="w-8 h-8 shrink-0 rounded-lg text-[#6b6f80] hover:text-[#f8f8f2] hover:bg-[#2a2c39] flex items-center justify-center text-lg leading-none transition-colors"
+										title="Cancel"
+										aria-label="Cancel"
+									>
+										×
+									</button>
+								</form>
+								{addContactError && (
+									<p className="text-[#ff5555] text-xs mt-1.5 px-1">{addContactError}</p>
+								)}
+							</div>
+						)}
+						<div className={`px-5 pb-3 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
 							<p className="text-sm text-[#8b8fa3] truncate">
 								Signed in as <span className="text-[#f8f8f2] font-medium">{currentUser}</span>
 							</p>
 						</div>
-						<div className="px-4 pb-3">
+						<div className={`px-4 pb-3 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
 							<input
 								value={contactSearch}
 								onChange={(e) => setContactSearch(e.target.value)}
@@ -486,7 +608,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 					</div>
 					<div className="flex-1 overflow-y-auto px-2 py-2">
 						{visibleContacts.length === 0 ? (
-							<p className="text-center text-sm text-[#6b6f80] mt-6 px-4">
+							<p className={`text-center text-sm text-[#6b6f80] mt-6 px-4 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
 								{contactSearch ? 'No contacts match your search.' : 'No contacts yet — add one with +.'}
 							</p>
 						) : (
@@ -498,10 +620,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 									<div
 										key={`${c}-${idx}`}
 										onClick={() => setPeer(c)}
-										className={`group px-3 py-2.5 mb-1 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${active ? 'bg-[#bd93f9]/15' : 'hover:bg-[#2a2c39]'
+										title={c}
+										className={`group px-3 py-2.5 mb-1 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${sidebarCollapsed ? 'md:justify-center md:px-1.5' : ''} ${active ? 'bg-[#bd93f9]/15' : 'hover:bg-[#2a2c39]'
 											}`}
 									>
-										<div className="flex items-center gap-3 min-w-0">
+										<div className={`flex items-center gap-3 min-w-0 ${sidebarCollapsed ? 'md:gap-0' : ''}`}>
 											<div className={`relative w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${active
 												? 'bg-[#bd93f9] text-[#21222c]'
 												: 'bg-[#2f3142] text-[#bd93f9] group-hover:bg-[#363850]'
@@ -510,10 +633,15 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 												{online && (
 													<span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#50fa7b] border-2 border-[#21222c]" />
 												)}
+												{unreadCount > 0 && (
+													<span className={`absolute -top-1 -right-1 bg-[#ff5555] text-white text-[10px] rounded-full min-w-4 h-4 px-1 hidden items-center justify-center font-bold ${sidebarCollapsed ? 'md:flex' : ''}`}>
+														{unreadCount > 9 ? '9+' : unreadCount}
+													</span>
+												)}
 											</div>
-											<span className={`truncate ${active ? 'text-[#f8f8f2] font-semibold' : 'text-[#c9ccd6]'}`}>{c}</span>
+											<span className={`truncate ${sidebarCollapsed ? 'md:hidden' : ''} ${active ? 'text-[#f8f8f2] font-semibold' : 'text-[#c9ccd6]'}`}>{c}</span>
 										</div>
-										<div className="flex items-center gap-2 shrink-0">
+										<div className={`flex items-center gap-2 shrink-0 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
 											{unreadCount > 0 && (
 												<div className="bg-[#ff5555] text-white text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center font-bold">
 													{unreadCount > 9 ? '9+' : unreadCount}
@@ -704,12 +832,6 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 				</div>
 			</div>
 
-			<AddContactModal
-				isOpen={isModalOpen}
-				onClose={() => setIsModalOpen(false)}
-				onAdd={handleAddContact}
-				currentUser={currentUser}
-			/>
 		</>
 	);
 }

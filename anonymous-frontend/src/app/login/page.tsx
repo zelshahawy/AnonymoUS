@@ -107,7 +107,7 @@ export default function LoginPage() {
 										</div>
 										<div>
 											<h3 className="font-semibold mb-1">{f.title}</h3>
-											<p className="text-sm text-[#8b8fa3] leading-relaxed">{f.text}</p>
+											<p className="text-[15px] text-[#a3a9bd] leading-relaxed">{f.text}</p>
 										</div>
 									</div>
 								))}
@@ -117,7 +117,7 @@ export default function LoginPage() {
 						<div className="bg-[#21222c]/90 border border-[#33354a] rounded-2xl p-6 md:p-8 shadow-2xl shadow-black/40">
 							<div className="mb-7">
 								<h2 className="text-3xl font-bold tracking-tight mb-1.5">Welcome back</h2>
-								<p className="text-[#8b8fa3] text-sm">Sign in to continue to your chats</p>
+								<p className="text-[#a3a9bd] text-[15px]">Sign in to continue to your chats</p>
 							</div>
 
 							{error && (
@@ -201,11 +201,11 @@ export default function LoginPage() {
 							</form>
 
 							<div className="mt-7 p-4 bg-[#1a1b23] border border-[#33354a] rounded-xl">
-								<p className="text-[#8b8fa3] text-xs leading-relaxed">
+								<p className="text-[#a3a9bd] text-[13px] leading-relaxed">
 									<span className="text-[#bd93f9] font-semibold">Demo credentials</span><br />
 									Username: <span className="text-[#f8f8f2] font-mono">testuser1</span> or <span className="text-[#f8f8f2] font-mono">testuser2</span><br />
 									Password: <span className="text-[#f8f8f2] font-mono">testpassword1</span> or <span className="text-[#f8f8f2] font-mono">testpassword2</span><br />
-									<span className="text-[#ffb86c] mt-2 block">⚠ Data is shared and cleared on logout</span>
+									<span className="text-[#ffb86c] mt-2 block">Data of both parties are cleared in case one logs out</span>
 								</p>
 							</div>
 						</div>

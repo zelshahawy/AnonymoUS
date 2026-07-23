@@ -11,7 +11,7 @@ type Message struct {
 	From      string `json:"from"`
 	To        string `json:"to"`
 	Body      string `json:"body"`
-	Type      string `json:"type"` // "chat", "history", "bot", "notification" or "presence"
+	Type      string `json:"type"` // "chat", "history", "bot", "notification", "presence" or "clear"
 	Count     int    `json:"count,omitempty"`
 	Ts        int64  `json:"ts,omitempty"` // unix milliseconds
 }

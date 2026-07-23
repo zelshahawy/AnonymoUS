@@ -25,8 +25,8 @@ const NavItem: FC<{
 					}
 			}
 		>
+			<div className={"circle" + (pulledOut ? " on" : "")} />
 			<span>{name}</span>
-			<span className="caret">▾</span>
 			{pulledOut ? (
 				<ul className="dropDown">
 					{options.map((option: [string, string]) => (
@@ -41,13 +41,31 @@ const NavItem: FC<{
 };
 
 export default function Navbar() {
+	const [user, setUser] = useState<string | undefined>(undefined);
+
+	useEffect(() => {
+		let cancelled = false;
+		fetch('/api/me', { credentials: 'include' })
+			.then(res => (res.ok ? res.json() : null))
+			.then(data => {
+				if (!cancelled) setUser(data?.username || undefined);
+			})
+			.catch(() => {
+				if (!cancelled) setUser(undefined);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
 	const navigation: { [key: string]: [string, string][] } = {
 		"Home": [["Home", "/"]],
 		"Login / Logout": [
 			["Login", "/login"],
 			["Logout", "/logout"],
 		],
-		"Chat": [["Chat", "/chat"]],
+		// Only surface Chat once we know the visitor is signed in.
+		...(user ? { "Chat": [["Chat", "/chat"]] } : {}),
 		"Inquiries": [["Email", "mailto:ziad.a.elshahawy@gmail.com"]],
 		"About Me": [["About Me", "https://ziadelshahawy.dev"]],
 	}
@@ -129,9 +147,11 @@ export default function Navbar() {
 				</Link>
 
 				<div className="mobile-actions">
-					<Link href="/chat" className="mobile-chat-link">
-						Chat
-					</Link>
+					{user && (
+						<Link href="/chat" className="mobile-chat-link">
+							Chat
+						</Link>
+					)}
 					<div className="mobile-profile">
 						<UserProfile />
 					</div>

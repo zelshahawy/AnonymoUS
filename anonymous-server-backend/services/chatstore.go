@@ -27,6 +27,22 @@ func SaveMessage(ctx context.Context, doc *MessageDoc) error {
 	return err
 }
 
+// DeleteConversation removes every message exchanged between two users.
+func DeleteConversation(ctx context.Context, userA, userB string) error {
+	filter := bson.M{"$or": []bson.M{
+		{"from": userA, "to": userB},
+		{"from": userB, "to": userA},
+	}}
+
+	res, err := config.DBClients.MessagesCollection.DeleteMany(ctx, filter)
+	if err != nil {
+		log.Printf("failed to delete conversation between %s and %s: %v", userA, userB, err)
+		return err
+	}
+	log.Printf("deleted %d messages between %s and %s", res.DeletedCount, userA, userB)
+	return nil
+}
+
 func DeleteUserData(username string) error {
 	// remove all messages sent or received by this user
 	filter := bson.M{"$or": []bson.M{

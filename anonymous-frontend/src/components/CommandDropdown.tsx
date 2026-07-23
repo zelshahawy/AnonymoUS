@@ -43,6 +43,10 @@ export const COMMANDS: Command[] = [
 	{
 		command: '/chart ',
 		description: 'View price chart (e.g., /chart AAPL or /chart AAPL 6mo)',
+	},
+	{
+		command: '/clear',
+		description: 'Clear this conversation for both of you',
 	}
 ];
 

@@ -65,10 +65,15 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 		<div className="min-h-screen bg-[#1a1b23] text-[#f8f8f2] flex flex-col">
 			{/* Header */}
 			<div className="bg-[#21222c]/95 backdrop-blur border-b border-[#33354a] px-4 md:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
-				<div className="flex items-center gap-3 min-w-0">
+				<div className="flex items-center gap-2 md:gap-3 min-w-0">
+					<Link href="/">
+						<button className="px-3.5 py-1.5 text-sm text-[#c9ccd6] bg-[#2a2c39] rounded-lg hover:bg-[#33354a] hover:text-[#f8f8f2] transition-colors whitespace-nowrap">
+							Home
+						</button>
+					</Link>
 					<Link href="/chat">
 						<button className="px-3.5 py-1.5 text-sm text-[#c9ccd6] bg-[#2a2c39] rounded-lg hover:bg-[#33354a] hover:text-[#f8f8f2] transition-colors whitespace-nowrap">
-							← Chat
+							Chat
 						</button>
 					</Link>
 					<h1 className="text-lg md:text-xl font-bold tracking-tight truncate">Settings & Profile</h1>

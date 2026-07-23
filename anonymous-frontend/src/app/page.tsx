@@ -58,14 +58,14 @@ export default function LandingPage() {
       <div className="relative min-h-screen flex flex-col text-[#f8f8f2]">
         <div className="relative z-10 flex-1 flex flex-col">
           <Navbar />
-          <div className="flex-1 flex flex-col items-center px-4 pt-28 md:pt-36 pb-16">
+          <div className="flex-1 flex flex-col items-center px-4 pt-20 md:pt-24 pb-16">
             <div className="w-full max-w-6xl">
               {/* Hero */}
-              <div className="text-center mb-14 md:mb-20">
+              <div className="text-center mb-12 md:mb-16">
                 <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-5">
                   Anonymous<span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}> for </span>Traders
                 </h1>
-                <p className="text-base md:text-lg text-[#a8adbf] max-w-2xl mx-auto leading-relaxed mb-8">
+                <p className="text-lg md:text-xl text-[#b4bac9] max-w-2xl mx-auto leading-relaxed mb-8">
                   Real-time messaging with built-in market data. Pull live quotes, charts, and
                   news into the conversation with a slash command.
                 </p>
@@ -81,9 +81,12 @@ export default function LandingPage() {
                     </button>
                   </Link>
                 </div>
-                <Link href="/login" className="inline-block mt-5">
-                  <span className="text-xs font-mono text-[#6b6f80] bg-[#21222c]/60 border border-[#33354a] rounded-full px-3.5 py-1.5 hover:text-[#a8adbf] hover:border-[#bd93f9]/50 transition-colors">
-                    Try the demo — testuser1 / testpassword1
+                <Link href="/login" className="group inline-block mt-6">
+                  <span className="inline-flex items-center gap-2.5 text-sm md:text-base font-mono text-[#e4e6ee] bg-[#bd93f9]/10 border border-[#bd93f9]/40 rounded-full px-5 py-2.5 group-hover:border-[#bd93f9] group-hover:bg-[#bd93f9]/15 transition-colors">
+                    Try the demo →
+                    <span className="text-[#bd93f9] font-bold">testuser1</span>
+                    <span className="text-[#6b6f80]">/</span>
+                    <span className="text-[#bd93f9] font-bold">testpassword1</span>
                   </span>
                 </Link>
               </div>
@@ -96,10 +99,7 @@ export default function LandingPage() {
                     <div className="w-8 h-8 rounded-full bg-[#2f3142] text-[#bd93f9] flex items-center justify-center font-bold text-[10px]">
                       TE
                     </div>
-                    <div className="leading-tight">
-                      <div className="text-sm font-semibold">testuser2</div>
-                      <div className="text-[11px] text-[#8b8fa3]">anonymous chat</div>
-                    </div>
+                    <div className="text-sm font-semibold">testuser2</div>
                   </div>
 
                   <div className="p-4 space-y-2.5 bg-[#1a1b23]">
@@ -152,7 +152,7 @@ export default function LandingPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold mb-1">{f.title}</h3>
-                          <p className="text-sm text-[#8b8fa3] leading-relaxed">{f.text}</p>
+                          <p className="text-[15px] text-[#a3a9bd] leading-relaxed">{f.text}</p>
                         </div>
                       </div>
                     ))}

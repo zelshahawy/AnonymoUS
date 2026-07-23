@@ -1,5 +1,5 @@
 'use client';
-import { mdiAccount, mdiCog, mdiLock, mdiLogout, mdiPencil } from '@mdi/js';
+import { mdiAccount, mdiCog, mdiLogout } from '@mdi/js';
 import Icon from '@mdi/react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -86,18 +86,16 @@ export default function UserProfile({ user: propUser }: UserProfileProps) {
 						<Link href="/login">
 							<button
 								onClick={() => setIsOpen(false)}
-								className="w-full text-left px-3 py-2.5 rounded-lg text-[#f8f8f2] hover:bg-[#2a2c39] transition-colors font-medium flex items-center gap-2.5"
+								className="w-full text-left px-3 py-2.5 rounded-lg text-[#f8f8f2] hover:bg-[#2a2c39] transition-colors font-medium"
 							>
-								<Icon path={mdiLock} size={0.55} color="#bd93f9" />
 								Sign In
 							</button>
 						</Link>
 						<Link href="/register">
 							<button
 								onClick={() => setIsOpen(false)}
-								className="w-full text-left px-3 py-2.5 rounded-lg text-[#f8f8f2] hover:bg-[#2a2c39] transition-colors font-medium flex items-center gap-2.5"
+								className="w-full text-left px-3 py-2.5 rounded-lg text-[#f8f8f2] hover:bg-[#2a2c39] transition-colors font-medium"
 							>
-								<Icon path={mdiPencil} size={0.55} color="#bd93f9" />
 								Register
 							</button>
 						</Link>
