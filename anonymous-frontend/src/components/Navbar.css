@@ -264,7 +264,7 @@ nav>div {
 		gap: 0.38rem;
 	}
 
-	.mobile-chat-link {
+	.mobile-nav-link {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -276,10 +276,11 @@ nav>div {
 		font-weight: 600;
 		font-size: 0.82rem;
 		line-height: 1;
+		white-space: nowrap;
 		transition: background-color 0.2s ease, color 0.2s ease;
 	}
 
-	.mobile-chat-link:hover {
+	.mobile-nav-link:hover {
 		background-color: #bd93f9;
 		color: #21222c;
 	}
@@ -311,7 +312,7 @@ nav>div {
 		height: 1.75rem;
 	}
 
-	.mobile-chat-link {
+	.mobile-nav-link {
 		padding: 0.26rem 0.65rem;
 		font-size: 0.76rem;
 	}

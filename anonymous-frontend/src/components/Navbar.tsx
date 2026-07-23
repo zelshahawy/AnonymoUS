@@ -72,7 +72,6 @@ export default function Navbar() {
 			["Login", "/login"],
 			["Logout", "/logout"],
 		],
-		"Inquiries": [["Email", "mailto:ziad.a.elshahawy@gmail.com"]],
 		"About Me": [["About Me", "https://ziadelshahawy.dev"]],
 		...(user ? { "Chat": [["Chat", "/chat"]] } : {}),
 	}
@@ -150,8 +149,16 @@ export default function Navbar() {
 				</Link>
 
 				<div className="mobile-actions">
+					<a
+						href="https://ziadelshahawy.dev"
+						className="mobile-nav-link"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						About Me
+					</a>
 					{user && (
-						<Link href="/chat" className="mobile-chat-link">
+						<Link href="/chat" className="mobile-nav-link">
 							Chat
 						</Link>
 					)}
