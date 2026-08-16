@@ -3,9 +3,12 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/zelshahawy/Anonymous_backend/config"
@@ -33,7 +36,6 @@ func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 // HandleGoogleCallback handles the OAuth callback from Google.
 func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
-	// Validate state
 	if r.FormValue("state") != oauthStateString {
 		http.Error(w, "Invalid OAuth state", http.StatusBadRequest)
 		return
@@ -151,4 +153,112 @@ func GetCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"username": username})
+}
+
+// UploadProfilePicHandler stores a profile picture for the authenticated user.
+// The target user comes from the auth token, never from the request, so a
+// caller can only ever overwrite their own picture.
+func UploadProfilePicHandler(w http.ResponseWriter, r *http.Request) {
+	const maxFileSize = 20 << 20 // 20 MB
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
+
+	username, ok := services.UserIDFromContext(r.Context())
+	if !ok || username == "" {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	file, _, err := r.FormFile("profilePic")
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			http.Error(w, "profile picture is too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		http.Error(w, "profile picture is required", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			http.Error(w, "profile picture is too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		http.Error(w, "failed to read profile picture", http.StatusBadRequest)
+		return
+	}
+
+	if len(data) == 0 {
+		http.Error(w, "profile picture is empty", http.StatusBadRequest)
+		return
+	}
+	contentType := http.DetectContentType(data)
+
+	switch contentType {
+	case "image/jpeg", "image/png", "image/webp":
+		// allowed
+	default:
+		http.Error(w, "profile picture must be JPEG, PNG, or WebP", http.StatusBadRequest)
+		return
+	}
+
+	profilePic := &services.ProfilePic{
+		Data:        data,
+		ContentType: contentType,
+	}
+
+	err = services.UpdateUserProfilePic(
+		r.Context(),
+		username,
+		profilePic,
+	)
+	if err != nil {
+		if errors.Is(err, services.ErrUserNotFound) {
+			http.Error(w, "user not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "failed to update profile picture", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = w.Write([]byte(`{"message":"profile picture updated"}`))
+}
+
+// GetProfilePicHandler serves the authenticated user's profile picture as raw
+// image bytes.
+func GetProfilePicHandler(w http.ResponseWriter, r *http.Request) {
+	username, ok := services.UserIDFromContext(r.Context())
+	if !ok || username == "" {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	profilePic, err := services.GetUserProfilePic(r.Context(), username)
+	if err != nil {
+		if errors.Is(err, services.ErrUserNotFound) {
+			http.Error(w, "user not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "failed to load profile picture", http.StatusInternalServerError)
+		return
+	}
+
+	if profilePic == nil || len(profilePic.Data) == 0 {
+		http.Error(w, "no profile picture set", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", profilePic.ContentType)
+	w.Header().Set("Content-Length", strconv.Itoa(len(profilePic.Data)))
+	w.Header().Set("Cache-Control", "private, no-cache")
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = w.Write(profilePic.Data)
 }

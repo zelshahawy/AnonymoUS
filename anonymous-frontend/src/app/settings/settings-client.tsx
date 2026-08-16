@@ -1,11 +1,16 @@
 'use client';
 import UserProfile from '@/components/UserProfile';
+import { isDemoUser } from '@/lib/users';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SettingsClientProps {
 	user: string;
 }
+
+const PROFILE_PIC_URL = '/api/me/profile-pic';
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 export default function SettingsClient({ user }: SettingsClientProps) {
 	const [profilePhoto, setProfilePhoto] = useState<string>('');
@@ -13,40 +18,148 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 	const [bio, setBio] = useState<string>('');
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveMessage, setSaveMessage] = useState('');
+	const [photoError, setPhotoError] = useState('');
 
-	// Load settings from localStorage
+	// Demo accounts have no server-side record, so their photo stays local.
+	const isDemo = isDemoUser(user);
+
+	// Pending upload for real accounts; demo accounts never set this.
+	const pendingPhotoRef = useRef<File | null>(null);
+	// Tracks the blob URL backing the preview so it can be revoked.
+	const objectUrlRef = useRef<string | null>(null);
+
+	const setPreviewFromObjectUrl = (url: string | null) => {
+		if (objectUrlRef.current) {
+			URL.revokeObjectURL(objectUrlRef.current);
+		}
+		objectUrlRef.current = url;
+		setProfilePhoto(url ?? '');
+	};
+
+	// Load display name and bio from localStorage (both stay local for everyone —
+	// the backend has no fields for them). The photo is only read from here for
+	// demo accounts.
 	useEffect(() => {
 		const saved = localStorage.getItem(`profile_${user}`);
 		if (saved) {
 			try {
 				const data = JSON.parse(saved);
-				setProfilePhoto(data.profilePhoto || '');
+				if (isDemo) {
+					setProfilePhoto(data.profilePhoto || '');
+				}
 				setDisplayName(data.displayName || user);
 				setBio(data.bio || '');
 			} catch {
 				// Ignore parse errors
 			}
 		}
-	}, [user]);
+	}, [user, isDemo]);
+
+	// Real accounts load their persisted photo from the backend.
+	useEffect(() => {
+		if (isDemo) return;
+
+		const controller = new AbortController();
+
+		(async () => {
+			try {
+				const res = await fetch(PROFILE_PIC_URL, {
+					credentials: 'include',
+					signal: controller.signal,
+				});
+				// 404 simply means no picture has been uploaded yet.
+				if (!res.ok) return;
+
+				const blob = await res.blob();
+				setPreviewFromObjectUrl(URL.createObjectURL(blob));
+			} catch {
+				// Offline or aborted — fall back to initials.
+			}
+		})();
+
+		return () => controller.abort();
+	}, [user, isDemo]);
+
+	// Revoke the last blob URL when leaving the page.
+	useEffect(() => {
+		return () => {
+			if (objectUrlRef.current) {
+				URL.revokeObjectURL(objectUrlRef.current);
+			}
+		};
+	}, []);
 
 	const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
-		if (file) {
+		if (!file) return;
+
+		setPhotoError('');
+
+		if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+			setPhotoError('Photo must be a JPG, PNG, or WebP image.');
+			e.target.value = '';
+			return;
+		}
+
+		if (file.size > MAX_PHOTO_BYTES) {
+			setPhotoError('Photo must be 5MB or smaller.');
+			e.target.value = '';
+			return;
+		}
+
+		if (isDemo) {
+			// Demo accounts persist the image itself in localStorage, so the
+			// preview has to be a data URL that survives a reload.
 			const reader = new FileReader();
 			reader.onload = (event) => {
+				setPreviewFromObjectUrl(null);
 				setProfilePhoto(event.target?.result as string);
 			};
 			reader.readAsDataURL(file);
+			return;
 		}
+
+		pendingPhotoRef.current = file;
+		setPreviewFromObjectUrl(URL.createObjectURL(file));
+	};
+
+	const uploadPhoto = async (file: File) => {
+		const body = new FormData();
+		body.append('profilePic', file);
+
+		const res = await fetch(PROFILE_PIC_URL, {
+			method: 'POST',
+			credentials: 'include',
+			body,
+		});
+
+		if (res.ok) return;
+
+		if (res.status === 401) {
+			throw new Error('Your session expired. Please sign in again.');
+		}
+		if (res.status === 413) {
+			throw new Error('Photo is too large to upload.');
+		}
+		throw new Error('Could not upload photo. Please try again.');
 	};
 
 	const handleSave = async () => {
 		setIsSaving(true);
 		setSaveMessage('');
+		setPhotoError('');
 
 		try {
+			// Real accounts push the photo to the backend; only demo accounts keep
+			// the image bytes in localStorage.
+			const pendingPhoto = pendingPhotoRef.current;
+			if (!isDemo && pendingPhoto) {
+				await uploadPhoto(pendingPhoto);
+				pendingPhotoRef.current = null;
+			}
+
 			const profileData = {
-				profilePhoto,
+				...(isDemo ? { profilePhoto } : {}),
 				displayName,
 				bio,
 			};
@@ -54,7 +167,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 			setSaveMessage('Profile saved successfully!');
 			setTimeout(() => setSaveMessage(''), 3000);
 		} catch (error) {
-			setSaveMessage('Error saving profile');
+			setSaveMessage(error instanceof Error ? error.message : 'Error saving profile');
 			console.error(error);
 		} finally {
 			setIsSaving(false);
@@ -112,14 +225,19 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 									<span className="text-[#c9ccd6] font-medium text-sm mb-2 block">Upload photo</span>
 									<input
 										type="file"
-										accept="image/*"
+										accept="image/jpeg,image/png,image/webp"
 										onChange={handlePhotoUpload}
 										className="block w-full text-sm text-[#6b6f80] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#bd93f9]/15 file:text-[#bd93f9] hover:file:bg-[#bd93f9]/25 file:transition-colors cursor-pointer"
 									/>
 								</label>
-								<p className="text-[#6b6f80] text-xs">
-									Supported formats: JPG, PNG, GIF (Max 5MB)
-								</p>
+								{photoError ? (
+									<p className="text-[#ff9a9a] text-xs">{photoError}</p>
+								) : (
+									<p className="text-[#6b6f80] text-xs">
+										Supported formats: JPG, PNG, WebP (Max 5MB)
+										{!isDemo && ' — saved to your account'}
+									</p>
+								)}
 							</div>
 						</div>
 					</div>
@@ -187,7 +305,9 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 					{/* Info Box */}
 					<div className="mt-6 bg-[#21222c]/60 border border-[#33354a] rounded-xl p-4">
 						<p className="text-[#8b8fa3] text-sm leading-relaxed">
-							💡 Your profile information is stored locally in your browser. It will be cleared if you clear your browser data.
+							{isDemo
+								? '💡 Demo accounts store everything locally in your browser. It will be cleared if you clear your browser data.'
+								: '💡 Your profile photo is saved to your account. Display name and bio are stored locally in your browser and will be cleared if you clear your browser data.'}
 						</p>
 					</div>
 				</div>

@@ -10,11 +10,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // ErrUserNotFound is returned when no user matches the query.
 var ErrUserNotFound = errors.New("user not found")
+
+// Profile pic
+type ProfilePic struct {
+	Data        []byte `bson:"data" json:"-"`
+	ContentType string `bson:"contentType" json:"contentType"`
+}
 
 // UserDoc represents a user record in MongoDB.
 type UserDoc struct {
@@ -25,6 +32,7 @@ type UserDoc struct {
 	Email        string             `bson:"email,omitempty"`
 	Active       bool               `bson:"active"`
 	CreatedAt    time.Time          `bson:"createdAt"`
+	ProfilePic   *ProfilePic        `bson:"profilePic,omitempty" json:"profilePic"`
 }
 
 // usersCollection returns the MongoDB collection handle for users.
@@ -82,4 +90,55 @@ func CreateExternalUser(ctx context.Context, googleID, email, username, password
 	}
 	user.ID = res.InsertedID.(primitive.ObjectID)
 	return &user, nil
+}
+
+// UpdateUserProfilePic stores the profile picture for the given username.
+// Returns ErrUserNotFound if no user matches.
+func UpdateUserProfilePic(
+	ctx context.Context,
+	username string,
+	profilePic *ProfilePic,
+) error {
+	result, err := usersCollection().UpdateOne(
+		ctx,
+		bson.M{"username": username},
+		bson.M{
+			"$set": bson.M{
+				"profilePic": profilePic,
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+
+// GetUserProfilePic returns the stored profile picture for the given username.
+// It projects away every other field so the image bytes are the only payload
+// pulled from Mongo. Returns ErrUserNotFound if the user does not exist, and a
+// nil picture if the user exists but has not uploaded one.
+func GetUserProfilePic(ctx context.Context, username string) (*ProfilePic, error) {
+	var doc struct {
+		ProfilePic *ProfilePic `bson:"profilePic"`
+	}
+
+	err := usersCollection().FindOne(
+		ctx,
+		bson.M{"username": username},
+		options.FindOne().SetProjection(bson.M{"profilePic": 1}),
+	).Decode(&doc)
+	if err == mongo.ErrNoDocuments {
+		return nil, ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return doc.ProfilePic, nil
 }

@@ -3,6 +3,7 @@
 import CommandDropdown, { COMMANDS } from '@/components/CommandDropdown';
 import StockChart, { isChartData, parseChartData } from '@/components/StockChart';
 import UserProfile from '@/components/UserProfile';
+import { DEMO_USERS, isSameUser, normalizeUsername } from '@/lib/users';
 import Link from 'next/link';
 import { Fragment, KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
 
@@ -58,10 +59,6 @@ function messagesReducer(state: Message[], action: Action): Message[] {
 			return state
 	}
 }
-
-const normalizeUsername = (value: string) => value.trim().toLowerCase();
-
-const isSameUser = (left: string, right: string) => normalizeUsername(left) === normalizeUsername(right);
 
 const hasContact = (list: string[], username: string) => {
 	const normalizedCandidate = normalizeUsername(username);
@@ -150,7 +147,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 			}
 		}
 
-		const testUsers = ['testuser1', 'testuser2'].filter(u => !isSameUser(u, currentUser));
+		const testUsers = DEMO_USERS.filter(u => !isSameUser(u, currentUser));
 		const mergedContacts = dedupeContactsCaseInsensitive([...loadedContacts, ...testUsers]);
 
 		setContacts(mergedContacts);

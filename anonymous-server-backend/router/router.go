@@ -38,13 +38,16 @@ func StartServer() {
 	router.HandleFunc("/auth/register-external", cmd.HandleExternalRegister).Methods("POST", "OPTIONS")
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	router.HandleFunc("/ws", cmd.WsHandler).Methods("GET", "OPTIONS")
 
 	// Protected routes
 	protected := router.NewRoute().Subrouter()
 	protected.Use(services.AuthMiddleware)
+
+	protected.HandleFunc("/ws", cmd.WsHandler).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/me", cmd.GetCurrentUserHandler).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/me/profile-pic", cmd.GetProfilePicHandler).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/me/profile-pic", cmd.UploadProfilePicHandler).Methods("POST", "OPTIONS")
 	port := "8080"
 	fmt.Printf("Starting server on port %s...\n", port)
 
