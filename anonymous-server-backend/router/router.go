@@ -37,13 +37,16 @@ func StartServer() {
 	router.HandleFunc("/auth/google/callback", cmd.HandleGoogleCallback).Methods("GET", "OPTIONS")
 	router.HandleFunc("/auth/register-external", cmd.HandleExternalRegister).Methods("POST", "OPTIONS")
 
+	// The browser connects here cross-origin, so no auth_token cookie rides along.
+	// WsHandler authenticates the ?token= query param itself before upgrading.
+	router.HandleFunc("/ws", cmd.WsHandler).Methods("GET", "OPTIONS")
+
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	// Protected routes
 	protected := router.NewRoute().Subrouter()
 	protected.Use(services.AuthMiddleware)
 
-	protected.HandleFunc("/ws", cmd.WsHandler).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/heartbeat", cmd.HeartbeatHandler).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/me", cmd.GetCurrentUserHandler).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/me/profile-pic", cmd.GetProfilePicHandler).Methods("GET", "OPTIONS")
