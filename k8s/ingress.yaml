@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+
+  tls:
+    - hosts:
+        - anon-backend.ziadelshahawy.dev
+      secretName: anon-backend-tls
+
+  rules:
+    - host: anon-backend.ziadelshahawy.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  name: http

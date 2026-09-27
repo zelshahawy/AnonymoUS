@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-data-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: market-data-service
+  template:
+    metadata:
+      labels:
+        app: market-data-service
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: market-data-service
+          image: docker.io/zelshahawy/market-data-service@sha256:e90f959e4bae28025fd51c4b43657da71d469c3cd013c5176326f38423cc9bdd
+          ports:
+            - name: http
+              containerPort: 5005
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: '1'
+              memory: 512Mi
+          startupProbe:
+            httpGet:
+              path: /openapi.json
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /openapi.json
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /openapi.json
+              port: http
+            periodSeconds: 20
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: market-data-service
+spec:
+  type: ClusterIP
+  selector:
+    app: market-data-service
+  ports:
+    - name: http
+      port: 5005
+      targetPort: http
