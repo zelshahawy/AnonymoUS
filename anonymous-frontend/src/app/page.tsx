@@ -120,6 +120,27 @@ export default function LandingPage() {
                     </div>
                     <div className="flex justify-end">
                       <div className="bg-[#bd93f9] text-[#21222c] rounded-2xl rounded-br-md px-4 py-2.5 text-sm font-medium">
+                        /buy GOOG 1
+                      </div>
+                    </div>
+                    <div className="flex justify-start">
+                      <div className="flex items-start gap-3 bg-[#21222c] ring-1 ring-[#50fa7b]/25 rounded-2xl rounded-bl-md px-4 py-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#50fa7b]/10 text-[#50fa7b]">
+                          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m5 12 4 4L19 6" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-[#f8f8f2]">Bought 1 share of GOOG</p>
+                          <p className="mt-1 text-xs text-[#a3a9bd]">
+                            ${DEMO_CHART.points[DEMO_CHART.points.length - 1].close.toFixed(2)} per share
+                            <span className="text-[#50fa7b]"> · Order filled</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <div className="bg-[#bd93f9] text-[#21222c] rounded-2xl rounded-br-md px-4 py-2.5 text-sm font-medium">
                         let&apos;s go 🚀
                       </div>
                     </div>
