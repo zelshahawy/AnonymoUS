@@ -1,11 +1,11 @@
 'use client';
-import Herobg from '@/components/herobg';
-import NavBar from '@/components/Navbar';
-import { mdiAccount, mdiAccountMultiple, mdiChat, mdiLightningBolt, mdiLock, mdiShieldLock } from '@mdi/js';
+import { mdiArrowRight, mdiEyeOutline, mdiEyeOffOutline, mdiGoogle } from '@mdi/js';
 import Icon from '@mdi/react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
+import styles from './login.module.css';
 
 const SITE_KEY =
 	process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
@@ -23,17 +23,30 @@ declare global {
 }
 
 export default function LoginPage() {
-	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
-	const [error, setError] = useState('');
-	const [isLoading, setIsLoading] = useState(false);
-	const router = useRouter();
+ const [username, setUsername] = useState('');
+ const [password, setPassword] = useState('');
+ const [error, setError] = useState('');
+ const [isLoading, setIsLoading] = useState(false);
+ const [showPassword, setShowPassword] = useState(false);
+ const [passwordFocused, setPasswordFocused] = useState(false);
+ const [capsLock, setCapsLock] = useState(false);
+ const [demoOpen, setDemoOpen] = useState(false);
+ const submitRef = useRef<HTMLButtonElement>(null);
+ const router = useRouter();
+ const LOGINURL = process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8080/login';
+ const REGISTERURL = process.env.NEXT_PUBLIC_REGISTER_URL || 'http://localhost:8080/auth/google/login';
+ const initials = username.trim().slice(0, 2).toUpperCase();
 
-	const LOGINURL = process.env.NEXT_PUBLIC_LOGIN_URL || 'http://localhost:8080/login';
-	const REGISTERURL = process.env.NEXT_PUBLIC_REGISTER_URL || 'http://localhost:8080/auth/google/login';
-
+ function selectDemo(account: number) {
+  setUsername(`testuser${account}`);
+  setPassword(`testpassword${account}`);
+  setError('');
+  setShowPassword(false);
+  submitRef.current?.focus();
+ }
 	async function handleLogin(e: FormEvent) {
 		e.preventDefault();
+		if (isLoading) return;
 		setError('');
 		setIsLoading(true);
 
@@ -74,144 +87,67 @@ export default function LoginPage() {
 		}
 	}
 
-	const features = [
-		{ icon: mdiChat, title: 'Real-time messaging', text: 'Send and receive messages instantly with your contacts.' },
-		{ icon: mdiAccountMultiple, title: 'Manage contacts', text: 'Easily add and organize your chat contacts.' },
-		{ icon: mdiLightningBolt, title: 'Lightning fast', text: 'Optimized for speed and reliability.' },
-		{ icon: mdiShieldLock, title: 'OAuth 2.0 security', text: 'Sign in securely with Google using industry-standard OAuth 2.0.' },
-	];
+ return (
+  <div className={styles.page}>
+   <Script src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`} strategy="afterInteractive" />
+   <header className={styles.header}>
+    <Link href="/" className={styles.brand} aria-label="AnonymoUS home"><span className={styles.brandMark} aria-hidden="true">a<span>_</span></span>AnonymoUS</Link>
+    <Link href="/" className={styles.back}>Back to home <span aria-hidden="true">↗</span></Link>
+   </header>
 
-	return (
-		<>
-			<NavBar />
-			<Herobg />
-			<Script
-				src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`}
-				strategy="afterInteractive"
-			/>
+   <main className={styles.main}>
+    <section className={styles.panel} aria-labelledby="login-title">
+     <div className={styles.identity} data-private={passwordFocused && !showPassword} aria-hidden="true">
+      <span className={styles.identityText}>{passwordFocused && !showPassword ? '••' : initials || 'a_'}</span>
+      <span className={styles.identityCorner} />
+     </div>
+     <div className={styles.heading}>
+      <p className={styles.eyebrow}>YOUR NEXT CONVERSATION</p>
+      <h1 id="login-title">Pick up where<br />you left off<span>.</span></h1>
+      <p className={styles.subtitle}>Sign in to AnonymoUS.</p>
+     </div>
 
-			<div className="min-h-screen flex items-center justify-center px-4 pt-24 pb-12 text-[#f8f8f2]">
-				<div className="w-full max-w-5xl">
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center">
-						<div className="hidden lg:block">
-							<h1 className="text-5xl font-bold tracking-tight mb-10 flex items-center">
-								<Icon path={mdiChat} size={1.6} color="#bd93f9" className="mr-4" />
-								Anonymous
-							</h1>
+     <button type="button" className={styles.google} disabled={isLoading} onClick={() => { window.location.href = REGISTERURL; }}>
+      <Icon path={mdiGoogle} size={0.8} aria-hidden="true" /> Continue with Google
+     </button>
+     <div className={styles.divider}><span>or use your username</span></div>
 
-							<div className="space-y-2">
-								{features.map(f => (
-									<div key={f.title} className="flex gap-4 items-start p-4 rounded-xl">
-										<div className="w-10 h-10 rounded-xl bg-[#bd93f9]/10 text-[#bd93f9] flex items-center justify-center shrink-0">
-											<Icon path={f.icon} size={0.8} color="currentColor" />
-										</div>
-										<div>
-											<h3 className="font-semibold mb-1">{f.title}</h3>
-											<p className="text-[15px] text-[#a3a9bd] leading-relaxed">{f.text}</p>
-										</div>
-									</div>
-								))}
-							</div>
-						</div>
+     <form onSubmit={handleLogin} className={styles.form} aria-busy={isLoading}>
+      <div className={styles.field}>
+       <label htmlFor="username">Username</label>
+       <input id="username" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required placeholder="Your username" value={username} onChange={e => { setUsername(e.target.value); setError(''); }} disabled={isLoading} aria-describedby={error ? 'login-error' : undefined} />
+      </div>
+      <div className={styles.field}>
+       <label htmlFor="password">Password</label>
+       <div className={styles.passwordWrap}>
+        <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required placeholder="Your password" value={password} onChange={e => { setPassword(e.target.value); setError(''); }} onFocus={() => setPasswordFocused(true)} onBlur={() => { setPasswordFocused(false); setCapsLock(false); }} onKeyUp={e => setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e => setCapsLock(e.getModifierState('CapsLock'))} disabled={isLoading} aria-describedby={[capsLock ? 'caps-lock' : '', error ? 'login-error' : ''].filter(Boolean).join(' ') || undefined} />
+        <button type="button" className={styles.reveal} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)} disabled={isLoading}><Icon path={showPassword ? mdiEyeOffOutline : mdiEyeOutline} size={0.8} aria-hidden="true" /></button>
+       </div>
+       {capsLock && <p className={styles.hint} id="caps-lock" role="status">Caps Lock is on.</p>}
+      </div>
+      {error && <p className={styles.error} id="login-error" role="alert">{error}</p>}
+      <button ref={submitRef} type="submit" className={styles.submit} disabled={isLoading}>
+       <span>{isLoading ? 'Signing in…' : 'Sign in'}</span>
+       {isLoading ? <span className={styles.spinner} aria-hidden="true" /> : <Icon path={mdiArrowRight} size={0.9} aria-hidden="true" />}
+      </button>
+      <span className={styles.srOnly} role="status">{isLoading ? 'Signing in. Please wait.' : ''}</span>
+     </form>
 
-						<div className="bg-[#21222c]/90 border border-[#33354a] rounded-2xl p-6 md:p-8 shadow-2xl shadow-black/40">
-							<div className="mb-7">
-								<h2 className="text-3xl font-bold tracking-tight mb-1.5">Welcome back</h2>
-								<p className="text-[#a3a9bd] text-[15px]">Sign in to continue to your chats</p>
-							</div>
-
-							{error && (
-								<div className="mb-5 px-4 py-3 bg-[#ff5555]/10 border border-[#ff5555]/30 text-[#ff9a9a] rounded-xl text-sm">
-									{error}
-								</div>
-							)}
-
-							<form onSubmit={handleLogin} className="space-y-4">
-								<div>
-									<label className="block text-[#c9ccd6] font-medium mb-1.5 text-sm">Username</label>
-									<div className="relative">
-										<div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b6f80]">
-											<Icon path={mdiAccount} size={0.75} color="currentColor" />
-										</div>
-										<input
-											value={username}
-											onChange={(e) => setUsername(e.target.value)}
-											className="w-full pl-11 pr-4 py-3 bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-xl border border-transparent focus:outline-none focus:border-[#bd93f9] transition-colors"
-											placeholder="testuser1"
-											disabled={isLoading}
-										/>
-									</div>
-								</div>
-
-								<div>
-									<label className="block text-[#c9ccd6] font-medium mb-1.5 text-sm">Password</label>
-									<div className="relative">
-										<div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b6f80]">
-											<Icon path={mdiLock} size={0.75} color="currentColor" />
-										</div>
-										<input
-											type="password"
-											value={password}
-											onChange={(e) => setPassword(e.target.value)}
-											className="w-full pl-11 pr-4 py-3 bg-[#2a2c39] text-[#f8f8f2] placeholder-[#6b6f80] rounded-xl border border-transparent focus:outline-none focus:border-[#bd93f9] transition-colors"
-											placeholder="testpassword1"
-											disabled={isLoading}
-										/>
-									</div>
-								</div>
-
-								<button
-									type="submit"
-									disabled={isLoading}
-									className="w-full bg-[#bd93f9] hover:bg-[#caa5fb] text-[#21222c] py-3 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
-								>
-									{isLoading ? (
-										<>
-											<span className="w-4 h-4 border-2 border-[#21222c]/30 border-t-[#21222c] rounded-full animate-spin" />
-											Signing in…
-										</>
-									) : (
-										<>
-											Sign in
-											<span>→</span>
-										</>
-									)}
-								</button>
-
-								<div className="relative my-5">
-									<div className="absolute inset-0 flex items-center">
-										<div className="w-full border-t border-[#33354a]"></div>
-									</div>
-									<div className="relative flex justify-center text-xs">
-										<span className="px-3 bg-[#21222c] text-[#6b6f80]">or</span>
-									</div>
-								</div>
-
-								<button
-									type='button'
-									onClick={() => window.location.href = REGISTERURL}
-									disabled={isLoading}
-									className="w-full bg-[#2a2c39] hover:bg-[#33354a] text-[#f8f8f2] py-3 rounded-xl font-semibold border border-[#33354a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5"
-								>
-									<span className="font-bold text-[#bd93f9]">G</span>
-									Continue with Google
-								</button>
-
-								<p className="text-center text-[#6b6f80] text-xs">Fastest way to get started</p>
-							</form>
-
-							<div className="mt-7 p-4 bg-[#1a1b23] border border-[#33354a] rounded-xl">
-								<p className="text-[#a3a9bd] text-[13px] leading-relaxed">
-									<span className="text-[#bd93f9] font-semibold">Demo credentials</span><br />
-									Username: <span className="text-[#f8f8f2] font-mono">testuser1</span> or <span className="text-[#f8f8f2] font-mono">testuser2</span><br />
-									Password: <span className="text-[#f8f8f2] font-mono">testpassword1</span> or <span className="text-[#f8f8f2] font-mono">testpassword2</span><br />
-									<span className="text-[#ffb86c] mt-2 block">Data of both parties are cleared in case one logs out</span>
-								</p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</>
-	);
+     <div className={styles.demo}>
+      <button className={styles.demoToggle} type="button" aria-expanded={demoOpen} aria-controls="demo-accounts" onClick={() => setDemoOpen(v => !v)}>
+       <span>Just looking around? <strong>Try a demo</strong></span><span className={styles.plus} data-open={demoOpen} aria-hidden="true">+</span>
+      </button>
+      <div id="demo-accounts" hidden={!demoOpen} className={styles.demoContent}>
+       <p>Choose an account, then sign in.</p>
+       <div className={styles.demoAccounts}>
+        {[1, 2].map(account => <button key={account} type="button" disabled={isLoading} aria-pressed={username === `testuser${account}` && password === `testpassword${account}`} onClick={() => selectDemo(account)}><span className={styles.demoAvatar}>0{account}</span><span>Demo {account}<small>testuser{account}</small></span><span className={styles.selected} aria-hidden="true">{username === `testuser${account}` && password === `testpassword${account}` ? '✓' : '↗'}</span></button>)}
+       </div>
+       <p className={styles.demoNote}>Shared accounts. Signing out clears both demo users’ data.</p>
+      </div>
+     </div>
+    </section>
+   </main>
+   <footer className={styles.footer}><span>AnonymoUS</span><span>A little less noise. A little more conversation.</span></footer>
+  </div>
+ );
 }
