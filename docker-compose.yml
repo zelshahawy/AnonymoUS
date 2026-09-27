@@ -1,0 +1,40 @@
+services:
+  market-data-service:
+    build:
+      context: ./market-data-service
+    networks:
+      - default
+
+  backend:
+    restart: unless-stopped
+    build:
+      context: ./anonymous-server-backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./anonymous-server-backend/.env
+    environment:
+      ANONYMOUS_BACKEND_STOCK_API: http://market-data-service:5005
+    expose:
+      - "8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.backend-http.rule=Host(`anon-backend.ziad-unit-64E.com`)"
+      - "traefik.http.routers.backend-http.entrypoints=web"
+      - "traefik.http.routers.backend-http.middlewares=https-redirect"
+      - "traefik.http.routers.backend-https.rule=Host(`anon-backend.ziad-unit-64E.com`)"
+      - "traefik.http.routers.backend-https.entrypoints=websecure"
+      - "traefik.http.routers.backend-https.tls=true"
+      - "traefik.http.routers.backend-https.tls.certresolver=myresolver"
+      - "traefik.http.services.backend-https.loadbalancer.server.port=8080"
+    networks:
+      - traefik-net
+      - default
+    depends_on:
+      - market-data-service
+
+networks:
+  traefik-net:
+    external: true
