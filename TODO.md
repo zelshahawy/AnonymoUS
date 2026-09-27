@@ -1,11 +1,11 @@
 ## Fix rendering of live messages -- currently only recieved mesgs and histroy appear --FIXED
 
-## Fix Cookies handling, add a signout button
+## Fix Cookies handling, add a signout button --FIXED
 
-## Fix weird behaviour, If I have a tab open in a live chat, open another tab and login to another user
+## Fix weird behaviour, If I have a tab open in a live chat, open another tab and login to another user --FIXED
 
-## my cookies reset, and when sending a message, my live chat switches to the other user.
+## my cookies reset, and when sending a message, my live chat switches to the other user. --FIXED
 
-## Fix allowing user to input same user.
+## Fix allowing user to input same user. --FIXED
 
-## Fix skipping logout if cookies is found.
+## Fix skipping logout if cookies is found. --FIXED
