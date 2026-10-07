@@ -6,8 +6,7 @@ A real‐time chat application built with Go and Next.js, featuring:
 - **Secure WebSockets** for peer‐to‐peer messaging
 - **JWT HS256 cookie authentication**, protected by Google reCAPTCHA and rate limiting
 - **Stock market integration** via Yahoo Finance and Alpaca API
-- **In‐chat Strategy Lab** for EMA/EMSTD backtests and auto‐deploy (220% simulated return)
-
+- **In‐chat Strategy Lab** for EMA/EMSTD backtests and auto‐deploy.
 ---
 
 ## Features
