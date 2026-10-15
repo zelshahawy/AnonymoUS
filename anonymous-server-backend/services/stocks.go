@@ -178,8 +178,12 @@ func HandleStockCommand(in *hub.Message) []BotResponse {
 	if err != nil {
 		text = friendlyError(sym, err)
 	} else {
-		text = fmt.Sprintf("📈 %s  Price: $%.2f  Change: %.2f%%  EMA20: $%.2f",
-			data.Symbol, data.Price, data.Change, data.EMA20)
+		quote, err := json.Marshal(data)
+		if err != nil {
+			text = friendlyError(sym, err)
+		} else {
+			text = "STOCK_DATA:" + string(quote)
+		}
 	}
 
 	return []BotResponse{{

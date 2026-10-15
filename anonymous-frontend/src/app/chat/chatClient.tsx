@@ -2,7 +2,9 @@
 
 import CommandDropdown, { COMMANDS } from '@/components/CommandDropdown';
 import StockChart, { isChartData, parseChartData } from '@/components/StockChart';
+import StockQuote from '@/components/StockQuote';
 import UserProfile from '@/components/UserProfile';
+import { isStockQuoteData, parseStockQuote } from '@/lib/stockQuote';
 import { DEMO_USERS, isSameUser, normalizeUsername } from '@/lib/users';
 import Link from 'next/link';
 import { Fragment, KeyboardEvent, useEffect, useReducer, useRef, useState } from 'react';
@@ -18,6 +20,8 @@ interface Message {
 }
 
 type ConnectionStatus = 'connecting' | 'open' | 'reconnecting';
+
+const CONNECTION_STATUS_GRACE_MS = 750;
 
 const formatTime = (ts?: number) =>
 	ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
@@ -111,6 +115,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 	const [presence, setPresence] = useState<Record<string, 'online' | 'offline'>>({});
 	const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+	const [showConnectionStatus, setShowConnectionStatus] = useState(false);
 	const [contactSearch, setContactSearch] = useState('');
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 	const endRef = useRef<HTMLDivElement>(null);
@@ -130,6 +135,18 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 	);
 
 	const WEBSOCKETURL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080/ws';
+	const isConnectionPending = connectionStatus !== 'open';
+
+	useEffect(() => {
+		if (!isConnectionPending) {
+			setShowConnectionStatus(false);
+			return;
+		}
+
+		// Avoid flashing the banner for quick connections; retries share the same grace period.
+		const timer = setTimeout(() => setShowConnectionStatus(true), CONNECTION_STATUS_GRACE_MS);
+		return () => clearTimeout(timer);
+	}, [isConnectionPending]);
 
 	useEffect(() => {
 		if (!currentUser) return;
@@ -702,7 +719,7 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 						<UserProfile user={currentUser} />
 					</div>
 
-					{connectionStatus !== 'open' && (
+					{isConnectionPending && showConnectionStatus && (
 						<div className="text-center text-xs text-[#ffb86c] bg-[#ffb86c]/10 border-b border-[#ffb86c]/20 py-1.5">
 							{connectionStatus === 'connecting' ? 'Connecting…' : 'Connection lost — reconnecting…'}
 						</div>
@@ -723,19 +740,22 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								const isMe = m.from === currentUser;
 								const isBot = m.type === 'bot';
 								const isChart = isBot && isChartData(m.body);
+								const stockQuote = isBot ? parseStockQuote(m.body) : null;
 								const prev = messages[i - 1];
 								const dividerLabel =
 									m.ts && (!prev?.ts || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString())
 										? dayLabel(m.ts)
 										: null;
 								const base = 'w-fit max-w-full break-words leading-relaxed shadow-sm';
-								const bubbleClass = isChart
-									? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl p-3`
-									: isBot
-										? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl px-4 py-2.5 text-[#e4e6ee]`
-										: isMe
-											? `${base} bg-[#bd93f9] text-[#21222c] rounded-2xl rounded-br-md px-4 py-2.5 font-medium`
-											: `${base} bg-[#2f3142] text-[#f8f8f2] rounded-2xl rounded-bl-md px-4 py-2.5`;
+								const bubbleClass = stockQuote
+									? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl p-4`
+									: isChart
+										? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl p-3`
+										: isBot
+											? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl px-4 py-2.5 text-[#e4e6ee]`
+											: isMe
+												? `${base} bg-[#bd93f9] text-[#21222c] rounded-2xl rounded-br-md px-4 py-2.5 font-medium`
+												: `${base} bg-[#2f3142] text-[#f8f8f2] rounded-2xl rounded-bl-md px-4 py-2.5`;
 								return (
 									<Fragment key={m.messageid}>
 										{dividerLabel && (
@@ -753,7 +773,11 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 											)}
 											<div className={`flex flex-col max-w-[80%] md:max-w-md ${isMe ? 'items-end' : 'items-start'}`}>
 												<div className={bubbleClass}>
-													{isChart ? (
+													{stockQuote ? (
+														<StockQuote data={stockQuote} />
+													) : isBot && isStockQuoteData(m.body) ? (
+														<span>Unable to display this stock quote. Try the command again.</span>
+													) : isChart ? (
 														(() => {
 															const chart = parseChartData(m.body);
 															return chart ? <StockChart data={chart} /> : <span>Failed to load chart</span>;
