@@ -83,7 +83,7 @@ func fetchStock(symbol string) (*StockResponse, error) {
 	return &out, nil
 }
 
-func fetchTopMovers() ([]StockResponse, error) {
+func fetchTopMovers() ([]marketQuote, error) {
 	client := http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Get(stockAPI + "/api/top-movers/")
 	if err != nil {
@@ -94,7 +94,7 @@ func fetchTopMovers() ([]StockResponse, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("service returned %d", resp.StatusCode)
 	}
-	var out []StockResponse
+	var out []marketQuote
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, err
 	}
@@ -121,45 +121,6 @@ func httpGetJSON(url string, out interface{}) error {
 		return err
 	}
 	return nil
-}
-
-func formatStockLines(title string, stocks []map[string]any, limit int) string {
-	lines := []string{title, ""}
-	for i, s := range stocks {
-		if i >= limit {
-			break
-		}
-		sym, _ := s["symbol"].(string)
-		price, _ := s["price"].(float64)
-		change, _ := s["change"].(float64)
-		emoji := "🔴"
-		if change > 0 {
-			emoji = "🟢"
-		}
-		lines = append(lines, fmt.Sprintf("%s **%s** $%.2f (%+.1f%%)", emoji, sym, price, change))
-	}
-	return strings.Join(lines, "\n")
-}
-
-func formatNewsLines(sym string, news []map[string]any, limit int) string {
-	lines := []string{}
-	if sym != "" {
-		lines = append(lines, fmt.Sprintf("📰 **%s News:**", sym))
-	} else {
-		lines = append(lines, "📰 **Market News:**")
-	}
-	lines = append(lines, "")
-	for i, a := range news {
-		if i >= limit {
-			break
-		}
-		title, _ := a["title"].(string)
-		if len(title) > 100 {
-			title = title[:100] + "..."
-		}
-		lines = append(lines, fmt.Sprintf("• %s", title))
-	}
-	return strings.Join(lines, "\n")
 }
 
 type BotResponse struct {
@@ -199,56 +160,10 @@ func HandleTopMoversCommand(in *hub.Message) []BotResponse {
 	}
 
 	data, err := fetchTopMovers()
-	var text string
 	if err != nil {
-		text = friendlyError("top movers", err)
-	} else {
-		var lines []string
-		lines = append(lines, "📊 **Top Movers Today**")
-		lines = append(lines, "")
-
-		var gainers []StockResponse
-		var losers []StockResponse
-
-		for _, stock := range data {
-			if stock.Change > 0 {
-				gainers = append(gainers, stock)
-			} else {
-				losers = append(losers, stock)
-			}
-		}
-
-		lines = append(lines, "🟢 **Top Gainers:**")
-		maxGainers := 5
-		if len(gainers) > maxGainers {
-			gainers = gainers[:maxGainers]
-		}
-		for _, stock := range gainers {
-			line := fmt.Sprintf("**%s** $%.2f (+%.1f%%)",
-				stock.Symbol, stock.Price, stock.Change)
-			lines = append(lines, line)
-		}
-
-		lines = append(lines, "")
-
-		lines = append(lines, "🔴 **Top Losers:**")
-		maxLosers := 5
-		if len(losers) > maxLosers {
-			losers = losers[:maxLosers]
-		}
-		for _, stock := range losers {
-			line := fmt.Sprintf("**%s** $%.2f (%.1f%%)",
-				stock.Symbol, stock.Price, stock.Change)
-			lines = append(lines, line)
-		}
-
-		text = strings.Join(lines, "\n")
+		return []BotResponse{{From: "bot", Body: friendlyError("top movers", err)}}
 	}
-
-	return []BotResponse{{
-		From: "bot",
-		Body: text,
-	}}
+	return marketListResponse("top-movers", data)
 }
 
 func parseNewsCommand(text string) (symbol string, ok bool) {
@@ -268,7 +183,7 @@ func HandleNewsCommand(in *hub.Message) []BotResponse {
 		return nil
 	}
 
-	var newsData []map[string]interface{}
+	newsData := []marketArticle{}
 	url := stockAPI + "/api/news?limit=5"
 	if sym != "" {
 		url = stockAPI + "/api/news?symbol=" + sym + "&limit=3"
@@ -277,7 +192,17 @@ func HandleNewsCommand(in *hub.Message) []BotResponse {
 		return []BotResponse{{From: "bot", Body: friendlyError("news", err)}}
 	}
 
-	return []BotResponse{{From: "bot", Body: formatNewsLines(sym, newsData, 3)}}
+	if len(newsData) > 3 {
+		newsData = newsData[:3]
+	}
+	if newsData == nil {
+		newsData = []marketArticle{}
+	}
+	return marketCardResponse("news", struct {
+		Kind     string          `json:"kind"`
+		Symbol   string          `json:"symbol,omitempty"`
+		Articles []marketArticle `json:"articles"`
+	}{Kind: "news", Symbol: sym, Articles: newsData})
 }
 
 func parseCryptoCommand(text string) bool {
@@ -290,12 +215,12 @@ func HandleCryptoCommand(in *hub.Message) []BotResponse {
 		return nil
 	}
 
-	var cryptoData []map[string]interface{}
+	var cryptoData []marketQuote
 	if err := httpGetJSON(stockAPI+"/api/crypto", &cryptoData); err != nil {
 		return []BotResponse{{From: "bot", Body: friendlyError("crypto", err)}}
 	}
 
-	return []BotResponse{{From: "bot", Body: formatStockLines("₿ **Crypto Prices:**", cryptoData, len(cryptoData))}}
+	return marketListResponse("crypto", cryptoData)
 }
 
 // Extra arguments (e.g. "/indices NASDAQ") are accepted but ignored.
@@ -309,27 +234,31 @@ func HandleIndicesCommand(in *hub.Message) []BotResponse {
 		return nil
 	}
 
-	var idx map[string]map[string]any
+	var idx map[string]*struct {
+		Name   string   `json:"name"`
+		Value  *float64 `json:"value"`
+		Change *float64 `json:"change"`
+	}
 	if err := httpGetJSON(stockAPI+"/api/indices", &idx); err != nil {
 		return []BotResponse{{From: "bot", Body: friendlyError("indices", err)}}
 	}
 
-	// Remap name/value/change keys to the symbol/price/change shape formatStockLines expects.
+	// Preserve benchmark order and skip unavailable indices instead of displaying zeroes.
 	order := []string{"sp500", "dow_jones", "nasdaq"}
-	vals := []map[string]any{}
+	vals := []marketQuote{}
 	for _, key := range order {
-		v, exists := idx[key]
-		if !exists {
+		v := idx[key]
+		if v == nil || strings.TrimSpace(v.Name) == "" || v.Value == nil || v.Change == nil {
 			continue
 		}
-		vals = append(vals, map[string]any{
-			"symbol": v["name"],
-			"price":  v["value"],
-			"change": v["change"],
+		vals = append(vals, marketQuote{
+			Symbol: v.Name,
+			Price:  *v.Value,
+			Change: *v.Change,
 		})
 	}
 
-	return []BotResponse{{From: "bot", Body: formatStockLines("📊 **Market Indices:**", vals, len(vals))}}
+	return marketListResponse("indices", vals)
 }
 
 // Maps user-friendly period inputs to the canonical periods the market-data service understands.
@@ -399,10 +328,13 @@ func HandleTrendingCommand(in *hub.Message) []BotResponse {
 		return nil
 	}
 
-	var trending []map[string]any
+	var trending []marketQuote
 	if err := httpGetJSON(stockAPI+"/api/trending", &trending); err != nil {
 		return []BotResponse{{From: "bot", Body: friendlyError("trending", err)}}
 	}
 
-	return []BotResponse{{From: "bot", Body: formatStockLines("🔥 **Trending Stocks:**", trending, 5)}}
+	if len(trending) > 5 {
+		trending = trending[:5]
+	}
+	return marketListResponse("trending", trending)
 }

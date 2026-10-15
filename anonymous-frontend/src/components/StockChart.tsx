@@ -1,6 +1,8 @@
 'use client';
 
 import { useId } from 'react';
+import MarketChangeBadge from '@/components/MarketChangeBadge';
+import { formatMarketPrice } from '@/lib/marketFormat';
 
 interface ChartData {
 	symbol: string;
@@ -14,19 +16,29 @@ export function isChartData(body: string): boolean {
 
 export function parseChartData(body: string): ChartData | null {
 	try {
-		return JSON.parse(body.slice('CHART_DATA:'.length));
+		const data = JSON.parse(body.slice('CHART_DATA:'.length));
+		if (!data || typeof data.symbol !== 'string' || !data.symbol.trim() ||
+			typeof data.period !== 'string' || !Array.isArray(data.points) ||
+			!data.points.every((point: unknown) => point && typeof point === 'object' &&
+				'date' in point && typeof point.date === 'string' &&
+				'close' in point && typeof point.close === 'number' && Number.isFinite(point.close))) return null;
+		return data;
 	} catch {
 		return null;
 	}
 }
 
-const fmtPrice = (n: number) =>
-	n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
 export default function StockChart({ data }: { data: ChartData }) {
 	const gradientId = useId();
 	const { symbol, period, points } = data;
-	if (!points || points.length === 0) return null;
+	if (!points || points.length === 0) {
+		return (
+			<section aria-label={`${symbol} price chart`} className="w-[300px] max-w-full">
+				<h3 className="break-words text-sm font-semibold text-[#bd93f9]">{symbol} · {period}</h3>
+				<p className="mt-3 text-xs text-[#9b9fb2]">No price history available right now.</p>
+			</section>
+		);
+	}
 
 	const closes = points.map(p => p.close);
 	const min = Math.min(...closes);
@@ -51,39 +63,32 @@ export default function StockChart({ data }: { data: ChartData }) {
 	const first = closes[0];
 	const last = closes[closes.length - 1];
 	const change = first ? ((last - first) / first) * 100 : 0;
-	const isUp = change >= 0;
-	const color = isUp ? '#50fa7b' : '#ff5555';
+	const color = change > 0 ? '#8be9a8' : change < 0 ? '#ff9292' : '#b3b7c8';
 
 	const bottomY = padTop + chartH;
 	const areaPoints = `${padX},${bottomY} ${polyPoints} ${padX + chartW},${bottomY}`;
 	const lastPt = coords[coords.length - 1];
 
 	return (
-		<div className="w-[300px] max-w-full">
-			<div className="flex items-start justify-between mb-2 gap-3">
-				<div className="min-w-0">
-					<div className="flex items-center gap-2">
-						<span className="font-bold text-[#f8f8f2] text-sm tracking-tight">{symbol}</span>
-						<span className="text-[10px] uppercase tracking-wide text-[#8b8fa3] bg-[#2a2c39] rounded px-1.5 py-0.5">
-							{period}
-						</span>
-					</div>
-					<div className="text-[10px] text-[#6b6f80] font-mono mt-0.5">
-						H ${fmtPrice(max)} · L ${fmtPrice(min)}
-					</div>
+		<section aria-label={`${symbol} price chart`} className="w-[300px] max-w-full text-[#f8f8f2]">
+			<div className="flex items-center justify-between gap-3">
+				<span className="min-w-0 break-all text-sm font-semibold tracking-wide text-[#bd93f9]">{symbol}</span>
+				<span className="shrink-0 text-[10px] uppercase tracking-widest text-[#9b9fb2]">Price history</span>
+			</div>
+			<div className="my-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+				<div className="min-w-0 break-all text-[28px] font-semibold leading-tight tracking-tight tabular-nums">
+					<span className="sr-only">Latest price: </span>{formatMarketPrice(last)}
 				</div>
-				<div className="text-right leading-tight shrink-0">
-					<div className="font-bold text-[#f8f8f2] text-sm">${fmtPrice(last)}</div>
-					<div className="text-xs font-mono" style={{ color }}>
-						{isUp ? '▲' : '▼'} {isUp ? '+' : ''}{change.toFixed(2)}%
-					</div>
+				<div className="flex flex-col items-end gap-1">
+					<MarketChangeBadge change={change} />
+					<span className="text-[10px] text-[#9b9fb2]">over {period}</span>
 				</div>
 			</div>
 
-			<svg viewBox={`0 0 ${w} ${h}`} width="100%" className="block">
+			<svg role="img" aria-label={`${symbol} closing prices over ${period}`} viewBox={`0 0 ${w} ${h}`} width="100%" className="block">
 				<defs>
 					<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-						<stop offset="0%" stopColor={color} stopOpacity="0.3" />
+						<stop offset="0%" stopColor={color} stopOpacity="0.18" />
 						<stop offset="100%" stopColor={color} stopOpacity="0" />
 					</linearGradient>
 				</defs>
@@ -120,10 +125,20 @@ export default function StockChart({ data }: { data: ChartData }) {
 				<circle cx={lastPt.x} cy={lastPt.y} r="3.5" fill={color} stroke="#21222c" strokeWidth="2" />
 			</svg>
 
-			<div className="flex justify-between text-[10px] text-[#6b6f80] font-mono mt-1">
-				<span>{points[0].date}</span>
-				<span>{points[points.length - 1].date}</span>
+			<div className="mt-1 flex justify-between gap-3 text-[10px] text-[#9b9fb2]">
+				<span className="min-w-0 break-words">{points[0].date}</span>
+				<span className="min-w-0 break-words text-right">{points[points.length - 1].date}</span>
 			</div>
-		</div>
+			<dl className="mt-3 grid grid-cols-2 gap-3 border-t border-[#33354a] pt-3 text-xs">
+				<div className="min-w-0">
+					<dt className="text-[10px] text-[#9b9fb2]">Period low</dt>
+					<dd className="mt-0.5 break-all tabular-nums text-[#d4d7e2]">{formatMarketPrice(min)}</dd>
+				</div>
+				<div className="min-w-0 text-right">
+					<dt className="text-[10px] text-[#9b9fb2]">Period high</dt>
+					<dd className="mt-0.5 break-all tabular-nums text-[#d4d7e2]">{formatMarketPrice(max)}</dd>
+				</div>
+			</dl>
+		</section>
 	);
 }

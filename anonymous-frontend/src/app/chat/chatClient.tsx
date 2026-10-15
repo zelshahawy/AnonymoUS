@@ -1,9 +1,11 @@
 'use client';
 
 import CommandDropdown, { COMMANDS } from '@/components/CommandDropdown';
+import MarketCard from '@/components/MarketCard';
 import StockChart, { isChartData, parseChartData } from '@/components/StockChart';
 import StockQuote from '@/components/StockQuote';
 import UserProfile from '@/components/UserProfile';
+import { isMarketData, parseMarketResponse } from '@/lib/marketResponse';
 import { isStockQuoteData, parseStockQuote } from '@/lib/stockQuote';
 import { DEMO_USERS, isSameUser, normalizeUsername } from '@/lib/users';
 import Link from 'next/link';
@@ -741,21 +743,20 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 								const isBot = m.type === 'bot';
 								const isChart = isBot && isChartData(m.body);
 								const stockQuote = isBot ? parseStockQuote(m.body) : null;
+								const marketResponse = isBot ? parseMarketResponse(m.body) : null;
 								const prev = messages[i - 1];
 								const dividerLabel =
 									m.ts && (!prev?.ts || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString())
 										? dayLabel(m.ts)
 										: null;
 								const base = 'w-fit max-w-full break-words leading-relaxed shadow-sm';
-								const bubbleClass = stockQuote
+								const bubbleClass = stockQuote || marketResponse || isChart
 									? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl p-4`
-									: isChart
-										? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl p-3`
-										: isBot
-											? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl px-4 py-2.5 text-[#e4e6ee]`
-											: isMe
-												? `${base} bg-[#bd93f9] text-[#21222c] rounded-2xl rounded-br-md px-4 py-2.5 font-medium`
-												: `${base} bg-[#2f3142] text-[#f8f8f2] rounded-2xl rounded-bl-md px-4 py-2.5`;
+									: isBot
+										? `${base} bg-[#21222c] ring-1 ring-[#33354a] rounded-2xl px-4 py-2.5 text-[#e4e6ee]`
+										: isMe
+											? `${base} bg-[#bd93f9] text-[#21222c] rounded-2xl rounded-br-md px-4 py-2.5 font-medium`
+											: `${base} bg-[#2f3142] text-[#f8f8f2] rounded-2xl rounded-bl-md px-4 py-2.5`;
 								return (
 									<Fragment key={m.messageid}>
 										{dividerLabel && (
@@ -775,6 +776,10 @@ export default function ChatClient({ user, token }: { user: string, token: strin
 												<div className={bubbleClass}>
 													{stockQuote ? (
 														<StockQuote data={stockQuote} />
+													) : marketResponse ? (
+														<MarketCard data={marketResponse} />
+													) : isBot && isMarketData(m.body) ? (
+														<span>Unable to display this market update. Try the command again.</span>
 													) : isBot && isStockQuoteData(m.body) ? (
 														<span>Unable to display this stock quote. Try the command again.</span>
 													) : isChart ? (
